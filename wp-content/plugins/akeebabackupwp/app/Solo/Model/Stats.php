@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -105,10 +105,10 @@ class Stats extends Model
         $at_minor = isset($at_parts[1]) ? $at_parts[1] : '';
         $at_revision = isset($at_parts[2]) ? $at_parts[2] : '';
 
-        list($php_major, $php_minor, $php_revision) = explode('.', phpversion());
+        [$php_major, $php_minor, $php_revision] = explode('.', phpversion());
         $php_qualifier = strpos($php_revision, '~') !== false ? substr($php_revision, strpos($php_revision, '~')) : '';
 
-        list($db_major, $db_minor, $db_revision) = explode('.', $db->getVersion());
+        [$db_major, $db_minor, $db_revision] = explode('.', $db->getVersion());
         $db_qualifier = strpos($db_revision, '~') !== false ? substr($db_revision, strpos($db_revision, '~')) : '';
 
 		switch ($db->getDriverType())
@@ -263,7 +263,7 @@ class Stats extends Model
      */
     public function getRandomData($bytes = 32)
     {
-        if (extension_loaded('openssl') && (version_compare(PHP_VERSION, '5.3.4') >= 0 || IS_WIN))
+        if (extension_loaded('openssl') && (version_compare(PHP_VERSION, '5.3.4') >= 0 || substr(PHP_OS, 0, 3) == 'WIN'))
         {
             $strong = false;
             $randBytes = openssl_random_pseudo_bytes($bytes, $strong);
@@ -272,11 +272,6 @@ class Stats extends Model
             {
                 return $randBytes;
             }
-        }
-
-        if (extension_loaded('mcrypt'))
-        {
-            return mcrypt_create_iv($bytes, MCRYPT_DEV_URANDOM);
         }
 
         return $this->genRandomBytes($bytes);
@@ -291,6 +286,11 @@ class Stats extends Model
      */
     public function genRandomBytes($length = 32)
     {
+    	if (function_exists('random_bytes'))
+	    {
+	    	return random_bytes($length);
+	    }
+
         $length = (int) $length;
         $sslStr = '';
 
@@ -311,7 +311,7 @@ class Stats extends Model
         // This is PHP 5.3.3 and up
         if (function_exists('stream_set_read_buffer') && @is_readable('/dev/urandom'))
         {
-            $handle = @fopen('/dev/urandom', 'rb');
+            $handle = @fopen('/dev/urandom', 'r');
 
             if ($handle)
             {

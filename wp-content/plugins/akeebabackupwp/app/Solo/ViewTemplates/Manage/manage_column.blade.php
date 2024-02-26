@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -21,10 +21,9 @@ if (!isset($record['remote_filename']))
 }
 
 $archiveExists = $record['meta'] == 'ok';
-$showManageRemote = in_array($record['meta'], array(
-		'ok', 'remote'
-	)) && !empty($record['remote_filename']) && (AKEEBABACKUP_PRO == 1);
-$showUploadRemote = $this->privileges['backup'] && $archiveExists && empty($record['remote_filename']) && ($this->enginesPerProfile[$record['profile_id']] != 'none') && ($record['meta'] != 'obsolete') && (AKEEBABACKUP_PRO == 1);
+$showManageRemote = $record['hasRemoteFiles'] && (AKEEBABACKUP_PRO == 1);
+$engineForProfile = array_key_exists($record['profile_id'], $this->enginesPerProfile) ? $this->enginesPerProfile[$record['profile_id']] : 'none';
+$showUploadRemote = $this->privileges['backup'] && $archiveExists && !$showManageRemote && ($engineForProfile != 'none') && ($record['meta'] != 'obsolete') && (AKEEBABACKUP_PRO == 1);
 $showDownload = $this->privileges['download'] && $archiveExists;
 $showViewLog = $this->privileges['backup'] && isset($record['backupid']) && !empty($record['backupid']);
 $postProcEngine = '';
@@ -33,7 +32,7 @@ $thisID = urlencode($record['id']);
 
 if ($showUploadRemote)
 {
-	$postProcEngine = $this->enginesPerProfile[$record['profile_id']];
+	$postProcEngine = $engineForProfile ?: 'none';
 	$showUploadRemote = !empty($postProcEngine);
 }
 
@@ -59,7 +58,7 @@ if ($showUploadRemote)
                 <strong>@lang('COM_AKEEBA_BUADMIN_LBL_ARCHIVEPATH' . ($archiveExists ? '' : '_PAST'))</strong>
                 <br />
                 <span class="akeeba-label--information">
-		        {{{ AkeebaHelperUtils::getRelativePath(APATH_BASE, dirname($record['absolute_path'])) }}}
+		        {{{ AkeebaHelperUtils::getRelativePath(defined('ABSPATH') ? ABSPATH : APATH_BASE, dirname($record['absolute_path'])) }}}
 		</span>
             </p>
             <p>
@@ -76,37 +75,103 @@ if ($showUploadRemote)
         <div id="akeeba-buadmin-download-{{ (int) $record['id'] }}" tabindex="-2" role="dialog">
             <div class="akeeba-renderer-fef {{ ($this->getContainer()->appConfig->get('darkmode', -1) == 1) ? 'akeeba-renderer-fef--dark' : '' }}">
                 <div class="akeeba-block--warning">
-                    <h4>
-                        @lang('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_TITLE')
-                    </h4>
-                    <p>
-                        @lang('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING')
-                    </p>
+                    @if(defined('WPINC') && !$this->showBrowserDownload)
+                        <h4>
+                            @lang('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_TITLE_NODOWNLOAD')
+                        </h4>
+                        <p>
+                            @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD')
+                        </p>
+                        <p>
+                            @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD_REENABLE')
+                        </p>
+                        <p>
+                            @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD_ALTERNATIVE')
+                        </p>
+                    @elseif($this->phpErrorDisplay === -1)
+                        <h4>
+                            @lang('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_TITLE_NODOWNLOAD_PHPERRORDISPLAY')
+                        </h4>
+                        <p>
+                            @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD_PHPERRORDISPLAY_UNKNOWN')
+                        </p>
+                    @elseif($this->phpErrorDisplay === 1)
+                        <h4>
+                            @lang('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_TITLE_NODOWNLOAD_PHPERRORDISPLAY')
+                        </h4>
+                        <p>
+                            @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD_PHPERRORDISPLAY_ENABLED')
+                        </p>
+                        @if (defined('WP_DEBUG') && WP_DEBUG)
+                            <p>@lang('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD_PHPERRORDISPLAY_WPDEBUG')</p>
+                        @elseif(defined('AKEEBADEBUG'))
+                            @if (defined('WPINC'))
+                            <p>
+                                @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD_PHPERRORDISPLAY_AKEEBADEBUG', str_replace(WP_CONTENT_URL . '/', '', plugins_url('helpers', AkeebaBackupWP::$absoluteFileName)))
+                            </p>
+                            @else
+                            <p>
+                                @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD_PHPERRORDISPLAY_AKEEBADEBUG', 'app')
+                            </p>
+                            @endif
+                        @endif
+                    @else
+                        <h4>
+                            @lang('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_TITLE')
+                        </h4>
+                        @if (defined('WPINC'))
+                            <p>
+                                @lang('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_WORDPRESS')
+                            </p>
+                        @endif
+                        <p>
+                            @lang('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING')
+                        </p>
+                    @endif
                 </div>
 
-                @if ($record['multipart'] < 2)
-                    <a class="akeeba-btn--primary--small comAkeebaManageDownloadButton"
-                       data-id="{{{ $record['id'] }}}">
-                        <span class="akion-ios-download"></span>
-                        @lang('COM_AKEEBA_BUADMIN_LOG_DOWNLOAD')
-                    </a>
-                @endif
 
-                @if ($record['multipart'] >= 2)
-                    <div>
-                        @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_PARTS', $record['multipart'])
+                @if((defined('WPINC') && !$this->showBrowserDownload) || $this->phpErrorDisplay != 0)
+                    <div class="akeeba-block--info">
+	                    <?php
+	                    $archiveName = $record['archivename'];
+	                    $extension = substr($archiveName, -4);
+	                    $firstPart = substr($extension, 0, 2) . '01';
+	                    $lastPart = substr($extension, 0, 2) . sprintf('%02u', max($record['multipart'] - 1, 1));
+	                    ?>
+                        @if ($record['multipart'] < 2)
+                            @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD_MULTIPART_1', $archiveName)
+                        @elseif($record['multipart'] < 3)
+                            @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD_MULTIPART_2', substr($archiveName, 0, -4), $extension, $firstPart)
+                        @else
+                            @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_WARNING_NODOWNLOAD_MULTIPART', $record['multipart'], substr($archiveName, 0, -4), $extension, $firstPart, $lastPart)
+                        @endif
                     </div>
-                    @for ($count = 0; $count < $record['multipart']; $count++)
-                    @if ($count > 0)
-                    &bull;
-                @endif
-                <a class="akeeba-btn--small--dark"
-                   data-id="{{{ $record['id'] }}}"
-                   data-part="{{{ $count }}}">
-                    <span class="akion-android-download"></span>
-                    @sprintf('COM_AKEEBA_BUADMIN_LABEL_PART', $count);
-                </a>
-                @endfor
+                @else
+                    @if ($record['multipart'] < 2)
+                        <a class="akeeba-btn--primary--small comAkeebaManageDownloadButton"
+                           data-id="{{{ $record['id'] }}}">
+                            <span class="akion-ios-download"></span>
+                            @lang('COM_AKEEBA_BUADMIN_LOG_DOWNLOAD')
+                        </a>
+                    @endif
+
+                    @if ($record['multipart'] >= 2)
+                        <div>
+                            @sprintf('COM_AKEEBA_BUADMIN_LBL_DOWNLOAD_PARTS', $record['multipart'])
+                        </div>
+                        @for ($count = 0; $count < $record['multipart']; $count++)
+                            @if ($count > 0)
+                            &bull;
+                            @endif
+                            <a class="akeeba-btn--small--dark comAkeebaManageDownloadButton"
+                               data-id="{{{ $record['id'] }}}"
+                               data-part="{{{ $count }}}">
+                                <span class="akion-android-download"></span>
+                                @sprintf('COM_AKEEBA_BUADMIN_LABEL_PART', $count)
+                            </a>
+                        @endfor
+                    @endif
                 @endif
             </div>
         </div>
@@ -137,7 +202,7 @@ if ($showUploadRemote)
 
 <div style="padding-bottom: 3pt">
     @if ($showDownload)
-        <a class="akeeba-btn--{{ $showManageRemote || $showUploadRemote ? 'smal--grey' : 'green' }} akeeba_download_button"
+        <a class="akeeba-btn--{{ $showManageRemote || $showUploadRemote ? 'small--grey' : 'green' }} akeeba_download_button"
            data-dltarget="#akeeba-buadmin-download-{{ (int)$record['id'] }}"
         >
             <span class="akion-android-download"></span>

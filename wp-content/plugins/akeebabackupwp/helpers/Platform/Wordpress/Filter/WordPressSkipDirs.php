@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -37,11 +37,22 @@ class WordPressSkipDirs extends FilterBase
 		}
 
 		$this->filter_data[$root] = [
-			// Cache directories. Ok, here's the deal. In theory inside WordPress you can use whatever you want as
-			// "cache" directory, since when you enable WP_CACHE you simply tell WP to look for a specific file that will
-			// handle the cache. In practice, 99% of time everything will go inside wp-content/cache .
-			// If the user did something different, it's up to him to remember to exclude the directory.
-			'wp-content/cache'
+			/**
+			 * Cache directory.
+			 *
+			 * In theory, you can use whichever directory you want as cache in WordPress. You just enable WP_CACHE which
+			 * tells WordPress to look for a specific file which will be handling caching. In practice, most of the time
+			 * the cache folder will default to wp-content/cache. If the user chose a different directory it is up to
+			 * them to exclude the cache directory.
+			 */
+			'wp-content/cache',
+			/**
+			 * Divi-specific cache folder.
+			 *
+			 * If this folder is included in the backup the frontend appears broken until you regenerate the Divi
+			 * template. Excluding this folder forces Divi to regenerate the template, working around this issue.
+			 */
+			'wp-content/et-cache',
 		];
 
 		parent::__construct();

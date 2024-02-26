@@ -1,0 +1,136 @@
+# Translation of Plugins - WP fail2ban &#8211; Advanced Security Plugin - Stable (latest release) in English (Canada)
+# This file is distributed under the same license as the Plugins - WP fail2ban &#8211; Advanced Security Plugin - Stable (latest release) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2019-04-22 17:22:45+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/4.0.0-beta.2\n"
+"Language: en_CA\n"
+"Project-Id-Version: Plugins - WP fail2ban &#8211; Advanced Security Plugin - Stable (latest release)\n"
+
+#: lib/activation.php:68
+msgid "A conflicting file was found in <tt>mu-plugins</tt>:"
+msgstr "A conflicting file was found in <tt>mu-plugins</tt>:"
+
+#: lib/activation.php:38
+msgid "A conflicting symbolic link was found in <tt>mu-plugins</tt>:"
+msgstr "A conflicting symbolic link was found in <tt>mu-plugins</tt>:"
+
+#: lib/activation.php:26
+msgid "A broken symbolic link was found in <tt>mu-plugins</tt>:"
+msgstr "A broken symbolic link was found in <tt>mu-plugins</tt>:"
+
+#: admin/config/plugins.php:84
+msgid "Facilities to use for plugin-generated messages. The defaults follow the Core defaults."
+msgstr "Facilities to use for plugin-generated messages. The defaults follow the Core defaults."
+
+#: admin/config/plugins.php:53
+msgid "REST"
+msgstr "REST"
+
+#: admin/config/plugins.php:52
+msgid "Password"
+msgstr "Password"
+
+#: admin/config/plugins.php:51
+msgid "Comment"
+msgstr "Comment"
+
+#: admin/config/plugins.php:48
+msgid "Event Class Facilities"
+msgstr "Event Class Facilities"
+
+#: admin/config/syslog.php:47 admin/config/syslog.php:49
+msgid "Options"
+msgstr "Options"
+
+#: admin/config/logging.php:155
+msgid "Use facility"
+msgstr "Use facility"
+
+#: admin/config/logging.php:47 admin/config/plugins.php:49
+msgid "Authentication"
+msgstr "Authentication"
+
+#: admin/config/logging.php:46
+msgid "What & Where"
+msgstr "What & Where"
+
+#: admin/admin.php:305
+msgid "Welcome"
+msgstr "Welcome"
+
+#: admin/lib/logging.php:42
+msgid " (default)"
+msgstr " (default)"
+
+#: admin/config/remote-ips.php:48
+msgid "Proxies"
+msgstr "Proxies"
+
+#: admin/config/block.php:54 admin/config/plugins.php:50
+msgid "Block"
+msgstr "Block"
+
+#: admin/config/syslog.php:52 admin/config/syslog.php:231
+msgid "Truncate Host"
+msgstr "Truncate Host"
+
+#: admin/config/syslog.php:51 admin/config/syslog.php:229
+msgid "Specify Host"
+msgstr "Specify Host"
+
+#: admin/config/syslog.php:50 admin/config/syslog.php:227
+msgid "Short Tag"
+msgstr "Short Tag"
+
+#: admin/config/syslog.php:48
+msgid "Workarounds"
+msgstr "Workarounds"
+
+#: admin/config/logging.php:50 admin/config/plugins.php:54
+msgid "Spam"
+msgstr "Spam"
+
+#: admin/config/logging.php:52
+msgid "Pingbacks"
+msgstr "Pingbacks"
+
+#: admin/config/logging.php:51
+msgid "Password Requests"
+msgstr "Password Requests"
+
+#: admin/config/logging.php:48
+msgid "Comments"
+msgstr "Comments"
+
+#: admin/config/logging.php:55
+msgid "Logging"
+msgstr "Logging"
+
+#: admin/config/syslog.php:46
+msgid "Connection"
+msgstr "Connection"
+
+#: admin/config/syslog.php:184 admin/config/syslog.php:185
+msgid "default"
+msgstr "default"
+
+#. Author of the plugin
+msgid "Charles Lecklider"
+msgstr "Charles Lecklider"
+
+#. Description of the plugin
+msgid "Write a myriad of WordPress events to syslog for integration with fail2ban."
+msgstr "Write a myriad of WordPress events to syslog for integration with fail2ban."
+
+#. Plugin URI of the plugin
+msgid "https://wp-fail2ban.com/"
+msgstr "https://wp-fail2ban.com/"
+
+#. Plugin Name of the plugin
+msgid "WP fail2ban"
+msgstr "WP fail2ban"

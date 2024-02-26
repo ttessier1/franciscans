@@ -1,35 +1,18 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
 namespace Solo\Pythia;
 
 
-use Awf\Application\Application;
 use Awf\Filesystem\File;
+use Solo\Container;
 
 class Pythia
 {
-	protected $application = null;
-
-	/**
-	 * Public constructor
-	 *
-	 * @param   Application   $app  The application we are attached to
-	 */
-	function __construct($app = null)
-	{
-		if (is_null($app))
-		{
-			$app = Application::getInstance();
-		}
-
-		$this->application = $app;
-	}
-
 	/**
 	 * Get information about the script installed under $path. Guessing classes ("oracles") try to figure out what
 	 * kind of CMS/script is installed and its database settings.
@@ -38,7 +21,7 @@ class Pythia
 	 *
 	 * @return  array
 	 */
-	public function getCmsInfo($path)
+	public function getCmsInfo(string $path): array
 	{
 		// Initialise
 		$ret = array(
@@ -59,7 +42,7 @@ class Pythia
 
 		// Get a list of all the CMS guessing classes
 		$dummy = array();
-		$fs = new File($dummy);
+		$fs = new File($dummy, new Container());
 		$files = $fs->directoryFiles(__DIR__ . '/Oracle', '.php');
 
 		if (empty($files))
@@ -113,7 +96,7 @@ class Pythia
 	 *
 	 * @since  1.9.4
 	 */
-	protected function cleanUpDBDriverName($driver)
+	protected function cleanUpDBDriverName(?string $driver): string
 	{
 		// Get the best possible default driver
 		$defaultDriver = $this->getBestMySQLDriver();
@@ -123,7 +106,7 @@ class Pythia
 		$hasMySQL  = function_exists('mysql_connect');
 		$hasMySQLi = function_exists('mysqli_connect');
 
-		$driver = strtolower($driver);
+		$driver = strtolower($driver ?? '');
 
 		// Dummy driver? Well, there's nothing to do
 		if ($driver == 'none')
@@ -172,7 +155,7 @@ class Pythia
 	 *
 	 * @since   1.9.4
 	 */
-	protected function getBestMySQLDriver()
+	protected function getBestMySQLDriver(): string
 	{
 		$hasPdo    = class_exists('\PDO');
 		$hasMySQL  = function_exists('mysql_connect');

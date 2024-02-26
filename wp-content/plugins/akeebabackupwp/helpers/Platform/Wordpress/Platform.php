@@ -1,17 +1,17 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
 namespace Akeeba\Engine\Platform;
 
 use Akeeba\Engine\Factory;
-use Akeeba\Engine\Finalization\TestExtract;
 use Akeeba\Engine\Platform;
-use Awf\Application\Application;
-use Psr\Log\LogLevel;
+use Akeeba\Engine\Psr\Log\LogLevel;
+use Awf\Container\ContainerAwareInterface;
+use Awf\Container\ContainerAwareTrait;
 
 // Protection against direct access
 defined('AKEEBAENGINE') or die();
@@ -24,8 +24,12 @@ if (!defined('DS'))
 /**
  * Akeeba Solo for WordPress platform class
  */
-class Wordpress extends Base
+class Wordpress extends Base implements ContainerAwareInterface
 {
+	use ContainerAwareTrait;
+
+	const SHOW_120_DAYS_WARNING = false;
+
 	/** @var   integer  Platform class priority */
 	public $priority = 60;
 
@@ -38,21 +42,6 @@ class Wordpress extends Base
 	 * @var   int|null
 	 */
 	public static $profile_id = null;
-
-	function __construct()
-	{
-		$configOverrides = array();
-
-		$configOverrides['volatile.core.finalization.action_handlers'] = array(
-			new TestExtract()
-		);
-		$configOverrides['volatile.core.finalization.action_queue_before'] = array(
-			'test_extract',
-		);
-
-		// Apply the configuration overrides, please
-		$this->configOverrides = $configOverrides;
-	}
 
 	/**
 	 * Performs heuristics to determine if this platform object is the ideal
@@ -77,14 +66,45 @@ class Wordpress extends Base
 	 */
 	public function get_stock_directories()
 	{
-		static $stock_directories = array();
+		static $stock_directories = [];
 
 		if (empty($stock_directories))
 		{
-			$stock_directories['[SITEROOT]'] = $this->get_site_root();
-			$stock_directories['[ROOTPARENT]'] = @realpath($this->get_site_root() . '/..');
-			$stock_directories['[SITETMP]'] = APATH_BASE . '/tmp';
-			$stock_directories['[DEFAULT_OUTPUT]'] = APATH_BASE . '/backups';
+			$host = $this->get_host();
+
+			$contentFolder =
+				rtrim(
+					(defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : (rtrim(ABSPATH, '/') . '/wp-content')),
+					'/'
+				);
+			$defaultOutput = $contentFolder . '/backups';
+
+			if (!@is_dir($defaultOutput))
+			{
+				$this->conditionallyCreateDefaultOutputDirectory($defaultOutput);
+			}
+
+			$contentFolder =
+				rtrim(
+					(defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : (rtrim(ABSPATH, '/') . '/wp-content')),
+					'/'
+				);
+			$pluginsDir = rtrim(
+				defined('WP_PLUGIN_DIR') ? WP_PLUGIN_DIR : ($contentFolder . '/plugins'),
+				'/'
+			);
+			$pluginSlug = (class_exists('AkeebaBackupWP') && !empty(\AkeebaBackupWP::$pluginBaseName))
+				? \AkeebaBackupWP::$pluginBaseName
+				: 'akeebabackupwp/akeebabackupwp.php';
+			$abwpDir = dirname($pluginsDir . '/' . $pluginSlug);
+
+			$stock_directories['[SITEROOT]']              = $this->get_site_root();
+			$stock_directories['[ROOTPARENT]']            = @realpath($this->get_site_root() . '/..');
+			$stock_directories['[SITETMP]']               = APATH_BASE . '/tmp';
+			$stock_directories['[DEFAULT_OUTPUT]']        = $defaultOutput;
+			$stock_directories['[LEGACY_DEFAULT_OUTPUT]'] = APATH_BASE . '/backups';
+			$stock_directories['[LEGACY_DEFAULT_OUTPUT_TESTING]'] = $abwpDir . '/app/backups';
+			$stock_directories['[HOST]']                  = empty($host) ? 'unknown_host' : $host;
 		}
 
 		return $stock_directories;
@@ -152,7 +172,7 @@ class Wordpress extends Base
 	 */
 	public function get_installer_images_path()
 	{
-		return Application::getInstance()->getContainer()->basePath . '/assets/installers';
+		return $this->getContainer()->basePath . '/assets/installers';
 	}
 
 	/**
@@ -173,7 +193,7 @@ class Wordpress extends Base
 			return AKEEBA_PROFILE;
 		}
 
-		$session = Application::getInstance()->getContainer()->segment;
+		$session = $this->getContainer()->segment;
 
 		if (!isset($session->profile))
 		{
@@ -213,11 +233,11 @@ class Wordpress extends Base
 			$id = 1;
 		}
 
-		$db = Application::getInstance()->getContainer()->db;
+		$db = $this->getContainer()->db;
 		$query = $db->getQuery(true)
 			->select($db->qn('description'))
 			->from($db->qn('#__ak_profiles'))
-			->where($db->qn('id') . ' = ' . $db->q($id));
+			->where($db->qn('id') . ' = ' . (int) $id);
 		$db->setQuery($query);
 
 		return $db->loadResult();
@@ -247,7 +267,7 @@ class Wordpress extends Base
 	 */
 	public function get_timestamp_database($date = 'now')
 	{
-		$date = new \Awf\Date\Date($date);
+		$date = $this->getContainer()->dateFactory($date);
 
 		return $date->toSql();
 	}
@@ -268,12 +288,12 @@ class Wordpress extends Base
 		// No forced timezone set? Use the default Joomla! behavior.
 		if (empty($tz) || ($tz == 'AKEEBA/DEFAULT'))
 		{
-			$tz = Application::getInstance()->getContainer()->appConfig->get('timezone', 'UTC');
+			$tz = $this->getContainer()->appConfig->get('timezone', 'UTC');
 		}
 
 		// Get the current date/time and apply the preferred timezone
 		$utcTimeZone = new \DateTimeZone('UTC');
-		$dateNow     = new \Awf\Date\Date('now', $utcTimeZone);
+		$dateNow     = $this->getContainer()->dateFactory('now', $utcTimeZone);
 		$timezone    = new \DateTimeZone($tz);
 		$dateNow->setTimezone($timezone);
 
@@ -287,8 +307,18 @@ class Wordpress extends Base
 	 */
 	public function get_host()
 	{
-		$overrideURL = Factory::getConfiguration()->get('akeeba.platform.site_url', '');
-		$overrideURL = trim($overrideURL);
+		static $deadLockTest = false;
+
+		if (!$deadLockTest)
+		{
+			$deadLockTest = true;
+			$overrideURL = Factory::getConfiguration()->get('akeeba.platform.site_url', '');
+			$overrideURL = trim($overrideURL);
+		}
+		else
+		{
+			$overrideURL = null;
+		}
 
 		if (defined('WPINC') && (function_exists('home_url') || function_exists('network_home_url')))
 		{
@@ -428,7 +458,7 @@ class Wordpress extends Base
 
 		if (!defined('AKEEBABACKUP_DATE'))
 		{
-			$date = new \Awf\Date\Date();
+			$date = $this->getContainer()->dateFactory();
 			define("AKEEBABACKUP_DATE", $date->format('Y-m-d'));
 		}
 	}
@@ -440,9 +470,14 @@ class Wordpress extends Base
 	 */
 	public function getPlatformVersion()
 	{
+		global $wp_version;
+
+		// Play safe in case the WordPress version is not correctly detected
+		$version = $wp_version ?? '0.0.0';
+
 		return array(
-			'name'    => 'Akeeba Backup for WordPress',
-			'version' => AKEEBABACKUP_VERSION
+			'name'    => 'WordPress',
+			'version' => $version
 		);
 	}
 
@@ -456,13 +491,13 @@ class Wordpress extends Base
 		$site_root = $this->get_site_root();
 
 		Factory::getLog()->log(LogLevel::INFO, "APATH_BASE         :" . APATH_BASE, ['translate_root' => false]);
-		Factory::getLog()->log(LogLevel::INFO, "Application Path   :" . Application::getInstance()->getContainer()->basePath, ['translate_root' => false]);
+		Factory::getLog()->log(LogLevel::INFO, "Application Path   :" . $this->getContainer()->basePath, ['translate_root' => false]);
 		Factory::getLog()->log(LogLevel::INFO, "Site root          :" . $this->get_site_root(), ['translate_root' => false]);
 
 		// If the release is older than 3 months, issue a warning
-		if (defined('AKEEBABACKUP_DATE'))
+		if (self::SHOW_120_DAYS_WARNING && defined('AKEEBABACKUP_DATE'))
 		{
-			$releaseDate = new \Awf\Date\Date(AKEEBABACKUP_DATE);
+			$releaseDate = $this->getContainer()->dateFactory(AKEEBABACKUP_DATE);
 
 			if (time() - $releaseDate->toUnix() > 10368000)
 			{
@@ -512,7 +547,7 @@ class Wordpress extends Base
 	 */
 	public function get_platform_configuration_option($key, $default)
 	{
-		$config   = Application::getInstance()->getContainer()->appConfig;
+		$config   = $this->getContainer()->appConfig;
 		$altValue = $config->get($key, $default);
 		$value    = $config->get('options.' . $key, $altValue);
 
@@ -565,8 +600,7 @@ class Wordpress extends Base
 	{
 		Factory::getLog()->log(LogLevel::DEBUG, "-- Fetching mailer object");
 
-		$app = Application::getInstance();
-		$mailer = $app->getContainer()->mailer;
+		$mailer = $this->getContainer()->mailer();
 
 		if (!is_object($mailer))
 		{
@@ -695,7 +729,7 @@ class Wordpress extends Base
 	{
 		try
 		{
-			$fs = Application::getInstance()->getContainer()->fileSystem;
+			$fs = $this->getContainer()->fileSystem;
 			$result = $fs->delete($file);
 		}
 		catch (\RuntimeException $e)
@@ -723,7 +757,7 @@ class Wordpress extends Base
 	{
 		try
 		{
-			$fs = Application::getInstance()->getContainer()->fileSystem;
+			$fs = $this->getContainer()->fileSystem;
 			$result = $fs->move($from, $to);
 		}
 		catch (\RuntimeException $e)
@@ -749,7 +783,7 @@ class Wordpress extends Base
 	 */
 	public function set_flash_variable($name, $value)
 	{
-		$session = Application::getInstance()->getContainer()->segment;
+		$session = $this->getContainer()->segment;
 
 		$session->setFlash($name, $value);
 	}
@@ -765,7 +799,7 @@ class Wordpress extends Base
 	 */
 	public function get_flash_variable($name, $default = null)
 	{
-		$session = Application::getInstance()->getContainer()->segment;
+		$session = $this->getContainer()->segment;
 
 		$value = $session->getFlash($name);
 
@@ -786,7 +820,7 @@ class Wordpress extends Base
 	 */
 	public function redirect($url)
 	{
-		Application::getInstance()->redirect($url);
+		$this->getContainer()->application->redirect($url);
 	}
 
 	/**
@@ -801,8 +835,10 @@ class Wordpress extends Base
 		Factory::getConfigurationChecks()->addConfigurationCheckDefinition('001', 'critical');
 		// Free memory too low
 		Factory::getConfigurationChecks()->addConfigurationCheckDefinition('004', 'critical');
-		// Output folder within component folder (except the default one)
+		// Output folder within plugin folder
 		Factory::getConfigurationChecks()->addConfigurationCheckDefinition('013', 'critical', 'COM_AKEEBA_CPANEL_WARNING_Q013', array('\\Akeeba\\Engine\\Platform\\Wordpress', 'quirk_013'));
+		// Cannot create default output directory
+		Factory::getConfigurationChecks()->addConfigurationCheckDefinition('014', 'critical', 'COM_AKEEBA_CPANEL_WARNING_Q014', array('\\Akeeba\\Engine\\Platform\\Wordpress', 'quirk_014'));
 		// open_basedir on output directory
 		Factory::getConfigurationChecks()->addConfigurationCheckDefinition('101', 'high');
 		// Less than 10" of max_execution_time with PHP Safe Mode enabled
@@ -822,57 +858,129 @@ class Wordpress extends Base
 		return array(__DIR__);
 	}
 
+	/**
+	 * Critical error detection: Output folder within plugin folder
+	 *
+	 * @return  bool
+	 * @since   8.1.0
+	 */
 	public static function quirk_013()
 	{
-		$stock_dirs  = Platform::getInstance()->get_stock_directories();
-		$default_out = @realpath($stock_dirs['[DEFAULT_OUTPUT]']);
-
-		$registry = Factory::getConfiguration();
-		$outdir = $registry->get('akeeba.basic.output_directory');
-
-		foreach ($stock_dirs as $macro => $replacement)
-		{
-			$outdir = str_replace($macro, $replacement, $outdir);
-		}
-
-		$outdir_real = @realpath($outdir);
-
-		// If the output folder is the default one (or any subdir), we are safe
-		if (strpos($outdir_real, $default_out) !== false)
+		if (defined('AKEEBA_BACKUP_TESTING_DISABLE_Q013') && AKEEBA_BACKUP_TESTING_DISABLE_Q013)
 		{
 			return false;
 		}
 
-		$component_path = @realpath(APATH_BASE);
+		$registry = Factory::getConfiguration();
+		$outDir   = $registry->get('akeeba.basic.output_directory');
 
-		$forbiddenPaths = [
-			'Awf',
-			'cli',
-			'fonts',
-			'languages',
-			'media',
-			'Solo',
-			'templates',
-			'tmp',
-		];
-
-		foreach ($forbiddenPaths as $subdir)
+		if (empty($outDir))
 		{
-			$checkPath = realpath($component_path . '/' . $subdir);
+			return false;
+		}
 
-			if ($checkPath === false)
-			{
-				continue;
-			}
+		$realOutDir = @realpath($outDir);
 
-			$checkPath .= DIRECTORY_SEPARATOR;
+		if (!@is_dir($realOutDir) || $realOutDir === false)
+		{
+			return false;
+		}
 
-			if (strpos($outdir_real, $checkPath) === 0)
-			{
-				return true;
-			}
+		$contentFolder =
+			rtrim(
+				(defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : (rtrim(ABSPATH, '/') . '/wp-content')),
+				'/'
+			);
+		$pluginsDir    = rtrim(
+			defined('WP_PLUGIN_DIR') ? WP_PLUGIN_DIR : ($contentFolder . '/plugins'),
+			'/'
+		);
+		$pluginSlug    = (class_exists('AkeebaBackupWP') && !empty(\AkeebaBackupWP::$pluginBaseName))
+			? \AkeebaBackupWP::$pluginBaseName
+			: 'akeebabackupwp/akeebabackupwp.php';
+
+		$abwpDir     = dirname($pluginsDir . '/' . $pluginSlug);
+		$abwpDirReal = @realpath($abwpDir);
+
+		if (!@is_dir($abwpDir) || empty($abwpDirReal))
+		{
+			return false;
+		}
+
+		return stripos($realOutDir, $abwpDirReal) === 0
+		       || stripos($realOutDir, $abwpDir) === 0
+		       || stripos($outDir, $abwpDirReal) === 0
+		       || stripos($outDir, $abwpDir) === 0;
+	}
+
+	/**
+	 * Critical error detection: Cannot create default output directory
+	 *
+	 * @return  bool
+	 * @since   8.1.0
+	 */
+	public static function quirk_014()
+	{
+		$stock_dirs    = Platform::getInstance()->get_stock_directories();
+		$defaultOutput = $stock_dirs['[DEFAULT_OUTPUT]'] ?? '';
+
+		if (empty($defaultOutput))
+		{
+			return false;
+		}
+
+		if (!@is_dir($defaultOutput))
+		{
+			return true;
+		}
+
+		if (@realpath($defaultOutput) === false)
+		{
+			return true;
 		}
 
 		return false;
+	}
+
+	protected function detectProxySettings()
+	{
+		$host    = defined('WP_PROXY_HOST') ? WP_PROXY_HOST : '';
+		$port    = defined('WP_PROXY_PORT') ? WP_PROXY_PORT : 8080;
+		$user    = defined('WP_PROXY_USERNAME') ? WP_PROXY_USERNAME : '';
+		$pass    = defined('WP_PROXY_PASSWORD') ? WP_PROXY_PASSWORD : '';
+		$enabled = !empty($host) && !empty($port);
+
+		$this->setProxySettings($enabled, $host, $port, $user, $pass);
+	}
+
+	/**
+	 * Tries to create the default output directory if it does not already exist.
+	 *
+	 * @param   string  $pathName  The path to the output directory
+	 *
+	 * @return  void
+	 */
+	protected function conditionallyCreateDefaultOutputDirectory(string $pathName)
+	{
+		// If it already exists
+		if (@is_dir($pathName))
+		{
+			return;
+		}
+
+		$success = @mkdir($pathName, 0755, true);
+
+		if (!$success || !@is_dir($pathName))
+		{
+			/**
+			 * Why return instead of using WordPress' WP_Filesystem? Because WordPress does not, in fact, save the FTP
+			 * information anywhere. Therefore, even using WordPress' WP_Filesystem would try to use mkdir() which has
+			 * already failed at this point. We can just display a message instead.
+			 */
+			return;
+		}
+
+		// Create files to protect against direct access
+		Factory::getFilesystemTools()->ensureNoAccess($pathName, true);
 	}
 }

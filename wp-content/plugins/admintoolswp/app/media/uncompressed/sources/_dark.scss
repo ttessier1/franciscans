@@ -1,0 +1,119 @@
+/*!*
+ * @package   admintoolswp
+ * @copyright Copyright (c)2017-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @license   GNU GPL version 3 or later
+ */
+@use "sass:color";
+
+// WordPress is being obtuse
+h1, h2, h3, h4, h5, h6 {
+  color: $light-grey;
+}
+
+form[class*=akeeba-form] {
+  select[multiple] {
+    background-color: $grey;
+    color: $light-grey;
+  }
+}
+
+
+// Page header
+.akeeba-cpanel-title, h1 {
+  color: $light-grey;
+}
+
+a.akeeba-component-name {
+  color: $teal !important;
+}
+
+// Modal dialogs
+#akeeba-modal-container {
+  background-color: $grey;
+  border: 1px solid lighten($grey, 20%);
+  box-shadow: 0px 4px 16px darken($grey, 20%);
+}
+
+#akeeba-modal-close {
+  background-color: $grey;
+}
+
+#akeeba-modal-container.modal-loading {
+  background-color: $grey;
+}
+
+// Changelog
+ul.akeeba-changelog {
+  border: thin solid lighten($grey, 20%);
+  background-color: transparent;
+
+  li {
+    &.akeeba-changelog-changed {
+      color: $light-grey;
+    }
+  }
+}
+
+// PHP File Change Scanner
+.admintools-files-alert {
+  color: color.scale($red, $lightness: 10%);
+  text-shadow: 0 0 3px $black;
+}
+
+.admintools-files-noalert {
+  color: color.scale($light-grey, $lightness: -10%);
+  text-shadow: 0 0 3px $black;
+}
+
+form .admintools-scanfile-new {
+  text-shadow: 0 0 3px $black;
+}
+
+form .admintools-scanfile-modified {
+  text-shadow: 0 0 3px $black;
+}
+
+form .admintools-scanfile-suspicious {
+  color: color.scale($red, $lightness: 10%);
+  text-shadow: 0 0 3px $black;
+}
+
+form .admintools-scanfile-nothreat {
+  text-shadow: 0 0 3px $black;
+}
+
+form .admintools-scanfile-threat-none {
+  text-shadow: 0 0 3px $black;
+}
+
+form .admintools-scanfile-threat-low {
+  text-shadow: 0 0 3px $black;
+}
+
+form .admintools-scanfile-threat-medium {
+  text-shadow: 0 0 3px $black;
+}
+
+form .admintools-scanfile-threat-high {
+  text-shadow: 0 0 3px $black;
+}
+
+form span.admintools-scanfile-markedsafe {
+  text-shadow: 0 0 3px $black;
+}
+
+// Tooltips
+
+.akeeba-popover {
+  background-color: $grey;
+  color: $light-grey;
+}
+
+.akeeba-popover-title {
+  background-color: color.scale($grey, $lightness: 10%);
+  color: $light-grey;
+}
+
+.akeeba-popover-content {
+  color: $light-grey;
+}

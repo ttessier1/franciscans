@@ -1,8 +1,7 @@
-body{background:#fefefe;}
+body{background:#654822;}
 
-#content-wrap{width:900px;margin-left:auto;margin-right:auto;box-shadow: 0px 0px 20px 10px #eeeeee;background:#ffffff;/*background: linear-gradient(to right, red, purple);*/}
-.language-bar{height:30px;}
-.language-bar .widget_polylang .widget-content{width:100%;background:#eeeeee;position:absolute;right:0px;display:block;height:30px;}
+#content-wrap{width:900px;margin-left:auto;margin-right:auto;box-shadow: 0px 0px 20px 10px #eeeeee;background:#654822;/*background: linear-gradient(to right, red, purple);*/}
+.language-bar{width:100%;background:#bea078;position:relative;right:0px;display:block;height:30px;}
 .language-bar .widget_polylang .widget-content h2{display:none;}
 .language-bar .widget_polylang .widget-content ul{color:red;text-decoration:none;list-style:none;position:absolute;right:0px;top:3px;}
 .language-bar .widget_polylang .widget-content ul li{text-decoration:none;list-style:none;margin:0px -5px 0px 0px;display:inline;float:left;padding:5px;}
@@ -10,9 +9,9 @@ body{background:#fefefe;}
 
 .search-bar{height:100px;}
 
-.nav-top{width:900px;height:124px;margin-left:auto;margin-right:auto;background:#ffffff;}
+.nav-top{width:900px;height:64px;margin-left:auto;margin-right:auto;background:#bea078;}
 
-.nav-top #site-logo{background-image: url(/wp-content/uploads/2020/09/Logo.png);width:134px;height:124px;float:left;}
+.nav-top #site-logo{background-image: url(/wp-content/uploads/2020/09/Logo.png);width:64px;height:58px;float:left;}
 
 .nav-top .current_page_item{background:#ffeeee;}
 .nav-top .menu-bar .widget_nav_menu .widget-content div *
@@ -220,7 +219,7 @@ body{background:#fefefe;}
 .header-bottom-lrg .header-content-lrg .widget .widget-content .custom-html-widget #header-image{margin-left:auto;margin-right:auto;background-image: url(/wp-content/uploads/2020/09/FranciscansHeader.jpg);display:block;width:900px;height:375px;}
 .header.bottom.end{float:none;}
 
-#site-content {overflow:visible; }
+#site-content {overflow:visible;padding:20px; }
 #site-content h1{font-size:24px;}
 #site-content h2{font-size:20px;}
 #site-content h3{font-size:18px;}

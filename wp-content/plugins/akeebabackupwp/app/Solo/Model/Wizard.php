@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -142,20 +142,31 @@ class Wizard extends Model
 	 */
 	public function autofixDirectories($dontRecurse = 0)
 	{
-		// Get the profile ID
-		$profile_id = Platform::getInstance()->get_active_profile();
+		// Get the output directory, translated
+		$engineConfig    = Factory::getConfiguration();
+		$outputDirectory = $engineConfig->get('akeeba.basic.output_directory', '');
+		$fixOut = true;
 
-		// Get the output and temporary directory
-		$aeconfig = Factory::getConfiguration();
-		$outdir = $aeconfig->get('akeeba.basic.output_directory', '');
-
-		$fixTemp = false;
-		$fixOut = false;
-
-		if (is_dir($outdir))
+		// Is the folder writeable?
+		if (is_dir($outputDirectory))
 		{
-			// Test the writability of the directory
-			$filename = $outdir . '/test.dat';
+			$filename = $outputDirectory . '/test.dat';
+			$fixOut   = !@file_put_contents($filename, 'test');
+
+			if (!$fixOut)
+			{
+				// Directory writable, remove the temp file
+				@unlink($filename);
+			}
+		}
+
+		// Do I need to change the permissions?
+		if ($fixOut && !empty($filename))
+		{
+			// Try to chmod the directory
+			$this->chmod($outputDirectory, 511);
+
+			// Repeat the test
 			$fixOut = !@file_put_contents($filename, 'test');
 
 			if (!$fixOut)
@@ -163,39 +174,43 @@ class Wizard extends Model
 				// Directory writable, remove the temp file
 				@unlink($filename);
 			}
-			else
-			{
-				// Try to chmod the directory
-				$this->chmod($outdir, 511);
-				// Repeat the test
-				$fixOut = !@file_put_contents($filename, 'test');
-
-				if (!$fixOut)
-				{
-					// Directory writable, remove the temp file
-					@unlink($filename);
-				}
-			}
-		}
-		else
-		{
-			$fixOut = true;
 		}
 
-		// Do I have to fix the output directory?
-		if ($fixOut && ($dontRecurse < 1))
+		/**
+		 * If we reached this point after recursion, we can't fix the permissions of the default backup output folder.
+		 * The user has to manually select a writeable backup output directory (or make the default otuput writeable).
+		 */
+		if ($fixOut && $dontRecurse)
 		{
-			$aeconfig->set('akeeba.basic.output_directory', '[DEFAULT_OUTPUT]');
-			Platform::getInstance()->save_configuration($profile_id);
-
-			// After fixing the directory, run ourselves again
-			return $this->autofixDirectories(1);
-		}
-		elseif ($fixOut)
-		{
-			// If we reached this point after recursing, we can't fix the permissions
-			// and the user has to RTFM and fix the issue!
 			return false;
+		}
+
+		/**
+		 * Write the output folder through the Configuration model. This ensures that:
+		 *
+		 * - we are not trying to use the site's root as the output folder.
+		 * - the output folder saved in the database contains an abstracted representation of the folder, using path
+		 *   variables instead of absolute filesystem folders.
+		 *
+		 * @var Configuration $model
+		 */
+		$model = $this->getContainer()->mvcFactory->makeTempModel('Configuration');
+
+		// Do I have to fall back to the default output directory?
+		$outputDirectory = $fixOut ? '[DEFAULT_OUTPUT]' : $outputDirectory;
+
+		$model->setState('engineconfig', [
+			'akeeba.basic.output_directory' => $outputDirectory,
+		]);
+		$model->saveEngineConfig();
+
+		/**
+		 * If we had to revert to the default output we will run ourselves again to make sure that the default backup
+		 * output folder is, in fact, writeable.
+		 */
+		if ($fixOut)
+		{
+			return $this->autofixDirectories(true);
 		}
 
 		return true;
@@ -555,12 +570,12 @@ class Wizard extends Model
 		}
 	}
 
-	/**
-	 * Run a specific step via AJAX
-	 *
-	 * @return  boolean
-	 */
-	public function runAjax()
+    /**
+     * Run a specific step via AJAX
+     *
+     * @return array
+     */
+	public function runAjax(): array
 	{
 		$act = $this->getState('act');
 
@@ -570,7 +585,7 @@ class Wizard extends Model
 		}
 		else
 		{
-			$result = false;
+			$result = ['status' => false];
 		}
 
 		return $result;
@@ -579,9 +594,9 @@ class Wizard extends Model
 	/**
 	 * Just returns true. Used to ping the engine.
 	 *
-	 * @return  boolean
+	 * @return  array{status: bool}
 	 */
-	private function ping()
+	private function ping(): array
 	{
 		$profile_id = Platform::getInstance()->get_active_profile();
 		$config = Factory::getConfiguration();
@@ -597,13 +612,15 @@ class Wizard extends Model
 
 		Platform::getInstance()->save_configuration($profile_id);
 
-		return true;
+        return ['status' => true];
 	}
 
 	/**
 	 * Try different values of minimum execution time
+     *
+     * @return  array{status: bool}
 	 */
-	private function minexec()
+	private function minexec(): array
 	{
 		$seconds = $this->input->get('seconds', '0.5', 'float');
 
@@ -616,15 +633,15 @@ class Wizard extends Model
 			sleep($seconds);
 		}
 
-		return true;
+        return ['status' => true];
 	}
 
 	/**
 	 * Saves the AJAX preference and the minimum execution time
 	 *
-	 * @return  boolean
+	 * @return  array{status: bool}
 	 */
-	private function applyminexec()
+	private function applyminexec(): array
 	{
 		// Get the user parameters
 		$minexec = $this->input->get('minecxec', 2.0, 'float');
@@ -640,58 +657,58 @@ class Wizard extends Model
 		$timer->enforce_min_exec_time(false);
 
 		// Done!
-		return true;
+		return ['status' => true];
 	}
 
 	/**
 	 * Try to make the directories writable or provide a set of writable directories
 	 *
-	 * @return  boolean
+	 * @return  array{status: bool}
 	 */
-	private function directories()
+	private function directories(): array
 	{
 		$timer = Factory::getTimer();
 		$result = $this->autofixDirectories();
 		$timer->enforce_min_exec_time(false);
 
-		return $result;
+        return ['status' => $result];
 	}
 
 	/**
 	 * Analyze the database and apply optimized database dump settings
 	 *
-	 * @return  boolean
+	 * @return  array{status: bool}
 	 */
-	private function database()
+	private function database(): array
 	{
 		$timer = Factory::getTimer();
 		$this->analyzeDatabase();
 		$timer->enforce_min_exec_time(false);
 
-		return true;
+        return ['status' => true];
 	}
 
 	/**
 	 * Try to apply a specific maximum execution time setting
 	 *
-	 * @return  boolean
+	 * @return  array{status: bool}
 	 */
-	private function maxexec()
+	private function maxexec(): array
 	{
 		$seconds = $this->input->get('seconds', 30, 'int');
 		$timer = Factory::getTimer();
 		$result = $this->doNothing($seconds);
 		$timer->enforce_min_exec_time(false);
 
-		return $result;
+        return ['status' => $result];
 	}
 
 	/**
 	 * Save a specific maximum execution time preference to the database
 	 *
-	 * @return  boolean
+	 * @return  array{status: bool}
 	 */
-	private function applymaxexec()
+	private function applymaxexec(): array
 	{
 		// Get the user parameters
 		$maxexec = $this->input->get('seconds', 2, 'int');
@@ -711,16 +728,16 @@ class Wizard extends Model
 		$timer->enforce_min_exec_time(false);
 
 		// Done!
-		return true;
+        return ['status' => true];
 	}
 
 	/**
 	 * Creates a dummy file of a given size. Remember to give the filesize
 	 * query parameter in bytes!
 	 *
-	 * @return  integer  Part size in bytes
+	 * @return  array{status: bool, value: integer}
 	 */
-	public function partsize()
+	public function partsize(): array
 	{
 		$timer = Factory::getTimer();
 		$blocks = $this->input->get('blocks', 1, 'int');
@@ -745,7 +762,10 @@ class Wizard extends Model
 		// Enforce the min exec time
 		$timer->enforce_min_exec_time(false);
 
-		return $result;
+		return [
+            'status' => true,
+            'value' => $result
+        ];
 	}
 
 	/**
@@ -753,7 +773,7 @@ class Wizard extends Model
 	 *
 	 * @return  array
 	 */
-	public function pythia()
+	public function pythia(): array
 	{
 		$folder = $this->input->get('folder', '', 'raw');
 
@@ -768,7 +788,6 @@ class Wizard extends Model
 		}
 
 		// Call the oracle
-		$pythia = new Pythia($this->container->application);
-		return $pythia->getCmsInfo($folder);
+        return (new Pythia())->getCmsInfo($folder);
 	}
 } 

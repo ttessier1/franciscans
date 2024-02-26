@@ -66,6 +66,11 @@ return array(
 		'facebook' => 'ak_GH',
 	),
 	'am' => array(
+		'code'     => 'am',
+		'locale'   => 'am',
+		'name'     => 'አማርኛ',
+		'dir'      => 'ltr',
+		'flag'     => 'et',
 		'facebook' => 'am_ET',
 	),
 	'ar' => array(
@@ -75,6 +80,13 @@ return array(
 		'dir'      => 'rtl',
 		'flag'     => 'arab',
 		'facebook' => 'ar_AR',
+	),
+	'arg' => array(
+		'code'     => 'an',
+		'locale'   => 'arg',
+		'name'     => 'Aragonés',
+		'dir'      => 'ltr',
+		'flag'     => 'es',
 	),
 	'arq' => array(
 		'facebook' => 'ar_AR',
@@ -247,6 +259,13 @@ return array(
 		'w3c'      => 'de-DE',
 		'facebook' => 'de_DE',
 	),
+	'dsb' => array(
+		'code'     => 'dsb',
+		'locale'   => 'dsb',
+		'name'     => 'Dolnoserbšćina',
+		'dir'      => 'ltr',
+		'flag'     => 'de',
+	),
 	'dzo' => array(
 		'code'     => 'dz',
 		'locale'   => 'dzo',
@@ -349,6 +368,22 @@ return array(
 		'name'     => 'Español',
 		'dir'      => 'ltr',
 		'flag'     => 'cr',
+		'facebook' => 'es_LA',
+	),
+	'es_DO' => array(
+		'code'     => 'es',
+		'locale'   => 'es_DO',
+		'name'     => 'Español',
+		'dir'      => 'ltr',
+		'flag'     => 'do',
+		'facebook' => 'es_LA',
+	),
+	'es_EC' => array(
+		'code'     => 'es',
+		'locale'   => 'es_EC',
+		'name'     => 'Español',
+		'dir'      => 'ltr',
+		'flag'     => 'ec',
 		'facebook' => 'es_LA',
 	),
 	'es_ES' => array(
@@ -650,6 +685,13 @@ return array(
 	'kin' => array(
 		'w3c'      => 'rw',
 		'facebook' => 'rw_RW',
+	),
+	'kir' => array(
+		'code'     => 'ky',
+		'locale'   => 'kir',
+		'name'     => 'Кыргызча',
+		'dir'      => 'ltr',
+		'flag'     => 'kg',
 	),
 	'kk' => array(
 		'code'     => 'kk',

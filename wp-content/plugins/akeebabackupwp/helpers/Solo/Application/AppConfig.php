@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -72,7 +72,7 @@ class AppConfig extends Configuration
 	 *
 	 * @return  void
 	 */
-	public function loadConfiguration($filePath = null, \Awf\Utils\Phpfunc $phpfunc = null)
+	public function loadConfiguration($filePath = null)
 	{
 		global $table_prefix, $wpdb;
 
@@ -116,19 +116,19 @@ class AppConfig extends Configuration
 		$this->loadConfigData();
 
 		// Set up additional data from defines.
-		if (defined('AKEEBA_SOLO_WP_SITEURL'))
+		if (defined('AKEEBABACKUPWP_SITEURL'))
 		{
-			$this->set('live_site', AKEEBA_SOLO_WP_SITEURL);
+			$this->set('live_site', AKEEBABACKUPWP_SITEURL);
 		}
 
-		if (defined('AKEEBA_SOLO_WP_URL'))
+		if (defined('AKEEBABACKUPWP_URL'))
 		{
-			$this->set('base_url', AKEEBA_SOLO_WP_URL);
+			$this->set('base_url', AKEEBABACKUPWP_URL);
 		}
 
-		if (defined('AKEEBA_SOLO_WP_ROOTURL'))
+		if (defined('AKEEBABACKUPWP_ROOTURL'))
 		{
-			$this->set('cms_url', AKEEBA_SOLO_WP_ROOTURL);
+			$this->set('cms_url', AKEEBABACKUPWP_ROOTURL);
 		}
 
 		// First of all, let's try to fetch it from WordPress

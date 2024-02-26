@@ -1,19 +1,18 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
 namespace Solo\Model;
 
+use Akeeba\Engine\Platform;
 use Awf\Container\Container;
-use Awf\Date\Date;
 use Awf\Download\Download;
 use Awf\Mvc\Model;
 use Awf\Registry\Registry;
 use Awf\Session\Exception;
-use Awf\Session\Randval;
 use Awf\Text\Text;
 use Awf\Uri\Uri;
 
@@ -25,14 +24,14 @@ class Update extends Model
 	/** @var   Registry  A registry object holding the update information */
 	protected $updateInfo = null;
 
-	/** @var   string  The table where key-valueinformation is stored */
-	protected $tableName = '';
+	/** @var   string  The table where key-value information is stored */
+	protected $tableName = '#__ak_storage';
 
 	/** @var   string  The table field which stored the key of the key-value pairs */
-	protected $keyField = 'key';
+	protected $keyField = 'tag';
 
 	/** @var   string  The table field which stored the value of the key-value pairs */
-	protected $valueField = 'value';
+	protected $valueField = 'data';
 
 	/** @var   string  The key tag for the live update serialised information */
 	protected $updateInfoTag = 'liveupdate';
@@ -55,9 +54,12 @@ class Update extends Model
 	protected $downloadId = '';
 
 	/**
-	 * How to determine if a new version is available. 'different' = if the version number is different,
-	 * the remote version is newer, 'vcompare' = use version compare between the two versions, 'newest' =
-	 * compare the release dates to find the newest. I suggest using 'different' on most cases.
+	 * How to determine if a new version is available.
+	 *
+	 * - `different` The version numbers are different
+	 * - `vcompare` Latest version, based on `version_compare` checks between the two version numbers
+	 * - `newest` Only checks the release dates; newer version wins, regardless of the version number
+	 * - `smart` Latest version, or newest release date.
 	 *
 	 * @var   string
 	 */
@@ -66,7 +68,7 @@ class Update extends Model
 	/**
 	 * Update constructor.
 	 *
-	 * @param   Container $container The application container
+	 * @param   Container  $container  The application container
 	 */
 	public function __construct(\Awf\Container\Container $container = null)
 	{
@@ -78,42 +80,37 @@ class Update extends Model
 		$this->downloadId       = $this->container->appConfig->get('options.update_dlid', '');
 
 		// Set the update stream URL
-		if (isset($container['updateStreamURL']))
-		{
-			$this->updateStreamURL = $container->updateStreamURL;
-		}
-		else
-		{
-			$pro = AKEEBABACKUP_PRO ? 'pro' : 'core';
+		$pro = AKEEBABACKUP_PRO ? 'pro' : 'core';
 
-			$this->updateStreamURL = 'http://cdn.akeeba.com/updates/solo' . $pro . '.ini';
-		}
+		// The `updateStreamURL` comes from the integration.php file
+		$this->updateStreamURL =
+			(isset($container['updateStreamURL']) && !empty($container['updateStreamURL']))
+				? $container->updateStreamURL
+				: 'http://cdn.akeeba.com/updates/solo' . $pro . '.json';
 
 		// Testing updates in development versions: define AKEEBABACKUP_UPDATE_BASEURL in version.php
 		if (defined('AKEEBABACKUP_UPDATE_BASEURL'))
 		{
 			$pro = AKEEBABACKUP_PRO ? 'pro' : 'core';
 
-			$this->updateStreamURL = AKEEBABACKUP_UPDATE_BASEURL . $pro . '.ini';
+			$this->updateStreamURL = AKEEBABACKUP_UPDATE_BASEURL . $pro . '.json';
 		}
-
-		$this->tableName       = '#__ak_storage';
-		$this->keyField        = 'tag';
-		$this->valueField      = 'data';
-		$this->versionStrategy = 'smart';
 
 		$this->load(false);
 	}
 
 	/**
-	 * Load the update information into the $this->updateInfo object. The update information will be returned from the
-	 * cache. If the cache is expired, the $force flag is set or the APATH_BASE  . 'update.ini' file is present the
-	 * update information will be reloaded from the source. The update source normally is $this->updateStreamURL. If
-	 * the APATH_BASE  . 'update.ini' file is present it's used as the update source instead.
+	 * Load the update information into the $this->updateInfo object.
 	 *
-	 * In short, the APATH_BASE  . 'update.ini' file allows you to override update sources for testing purposes.
+	 * The update source is `$this->updateStreamURL`, unless the file `APATH_BASE  . 'update.json'` is present.
 	 *
-	 * @param   bool $force True to force reload the information from the source.
+	 * Update information is cached. If the information is found in the cache, it will be returned from the cache unless
+	 * either of the following conditions is true:
+	 * - The cache is expired.
+	 * - The `$force` flag is set.
+	 * - The file `APATH_BASE  . 'update.json'` is present.
+	 *
+	 * @param   bool  $force  True to force reload the information from the source.
 	 *
 	 * @return  void
 	 */
@@ -126,38 +123,34 @@ class Update extends Model
 		// Get a reference to the database
 		$db = $this->container->db;
 
-		// Get the last update timestamp
-		$query           = $db->getQuery(true)
-			->select($db->qn($this->valueField))
-			->from($db->qn($this->tableName))
-			->where($db->qn($this->keyField) . '=' . $db->q($this->lastCheckTag));
-		$this->lastCheck = $db->setQuery($query)->loadResult();
-
-		if (is_null($this->lastCheck))
-		{
-			$this->lastCheck = 0;
-		}
-
 		/**
 		 * Override for automated testing
 		 *
 		 * If the file update.ini exists (next to version.php) force reloading the update information.
 		 */
-		$fileTestingUpdates = APATH_BASE . '/update.ini';
+		$fileTestingUpdates = APATH_BASE . '/update.json';
 
 		if (file_exists($fileTestingUpdates))
 		{
-			$force = true;
+			$force           = true;
+			$this->lastCheck = 0;
 		}
-
-		// Do I have to forcible reload from a URL?
-		if (!$force)
+		elseif (!$force)
 		{
-			// Force reload if more than 6 hours have elapsed
-			if (abs(time() - $this->lastCheck) >= 21600)
+			// Get the last update timestamp
+			$query           = $db->getQuery(true)
+				->select($db->qn($this->valueField))
+				->from($db->qn($this->tableName))
+				->where($db->qn($this->keyField) . '=' . $db->q($this->lastCheckTag));
+			$this->lastCheck = $db->setQuery($query)->loadResult();
+
+			if (is_null($this->lastCheck))
 			{
-				$force = true;
+				$this->lastCheck = 0;
 			}
+
+			// Force-reload the update information if it's older than 6 hours
+			$force = abs(time() - $this->lastCheck) >= 21600;
 		}
 
 		// Try to load from cache
@@ -180,7 +173,7 @@ class Update extends Model
 			}
 		}
 
-		// If it's stuck and we are not forcibly retrying to reload, bail out
+		// If it's stuck, and we are not forcibly retrying to reload, bail out
 		if (!$force && !empty($this->updateInfo) && $this->updateInfo->get('stuck', false))
 		{
 			return;
@@ -195,104 +188,52 @@ class Update extends Model
 			$this->lastCheck = time();
 
 			// Store last update check timestamp
-			$o = (object) array(
-				$this->keyField   => $this->lastCheckTag,
-				$this->valueField => $this->lastCheck,
+			$this->replaceCommonStorageObject(
+				(object) [
+					$this->keyField   => $this->lastCheckTag,
+					$this->valueField => $this->lastCheck,
+				]
 			);
-
-			$result = false;
-
-			try
-			{
-				$result = $db->insertObject($this->tableName, $o, $this->keyField);
-			}
-			catch (\Exception $e)
-			{
-				$result = false;
-			}
-
-			if (!$result)
-			{
-				try
-				{
-					$result = $db->updateObject($this->tableName, $o, $this->keyField);
-				}
-				catch (\Exception $e)
-				{
-					$result = false;
-				}
-			}
 
 			// Store update information
-			$o = (object) array(
-				$this->keyField   => $this->updateInfoTag,
-				$this->valueField => $this->updateInfo->toString('JSON'),
+			$this->replaceCommonStorageObject(
+				(object) [
+					$this->keyField   => $this->updateInfoTag,
+					$this->valueField => $this->updateInfo->toString('JSON'),
+				]
 			);
 
-			$result = false;
-
-			try
-			{
-				$result = $db->insertObject($this->tableName, $o, $this->keyField);
-			}
-			catch (\Exception $e)
-			{
-				$result = false;
-			}
-
-			if (!$result)
-			{
-				try
-				{
-					$result = $db->updateObject($this->tableName, $o, $this->keyField);
-				}
-				catch (\Exception $e)
-				{
-					$result = false;
-				}
-			}
-
 			// Simulate a PHP crash for automated testing
-			if (defined('AKEEBA_TESTS_SIMULATE_STUCK_UPDATE'))
+			if (defined('AKEEBA_TESTS_SIMULATE_STUCK_UPDATE') && AKEEBA_TESTS_SIMULATE_STUCK_UPDATE)
 			{
-				die(sprintf('<p id="automated-testing-simulated-crash">This is a simulated crash for automated testing.</p></p>If you are seeing this outside of an automated testing scenario, please delete the line <code>define(\'AKEEBA_TESTS_SIMULATE_STUCK_UPDATE\', 1);</code> from the %s\version.php file</p>', APATH_BASE));
+				die(
+				sprintf(
+					'<p id="automated-testing-simulated-crash">This is a simulated crash for automated testing.</p></p>If you are seeing this outside of an automated testing scenario, please delete the line <code>define(\'AKEEBA_TESTS_SIMULATE_STUCK_UPDATE\', 1);</code> from the %s\version.php file</p>',
+					APATH_BASE
+				)
+				);
 			}
 
 			// Try to fetch the update information
-			try
+			$updateInformation = $this->fetchUpdates();
+
+			if ($updateInformation === null)
 			{
-				/**
-				 * Override for automated testing
-				 *
-				 * If the file update.ini exists (next to version.php) we use its contents as the update source, without
-				 * accessing the update information URL at all. The file is immediately removed.
-				 */
-				if (is_file($fileTestingUpdates))
-				{
-					$rawInfo = @file_get_contents($fileTestingUpdates);
-
-					$this->container->fileSystem->delete($fileTestingUpdates);
-				}
-				else
-				{
-					$download = new Download($this->container);
-					$rawInfo  = $download->getFromURL($this->updateStreamURL);
-				}
-
-				$this->updateInfo->loadString($rawInfo, 'INI');
-				$this->updateInfo->set('loadedUpdate', ($rawInfo !== false) ? 1 : 0);
-				$this->updateInfo->set('stuck', 0);
-			}
-			catch (\Exception $e)
-			{
-				// We are stuck. Darn.
-
+				// We are stuck. Darn it!
 				return;
 			}
 
-			// If not stuck, loadedUpdate is 1, version key exists and stability key does not exist / is empty, determine the version stability
+			if (is_object($updateInformation))
+			{
+				$this->updateInfo->loadObject($updateInformation);
+			}
+
+			$this->updateInfo->set('loadedUpdate', ($updateInformation !== false) ? 1 : 0);
+			$this->updateInfo->set('stuck', 0);
+
+			// Determine the version stability if it was not provided
 			$version   = $this->updateInfo->get('version', '');
-			$stability = $this->updateInfo->get('stability', '');
+			$stability = $this->updateInfo->get('maturity', '');
 			if (
 				!$this->updateInfo->get('stuck', 0)
 				&& $this->updateInfo->get('loadedUpdate', 0)
@@ -300,50 +241,29 @@ class Update extends Model
 				&& empty($stability)
 			)
 			{
-				$this->updateInfo->set('stability', $this->getStability($version));
+				$this->updateInfo->set('maturity', $this->getStability($version));
 			}
 
 			// Since we had to load from a URL, commit the update information to db
-			$o = (object) array(
-				$this->keyField   => $this->updateInfoTag,
-				$this->valueField => $this->updateInfo->toString('JSON'),
+			$this->replaceCommonStorageObject(
+				(object) [
+					$this->keyField   => $this->updateInfoTag,
+					$this->valueField => $this->updateInfo->toString('JSON'),
+				]
 			);
-
-			$result = false;
-
-			try
-			{
-				$result = $db->insertObject($this->tableName, $o, $this->keyField);
-			}
-			catch (\Exception $e)
-			{
-				$result = false;
-			}
-
-			if (!$result)
-			{
-				try
-				{
-					$result = $db->updateObject($this->tableName, $o, $this->keyField);
-				}
-				catch (\Exception $e)
-				{
-					$result = false;
-				}
-			}
 		}
 
 		// Check if an update is available and push it to the update information registry
 		$this->updateInfo->set('hasUpdate', $this->hasUpdate());
 
 		// Post-process the download URL, appending the Download ID (if defined)
-		$link = $this->updateInfo->get('link', '');
+		$link = $this->updateInfo->get('download', '');
 
 		if (!empty($link) && !empty($this->downloadId))
 		{
 			$link = new Uri($link);
 			$link->setVar('dlid', $this->downloadId);
-			$this->updateInfo->set('link', $link->toString());
+			$this->updateInfo->set('download', $link->toString());
 		}
 	}
 
@@ -354,167 +274,45 @@ class Update extends Model
 	 */
 	public function hasUpdate()
 	{
+		if (!$this->updateInfo->get('loadedUpdate', 0))
+		{
+			return false;
+		}
+
 		$this->updateInfo->set('minstabilityMatch', 1);
 		$this->updateInfo->set('platformMatch', 0);
 
+		// Get the update information as an object
+		$tempObject = $this->updateInfo->toObject();
+
 		// Validate the minimum stability
-		$stability = strtolower($this->updateInfo->get('stability'));
-
-		switch ($this->minStability)
-		{
-			case 'alpha':
-			default:
-				// Reports any stability level as an available update
-				break;
-
-			case 'beta':
-				// Do not report alphas as available updates
-				if (in_array($stability, array('alpha')))
-				{
-					$this->updateInfo->set('minstabilityMatch', 0);
-
-					return false;
-				}
-				break;
-
-			case 'rc':
-				// Do not report alphas and betas as available updates
-				if (in_array($stability, array('alpha', 'beta')))
-				{
-					$this->updateInfo->set('minstabilityMatch', 0);
-
-					return false;
-				}
-				break;
-
-			case 'stable':
-				// Do not report alphas, betas and rcs as available updates
-				if (in_array($stability, array('alpha', 'beta', 'rc')))
-				{
-					$this->updateInfo->set('minstabilityMatch', 0);
-
-					return false;
-				}
-				break;
-		}
+		$this->updateInfo->set('minstabilityMatch', $this->filterStability($tempObject) ? 1 : 0);
 
 		// Validate the platform compatibility
-		$platforms = explode(',', $this->updateInfo->get('platforms', ''));
+		$this->updateInfo->set(
+			'platformMatch',
+			$this->filterPhpVersion($tempObject) && $this->filterPlatformVersion($tempObject)
+				? 1 : 0
+		);
 
-		if (!empty($platforms))
-		{
-			$phpVersionParts   = explode('.', PHP_VERSION, 3);
-			$currentPHPVersion = $phpVersionParts[0] . '.' . $phpVersionParts[1];
-
-			$platformFound = false;
-
-			$requirePlatformName = $this->container->segment->get('platformNameForUpdates', 'php');
-			$currentPlatform     = $this->container->segment->get('platformVersionForUpdates', $currentPHPVersion);
-
-			// Check for the platform
-			foreach ($platforms as $platform)
-			{
-				$platform      = trim($platform);
-				$platform      = strtolower($platform);
-				$platformParts = explode('/', $platform, 2);
-
-				if ($platformParts[0] != $requirePlatformName)
-				{
-					continue;
-				}
-
-				if ((substr($platformParts[1], -1) == '+') && version_compare($currentPlatform, substr($platformParts[1], 0, -1), 'ge'))
-				{
-					$this->updateInfo->set('platformMatch', 1);
-					$platformFound = true;
-				}
-				elseif ($platformParts[1] == $currentPlatform)
-				{
-					$this->updateInfo->set('platformMatch', 1);
-					$platformFound = true;
-				}
-			}
-
-			// If we are running inside a CMS perform a second check for the PHP version
-			if ($platformFound && ($requirePlatformName != 'php'))
-			{
-				$this->updateInfo->set('platformMatch', 0);
-				$platformFound = false;
-
-				foreach ($platforms as $platform)
-				{
-					$platform      = trim($platform);
-					$platform      = strtolower($platform);
-					$platformParts = explode('/', $platform, 2);
-
-					if ($platformParts[0] != 'php')
-					{
-						continue;
-					}
-
-					if ($platformParts[1] == $currentPHPVersion)
-					{
-						$this->updateInfo->set('platformMatch', 1);
-						$platformFound = true;
-					}
-				}
-			}
-
-			if (!$platformFound)
-			{
-				return false;
-			}
-		}
-
-		// If the user had the Core version but has entered a Download ID we will always display an update as being
-		// available
+		// A Core version with a Download ID entered will always show an update available
 		if (!AKEEBABACKUP_PRO && !empty($this->downloadId))
 		{
 			return true;
 		}
 
-		// Apply the version strategy
-		$version = $this->updateInfo->get('version', null);
-		$date    = $this->updateInfo->get('date', null);
-
-		if (empty($version) || empty($date))
-		{
-			return false;
-		}
-
-		switch ($this->versionStrategy)
-		{
-			case 'newest':
-				return $this->hasUpdateByNewest($version, $date);
-
-				break;
-
-			case 'vcompare':
-				return $this->hasUpdateByVersion($version, $date);
-
-				break;
-
-			case 'different':
-				return $this->hasUpdateByDifferentVersion($version, $date);
-
-				break;
-
-			case 'smart':
-				return $this->hasUpdateByDateAndVersion($version, $date);
-				break;
-		}
-
-		return false;
+		// Apply the version strategy filter
+		return $this->filterVersion($tempObject);
 	}
 
 	/**
 	 * Returns the update information
 	 *
-	 * @param   bool $force Should we force the fetch of new information?
+	 * @param   bool  $force  Should we force the fetch of new information?
 	 *
 	 * @return \Awf\Registry\Registry
 	 */
-	public function getUpdateInformation($force = false)
+	public function getUpdateInformation(bool $force = false): ?Registry
 	{
 		if (is_null($this->updateInfo))
 		{
@@ -534,7 +332,8 @@ class Update extends Model
 	 */
 	public function prepareDownload()
 	{
-		$tmpDir        = defined('AKEEBA_TESTS_UPDATE_TEMP_FOLDER') ? AKEEBA_TESTS_UPDATE_TEMP_FOLDER : $this->container['temporaryPath'];
+		$tmpDir  = defined('AKEEBA_TESTS_UPDATE_TEMP_FOLDER') ? AKEEBA_TESTS_UPDATE_TEMP_FOLDER
+			: $this->container['temporaryPath'];
 		$tmpFile = $tmpDir . '/update.zip';
 
 		$fs = $this->container->fileSystem;
@@ -546,7 +345,7 @@ class Update extends Model
 
 		$fs->delete($tmpFile);
 
-		$fp = @fopen($tmpFile, 'wb');
+		$fp = @fopen($tmpFile, 'w');
 
 		if ($fp === false)
 		{
@@ -566,7 +365,7 @@ class Update extends Model
 	 *
 	 * If the file APATH_BASE  . 'update.zip' file is present it is used instead (and removed immediately).
 	 *
-	 * @param   bool $staggered Should I try a staggered (multi-step) download? Default is true.
+	 * @param   bool  $staggered  Should I try a staggered (multi-step) download? Default is true.
 	 *
 	 * @return  array  A return array giving the status of the staggered download
 	 */
@@ -576,7 +375,8 @@ class Update extends Model
 		$this->load();
 
 		// The restore script expects to find the update inside the temp directory
-		$tmpDir        = defined('AKEEBA_TESTS_UPDATE_TEMP_FOLDER') ? AKEEBA_TESTS_UPDATE_TEMP_FOLDER : $this->container['temporaryPath'];
+		$tmpDir        = defined('AKEEBA_TESTS_UPDATE_TEMP_FOLDER') ? AKEEBA_TESTS_UPDATE_TEMP_FOLDER
+			: $this->container['temporaryPath'];
 		$tmpDir        = rtrim($tmpDir, '/\\');
 		$localFilename = $tmpDir . '/update.zip';
 
@@ -593,7 +393,7 @@ class Update extends Model
 			$frag = $this->getState('frag', 0);
 			$frag++;
 
-			$ret = array(
+			$ret = [
 				"status"    => true,
 				"error"     => '',
 				"frag"      => $frag,
@@ -601,7 +401,7 @@ class Update extends Model
 				"doneSize"  => $size,
 				"percent"   => 100,
 				"errorCode" => 0,
-			);
+			];
 
 			// Fake stepped download: frag 1 causes 1 second delay, frag 2 moves the file
 			switch ($frag)
@@ -625,7 +425,9 @@ class Update extends Model
 			if ($size == 0)
 			{
 				$retArray['status']    = false;
-				$retArray['error']     = Text::sprintf('AWF_DOWNLOAD_ERR_LIB_COULDNOTDOWNLOADFROMURL', '@test_override_file@');
+				$retArray['error']     = Text::sprintf(
+					'AWF_DOWNLOAD_ERR_LIB_COULDNOTDOWNLOADFROMURL', '@test_override_file@'
+				);
 				$retArray['errorCode'] = 500;
 				$this->container->fileSystem->delete($fileOverride);
 			}
@@ -636,13 +438,13 @@ class Update extends Model
 		/**
 		 * Back to our regular code. Set up the file import parameters.
 		 */
-		$params = array(
-			'file'          => $this->updateInfo->get('link', ''),
+		$params = [
+			'file'          => $this->updateInfo->get('download', ''),
 			'frag'          => $this->getState('frag', -1),
 			'totalSize'     => $this->getState('totalSize', -1),
 			'doneSize'      => $this->getState('doneSize', -1),
 			'localFilename' => $localFilename,
-		);
+		];
 
 		$download = new Download($this->container);
 
@@ -657,7 +459,7 @@ class Update extends Model
 		}
 		else
 		{
-			$retArray = array(
+			$retArray = [
 				"status"    => true,
 				"error"     => '',
 				"frag"      => 1,
@@ -665,7 +467,7 @@ class Update extends Model
 				"doneSize"  => 0,
 				"percent"   => 0,
 				"errorCode" => 0,
-			);
+			];
 
 			try
 			{
@@ -673,7 +475,9 @@ class Update extends Model
 
 				if ($result === false)
 				{
-					throw new Exception(Text::sprintf('AWF_DOWNLOAD_ERR_LIB_COULDNOTDOWNLOADFROMURL', $params['file']), 500);
+					throw new Exception(
+						Text::sprintf('AWF_DOWNLOAD_ERR_LIB_COULDNOTDOWNLOADFROMURL', $params['file']), 500
+					);
 				}
 
 				$tmpDir        = APATH_ROOT . '/tmp';
@@ -709,8 +513,7 @@ class Update extends Model
 	public function createRestorationINI()
 	{
 		// Get a password
-		$randVal  = new Randval(new \Awf\Utils\Phpfunc());
-		$password = base64_encode($randVal->generate(32));
+		$password = base64_encode(random_bytes(32));
 
 		$fs = $this->container->fileSystem;
 
@@ -834,7 +637,7 @@ ENDDATA;
 		// Clear opcode caches for the generated .php file
 		if (function_exists('opcache_invalidate'))
 		{
-			opcache_invalidate($configPath);
+			opcache_invalidate($configPath, true);
 		}
 
 		if (function_exists('apc_compile_file'))
@@ -844,7 +647,7 @@ ENDDATA;
 
 		if (function_exists('wincache_refresh_if_changed'))
 		{
-			wincache_refresh_if_changed(array($configPath));
+			wincache_refresh_if_changed([$configPath]);
 		}
 
 		if (function_exists('xcache_asm'))
@@ -865,7 +668,7 @@ ENDDATA;
 		// Initialise from Joomla! Global Configuration
 		$config = $this->container->appConfig;
 
-		$retArray = array(
+		$retArray = [
 			'enable'  => $config->get('fs.driver', 'file') == 'ftp',
 			'host'    => $config->get('fs.host', 'localhost'),
 			'port'    => $config->get('fs.port', '21'),
@@ -873,7 +676,7 @@ ENDDATA;
 			'pass'    => $config->get('fs.password', ''),
 			'root'    => $config->get('fs.directory', ''),
 			'tempdir' => APATH_BASE . '/tmp',
-		);
+		];
 
 		return $retArray;
 	}
@@ -883,7 +686,9 @@ ENDDATA;
 	 */
 	public function finalise()
 	{
-		// Reserved for future use. DO NOT REMOVE.
+		// Clear the compiled templates
+		$tmp = $this->container['temporaryPath'] . '/compiled_templates';
+		$this->container->fileSystem->rmdir($tmp, true);
 	}
 
 	/**
@@ -899,7 +704,7 @@ ENDDATA;
 	/**
 	 * Normalise the version number to a PHP-format version string.
 	 *
-	 * @param   string $version The whatever-format version number
+	 * @param   string  $version  The whatever-format version number
 	 *
 	 * @return  string  A standard formatted version number
 	 */
@@ -1028,21 +833,21 @@ ENDDATA;
 	{
 		if (empty($this->currentDateStamp))
 		{
-			$mine = new Date('2000-01-01 00:00:00');
+			$mine = $this->container->dateFactory('2000-01-01 00:00:00');
 		}
 		else
 		{
 			try
 			{
-				$mine = new Date($this->currentDateStamp);
+				$mine = $this->container->dateFactory($this->currentDateStamp);
 			}
 			catch (\Exception $e)
 			{
-				$mine = new Date('2000-01-01 00:00:00');
+				$mine = $this->container->dateFactory('2000-01-01 00:00:00');
 			}
 		}
 
-		$theirs = new Date($date);
+		$theirs = $this->container->dateFactory($date);
 
 		/**
 		 * Do we have the same time? This happens when we release two versions in the same day. In such cases we have to
@@ -1102,13 +907,13 @@ ENDDATA;
 			$version = '0.0.0';
 		}
 
-		return ($version != $mine);
+		return version_compare($version, $mine, 'gt');
 	}
 
 	private function hasUpdateByDateAndVersion($version, $date)
 	{
-		$isCurrentDev = in_array(substr($this->currentVersion, 0, 3), array('dev', 'rev'));
-		$isUpdateDev = in_array(substr($version, 0, 3), array('dev', 'rev'));
+		$isCurrentDev = in_array(substr($this->currentVersion, 0, 3), ['dev', 'rev']);
+		$isUpdateDev  = in_array(substr($version, 0, 3), ['dev', 'rev']);
 
 		// Development (rev*) to numbered version; numbered to development; or development to development: use the date
 		if ($isCurrentDev || $isUpdateDev)
@@ -1124,5 +929,236 @@ ENDDATA;
 
 		// Otherwise only by version number
 		return $this->hasUpdateByVersion($version, $date);
+	}
+
+	/**
+	 * Store information in the `#__akeeba_common` table.
+	 *
+	 * @param   object  $o  The object to store
+	 *
+	 * @return  void
+	 * @since   8.1.0
+	 */
+	private function replaceCommonStorageObject(object $o)
+	{
+		$db = $this->container->db;
+
+		$query = $db->getQuery(true)
+			->delete($db->quoteName($this->tableName))
+			->where($db->quoteName($this->keyField) . ' = ' . $db->quote($o->{$this->keyField}));
+		$db->setQuery($query)->execute();
+
+		$db->insertObject($this->tableName, $o, $this->keyField);
+	}
+
+
+	/**
+	 * Fetch the updates from the external source.
+	 *
+	 * @return  object|false|null  NULL stuck updates. FALSE could not retrieve updates. Otherwise, best match update
+	 *                             object
+	 * @since   8.1.0
+	 */
+	private function fetchUpdates()
+	{
+		// First, check for the existence of the file used in automated testing
+		$fileTestingUpdates = APATH_BASE . '/update.json';
+
+		if (is_file($fileTestingUpdates))
+		{
+			$rawInfo = @file_get_contents($fileTestingUpdates);
+			$this->container->fileSystem->delete($fileTestingUpdates);
+
+			try
+			{
+				return json_decode($rawInfo, false, 512, JSON_THROW_ON_ERROR) ?: new \stdClass();
+			}
+			catch (\JsonException $e)
+			{
+				return new \stdClass();
+			}
+		}
+
+		$options     = [];
+		$proxyParams = Platform::getInstance()->getProxySettings();
+
+		if ($proxyParams['enabled'])
+		{
+			$options['proxy'] = [
+				'host' => $proxyParams['host'],
+				'port' => $proxyParams['port'],
+				'user' => $proxyParams['user'],
+				'pass' => $proxyParams['pass'],
+			];
+		}
+
+		$download = new Download($this->container);
+		$download->setAdapterOptions($options);
+
+		$rawInfo = $download->getFromURL($this->updateStreamURL);
+
+		if ($rawInfo === false)
+		{
+			return $rawInfo;
+		}
+
+		try
+		{
+			$versionsList = json_decode($rawInfo, false, 512, JSON_THROW_ON_ERROR);
+		}
+		catch (\JsonException $e)
+		{
+			return null;
+		}
+
+		// Let's get the latest update (highest available version, whatever it may be)
+		$latestVersion = array_reduce(
+			$versionsList,
+			fn(?object $carry, object $item) => ($carry === null)
+				? $item
+				: (version_compare($item->version, $carry->version, 'gt') ? $item : $carry),
+			null
+		);
+
+		// Filter by PHP
+		$versionsList = array_filter($versionsList, [$this, 'filterPhpVersion']);
+
+		// Filter by platform (only on WordPress and ClassicPress)
+		$versionsList = array_filter($versionsList, [$this, 'filterPlatformVersion']);
+
+		// Filter by version (must be newer or equal to myself)
+		$versionsList = array_filter($versionsList, [$this, 'filterVersion']);
+
+		// Filter by stability (must be at least as stable as the minimum requested stability)
+		$versionsList = array_filter($versionsList, [$this, 'filterStability']);
+
+		// No updates left? Keep the latest update, whatever it is.
+		if (empty($versionsList))
+		{
+			return $latestVersion;
+		}
+
+		// Otherwise, return the newest version
+		return array_reduce(
+			$versionsList,
+			fn(?object $carry, object $item) => ($carry === null)
+				? $item
+				: (version_compare($item->version, $carry->version, 'gt') ? $item : $carry),
+			null
+		);
+	}
+
+	private function filterPlatformVersion(object $item): bool
+	{
+		if (!defined('ABSPATH'))
+		{
+			return true;
+		}
+
+		$platform       = function_exists('classicpress_version') ? 'classicpress' : 'wordpress';
+		$currentVersion = $this->container->segment->get('platformVersionForUpdates', '0.0');
+
+		if (!isset($item->platforms) || empty($item->platforms)
+		    || !isset($item->platforms->{$platform})
+		    || empty($item->platforms->{$platform})
+		    || !is_array($item->platforms->{$platform})
+		)
+		{
+			return false;
+		}
+
+		foreach ($item->platforms->{$platform} as $version)
+		{
+			if (substr($version, -1) === '+')
+			{
+				if (version_compare($currentVersion, substr($version, 0, -1), 'ge'))
+				{
+					return true;
+				}
+
+				continue;
+			}
+
+			if (strpos($currentVersion, $version . '.') === 0)
+			{
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private function filterStability(object $item): bool
+	{
+		switch ($this->minStability)
+		{
+			case 'alpha':
+				return in_array($item->maturity, ['stable', 'rc', 'beta', 'alpha']);
+
+			case 'beta':
+				return in_array($item->maturity, ['stable', 'rc', 'beta']);
+
+			case 'rc':
+				return in_array($item->maturity, ['stable', 'rc']);
+
+			default:
+				return $item->maturity === 'stable';
+		}
+	}
+
+	private function filterPhpVersion(object $item): bool
+	{
+		/**
+		 * The minimum PHP version check takes place against the current PHP version, or the minimum currently supported.
+		 *
+		 * This is a deliberate choice when running under WordPress. Some sites have CLI scripts running under obsolete
+		 * versions of PHP which are too old for our software. Since updates are retrieved under these versions, the
+		 * update detected is incompatible with that version, therefore it's cached as incompatible. When the user views
+		 * the update information on the web, under a modern PHP version, they don't understand why their latest and
+		 * greatest PHP version is not supported and reported as too old.tia
+		 */
+		$testAgainst = PHP_VERSION;
+
+		if (class_exists(\AkeebaBackupWP::class))
+		{
+			$testAgainst = version_compare(\AkeebaBackupWP::$minimumPHP, PHP_VERSION, 'gt')
+				? \AkeebaBackupWP::$minimumPHP
+				: PHP_VERSION;
+		}
+
+		$parts        = explode('.', $testAgainst);
+		$majorVersion = $parts[0] ?? 0;
+		$minorVersion = $parts[1] ?? '0';
+
+		if ($majorVersion === 0 || intval($majorVersion) != $majorVersion)
+		{
+			$majorVersion = 8;
+			$minorVersion = 0;
+		}
+
+		return in_array($majorVersion . '.' . $minorVersion, $item->php ?: []);
+	}
+
+	private function filterVersion(object $item): bool
+	{
+		// Apply the version strategy
+		$version = $item->version ?? null;
+		$date    = $item->date ?? null;
+
+		switch ($this->versionStrategy)
+		{
+			case 'newest':
+				return !empty($date) && $this->hasUpdateByNewest($version, $date);
+
+			case 'vcompare':
+				return !empty($version) && $this->hasUpdateByVersion($version, $date);
+
+			case 'different':
+				return !empty($version) && $this->hasUpdateByDifferentVersion($version, $date);
+
+			case 'smart':
+			default:
+				return !empty($date) && !empty($version) && $this->hasUpdateByDateAndVersion($version, $date);
+		}
 	}
 }

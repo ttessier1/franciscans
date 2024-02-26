@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -9,12 +9,12 @@ namespace Solo\View\Main;
 
 use Akeeba\Engine\Factory;
 use Akeeba\Engine\Platform;
-use Awf\Mvc\Model;
 use Awf\Mvc\View;
 use Awf\Utils\Template;
 use RuntimeException;
 use Solo\Helper\Status;
 use Solo\Model\Main;
+use Solo\Model\Migreight;
 use Solo\Model\Stats;
 
 class Html extends View
@@ -172,11 +172,19 @@ class Html extends View
 	 */
 	public $hasOutputDirectorySecurityFiles = false;
 
+	/**
+	 * Do I need to migrate backup profiles and archives? (Only under WordPress)
+	 *
+	 * @var   bool
+	 * @since 8.1.0
+	 */
+	public $needsMigreight = false;
+
 	public function onBeforeMain()
 	{
 		/** @var Main $model */
 		$model        = $this->getModel();
-		$statusHelper = Status::getInstance();
+		$statusHelper = Status::getInstance($this->container);
 		$session      = $this->container->segment;
 
 		$this->profile                         = Platform::getInstance()->get_active_profile();
@@ -206,7 +214,7 @@ class Html extends View
 		}
 
 		/** @var Stats $statsModel */
-		$statsModel        = Model::getTmpInstance($this->container->application_name, 'Stats', $this->container);
+		$statsModel        = $this->container->mvcFactory->makeTempModel('Stats');
 		$this->statsIframe = $statsModel->collectStatistics(true);
 
 		// Load the Javascript for this page
@@ -222,6 +230,15 @@ class Html extends View
 		$document->addScriptOptions('akeeba.ControlPanel.hasSecurityFiles', (bool) $this->hasOutputDirectorySecurityFiles);
 		$document->addScriptOptions('akeeba.ControlPanel.cloudFlareURN', 'CLOUDFLARE::' . Template::parsePath('media://js/solo/system.js', false, $this->getContainer()->application));
 		$document->addScriptOptions('akeeba.ControlPanel.updateInfoURL', $router->route('index.php?view=main&format=raw&task=getUpdateInformation&' . $this->getContainer()->session->getCsrfToken()->getValue() . '=1'));
+
+		if ($this->container->segment->get('insideCMS', false))
+		{
+			/** @var Migreight $migreightModel */
+			$migreightModel = $this->getModel('Migreight');
+			$this->needsMigreight = count($migreightModel->getAffectedProfiles())
+				|| count($migreightModel->getArchiveFolderMap());
+
+		}
 
 		return true;
 	}
@@ -312,23 +329,28 @@ class Html extends View
 					break;
 
 				case '+':
-					$ret .= "\t" . '<li class="akeeba-changelog-added"><span></span>' . htmlentities(trim(substr($line, 2))) . "</li>\n";
+					$ret .= "\t" . '<li><span class="akeeba-label--green">Added</span> ' . htmlentities(trim(substr($line, 2))) . "</li>\n";
 					break;
 
 				case '-':
-					$ret .= "\t" . '<li class="akeeba-changelog-removed"><span></span>' . htmlentities(trim(substr($line, 2))) . "</li>\n";
+					$ret .= "\t" . '<li><span class="akeeba-label--grey">Removed</span> ' . htmlentities(trim(substr($line, 2))) . "</li>\n";
 					break;
 
 				case '~':
-					$ret .= "\t" . '<li class="akeeba-changelog-changed"><span></span>' . htmlentities(trim(substr($line, 2))) . "</li>\n";
+				case '^':
+					$ret .= "\t" . '<li><span class="akeeba-label--grey">Changed</span> ' . htmlentities(trim(substr($line, 2))) . "</li>\n";
+					break;
+
+				case '*':
+					$ret .= "\t" . '<li><span class="akeeba-label--red">Security</span> ' . htmlentities(trim(substr($line, 2))) . "</li>\n";
 					break;
 
 				case '!':
-					$ret .= "\t" . '<li class="akeeba-changelog-important"><span></span>' . htmlentities(trim(substr($line, 2))) . "</li>\n";
+					$ret .= "\t" . '<li><span class="akeeba-label--orange">Important</span> ' . htmlentities(trim(substr($line, 2))) . "</li>\n";
 					break;
 
 				case '#':
-					$ret .= "\t" . '<li class="akeeba-changelog-fixed"><span></span>' . htmlentities(trim(substr($line, 2))) . "</li>\n";
+					$ret .= "\t" . '<li><span class="akeeba-label--teal">Fixed</span> ' . htmlentities(trim(substr($line, 2))) . "</li>\n";
 					break;
 
 				default:
@@ -343,7 +365,7 @@ class Html extends View
 
 					if (!$onlyLast)
 					{
-						$ret .= "<h3 class=\"akeeba-changelog\">$line</h3>\n";
+						$ret .= "<h4>$line</h4>\n";
 					}
 					$ret .= "<ul class=\"akeeba-changelog\">\n";
 

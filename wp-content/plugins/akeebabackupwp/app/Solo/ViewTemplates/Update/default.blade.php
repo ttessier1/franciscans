@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -11,8 +11,8 @@ defined('_AKEEBA') or die();
 
 /** @var   \Solo\View\Update\Html  $this */
 
-$releaseNotes = $this->updateInfo->get('releasenotes');
-$infoUrl = $this->updateInfo->get('infourl');
+$releaseNotes = $this->updateInfo->get('releaseNotes');
+$infoUrl = $this->updateInfo->get('infoUrl');
 $requirePlatformName = $this->getContainer()->segment->get('platformNameForUpdates', 'php');
 
 ?>
@@ -105,8 +105,8 @@ $requirePlatformName = $this->getContainer()->segment->get('platformNameForUpdat
     <tr>
         <td>@lang('SOLO_UPDATE_DOWNLOADURL')</td>
         <td>
-            <a href="{{ $this->updateInfo->get('link') }}">
-				{{{ $this->updateInfo->get('link') }}}
+            <a href="{{ $this->updateInfo->get('download') }}">
+				{{{ $this->updateInfo->get('download') }}}
             </a>
         </td>
     </tr>
@@ -136,13 +136,20 @@ $requirePlatformName = $this->getContainer()->segment->get('platformNameForUpdat
 
 <p>
 	@if ($this->updateInfo->get('hasUpdate', 0))
-		<?php $disabled = $this->needsDownloadId ? 'disabled="disabled"' : '' ?>
-		<a {{ $disabled }}
-			href="@route('index.php?view=update&task=download')"
-			class="akeeba-btn--large--primary">
-			<span class="akion-chevron-right"></span>
-			@lang('SOLO_UPDATE_DO_UPDATE')
-		</a>
+		@if ($this->needsDownloadId)
+			<button disabled type="button"
+			   class="akeeba-btn--large--primary">
+				<span class="akion-chevron-right"></span>
+				@lang('SOLO_UPDATE_DO_UPDATE')
+			</button>
+		@else
+			<a href="@route('index.php?view=update&task=download')"
+			   class="akeeba-btn--large--primary">
+				<span class="akion-chevron-right"></span>
+				@lang('SOLO_UPDATE_DO_UPDATE')
+			</a>
+		@endif
+
 	@endif
 	<a href="@route('index.php?view=update&force=1')"
 		class="akeeba-btn--grey">

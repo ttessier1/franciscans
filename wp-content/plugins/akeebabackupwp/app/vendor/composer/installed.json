@@ -1,0 +1,381 @@
+{
+    "packages": [
+        {
+            "name": "akeeba/awf",
+            "version": "dev-development",
+            "version_normalized": "dev-development",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/akeeba/awf.git",
+                "reference": "8c4335240f15e3db1b07ef140a56bee0939241cc"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/akeeba/awf/zipball/8c4335240f15e3db1b07ef140a56bee0939241cc",
+                "reference": "8c4335240f15e3db1b07ef140a56bee0939241cc",
+                "shasum": ""
+            },
+            "require": {
+                "composer/ca-bundle": "^1.2",
+                "ext-json": "*",
+                "php": "^7.2.0|^8.0.0",
+                "phpmailer/phpmailer": "^6.8.0"
+            },
+            "suggest": {
+                "ext-curl": "*",
+                "ext-libxml": "*",
+                "ext-mysqli": "*",
+                "ext-pdo": "*",
+                "ext-pgsql": "*",
+                "ext-simplexml": "*",
+                "ext-sqlsrv": "*"
+            },
+            "time": "2024-02-03T20:48:47+00:00",
+            "default-branch": true,
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "src/Utils/helpers.php"
+                ],
+                "psr-4": {
+                    "Awf\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Nicholas K. Dionysopoulos",
+                    "email": "nicholas_NO_SPAM_PLEASE@akeeba.com",
+                    "homepage": "http://www.dionysopoulos.me",
+                    "role": "Lead Developer"
+                }
+            ],
+            "description": "A tiny MVC web application framework for single source standalone web applications, and WordPress plugins",
+            "homepage": "https://github.com/akeeba/awf",
+            "keywords": [
+                "framework",
+                "joomla",
+                "wordpress"
+            ],
+            "support": {
+                "issues": "https://github.com/akeeba/awf/issues",
+                "source": "https://github.com/akeeba/awf/tree/development"
+            },
+            "install-path": "../akeeba/awf"
+        },
+        {
+            "name": "akeeba/engine",
+            "version": "dev-development",
+            "version_normalized": "dev-development",
+            "source": {
+                "type": "git",
+                "url": "git@github.com:akeeba/engine.git",
+                "reference": "66a3d5f1151ee7d210624fb05abf386bb3f8c25d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/akeeba/engine/zipball/66a3d5f1151ee7d210624fb05abf386bb3f8c25d",
+                "reference": "66a3d5f1151ee7d210624fb05abf386bb3f8c25d",
+                "shasum": ""
+            },
+            "require": {
+                "akeeba/s3": "dev-development",
+                "ext-fileinfo": "*",
+                "ext-json": "*",
+                "ext-mbstring": "*",
+                "php": ">=7.4 <8.4"
+            },
+            "require-dev": {
+                "composer/ca-bundle": "^1.3.6",
+                "mnapoli/silly": "^1.8.3",
+                "phpunit/phpunit": "^9.0.0",
+                "rector/rector": "^0.15.21"
+            },
+            "suggest": {
+                "ext-curl": "*",
+                "ext-dom": "*",
+                "ext-ftp": "*",
+                "ext-mysqli": "*",
+                "ext-openssl": "*",
+                "ext-pdo": "*",
+                "ext-simplexml": "*",
+                "ext-sqlite3": "*",
+                "ext-ssh2": "*",
+                "ext-zip": "*"
+            },
+            "time": "2024-02-19T11:57:56+00:00",
+            "default-branch": true,
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Akeeba\\Engine\\Test\\": "Test/",
+                    "Akeeba\\Engine\\": "engine/"
+                }
+            },
+            "archive": {
+                "exclude": [
+                    "binned_ideas",
+                    "connector_development",
+                    "run",
+                    "Test",
+                    "tools"
+                ]
+            },
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Nicholas K. Dionysopoulos",
+                    "email": "nicholas_NO_SPAM_PLEASE@akeeba.com",
+                    "homepage": "https://www.dionysopoulos.me",
+                    "role": "Lead Developer"
+                },
+                {
+                    "name": "Davide Tampellini",
+                    "email": "davide_NO_SPAM_PLEASE@akeeba.com",
+                    "homepage": "https://www.dionysopoulos.me",
+                    "role": "Senior Developer"
+                }
+            ],
+            "description": "Akeeba Engine - a site backup engine written in pure PHP",
+            "homepage": "https://github.com/akeeba/engine",
+            "keywords": [
+                "backup",
+                "mysql",
+                "php"
+            ],
+            "support": {
+                "source": "https://github.com/akeeba/engine/tree/development",
+                "issues": "https://github.com/akeeba/engine/issues"
+            },
+            "install-path": "../akeeba/engine"
+        },
+        {
+            "name": "akeeba/s3",
+            "version": "dev-development",
+            "version_normalized": "dev-development",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/akeeba/s3.git",
+                "reference": "452fbd3084f1cb581851a1602226224d29d586d4"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/akeeba/s3/zipball/452fbd3084f1cb581851a1602226224d29d586d4",
+                "reference": "452fbd3084f1cb581851a1602226224d29d586d4",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-simplexml": "*",
+                "php": ">=7.1.0 <8.4"
+            },
+            "time": "2024-02-19T10:08:06+00:00",
+            "default-branch": true,
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "files": [
+                    "src/aliasing.php"
+                ],
+                "psr-4": {
+                    "Akeeba\\S3\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "GPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Nicholas K. Dionysopoulos",
+                    "email": "nicholas_NO_SPAM_PLEASE@akeeba.com",
+                    "homepage": "http://www.dionysopoulos.me",
+                    "role": "Lead Developer"
+                }
+            ],
+            "description": "A compact, dependency-less Amazon S3 API client implementing the most commonly used features",
+            "homepage": "https://github.com/akeeba/s3",
+            "keywords": [
+                "s3"
+            ],
+            "support": {
+                "issues": "https://github.com/akeeba/s3/issues",
+                "source": "https://github.com/akeeba/s3/tree/development"
+            },
+            "install-path": "../akeeba/s3"
+        },
+        {
+            "name": "composer/ca-bundle",
+            "version": "dev-main",
+            "version_normalized": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/composer/ca-bundle.git",
+                "reference": "5ac25209050161f6d3e0a6e149709557e936d5a5"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/composer/ca-bundle/zipball/5ac25209050161f6d3e0a6e149709557e936d5a5",
+                "reference": "5ac25209050161f6d3e0a6e149709557e936d5a5",
+                "shasum": ""
+            },
+            "require": {
+                "ext-openssl": "*",
+                "ext-pcre": "*",
+                "php": "^5.3.2 || ^7.0 || ^8.0"
+            },
+            "require-dev": {
+                "phpstan/phpstan": "^0.12.55",
+                "psr/log": "^1.0",
+                "symfony/phpunit-bridge": "^4.2 || ^5",
+                "symfony/process": "^2.5 || ^3.0 || ^4.0 || ^5.0 || ^6.0 || ^7.0"
+            },
+            "time": "2024-02-07T10:25:13+00:00",
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-main": "1.x-dev"
+                }
+            },
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "Composer\\CaBundle\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Jordi Boggiano",
+                    "email": "j.boggiano@seld.be",
+                    "homepage": "http://seld.be"
+                }
+            ],
+            "description": "Lets you find a path to the system CA bundle, and includes a fallback to the Mozilla CA bundle.",
+            "keywords": [
+                "cabundle",
+                "cacert",
+                "certificate",
+                "ssl",
+                "tls"
+            ],
+            "support": {
+                "irc": "irc://irc.freenode.org/composer",
+                "issues": "https://github.com/composer/ca-bundle/issues",
+                "source": "https://github.com/composer/ca-bundle/tree/main"
+            },
+            "funding": [
+                {
+                    "url": "https://packagist.com",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/composer",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/composer/composer",
+                    "type": "tidelift"
+                }
+            ],
+            "install-path": "./ca-bundle"
+        },
+        {
+            "name": "phpmailer/phpmailer",
+            "version": "v6.9.1",
+            "version_normalized": "6.9.1.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/PHPMailer/PHPMailer.git",
+                "reference": "039de174cd9c17a8389754d3b877a2ed22743e18"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/PHPMailer/PHPMailer/zipball/039de174cd9c17a8389754d3b877a2ed22743e18",
+                "reference": "039de174cd9c17a8389754d3b877a2ed22743e18",
+                "shasum": ""
+            },
+            "require": {
+                "ext-ctype": "*",
+                "ext-filter": "*",
+                "ext-hash": "*",
+                "php": ">=5.5.0"
+            },
+            "require-dev": {
+                "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+                "doctrine/annotations": "^1.2.6 || ^1.13.3",
+                "php-parallel-lint/php-console-highlighter": "^1.0.0",
+                "php-parallel-lint/php-parallel-lint": "^1.3.2",
+                "phpcompatibility/php-compatibility": "^9.3.5",
+                "roave/security-advisories": "dev-latest",
+                "squizlabs/php_codesniffer": "^3.7.2",
+                "yoast/phpunit-polyfills": "^1.0.4"
+            },
+            "suggest": {
+                "decomplexity/SendOauth2": "Adapter for using XOAUTH2 authentication",
+                "ext-mbstring": "Needed to send email in multibyte encoding charset or decode encoded addresses",
+                "ext-openssl": "Needed for secure SMTP sending and DKIM signing",
+                "greew/oauth2-azure-provider": "Needed for Microsoft Azure XOAUTH2 authentication",
+                "hayageek/oauth2-yahoo": "Needed for Yahoo XOAUTH2 authentication",
+                "league/oauth2-google": "Needed for Google XOAUTH2 authentication",
+                "psr/log": "For optional PSR-3 debug logging",
+                "symfony/polyfill-mbstring": "To support UTF-8 if the Mbstring PHP extension is not enabled (^1.2)",
+                "thenetworg/oauth2-azure": "Needed for Microsoft XOAUTH2 authentication"
+            },
+            "time": "2023-11-25T22:23:28+00:00",
+            "type": "library",
+            "installation-source": "dist",
+            "autoload": {
+                "psr-4": {
+                    "PHPMailer\\PHPMailer\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-2.1-only"
+            ],
+            "authors": [
+                {
+                    "name": "Marcus Bointon",
+                    "email": "phpmailer@synchromedia.co.uk"
+                },
+                {
+                    "name": "Jim Jagielski",
+                    "email": "jimjag@gmail.com"
+                },
+                {
+                    "name": "Andy Prevost",
+                    "email": "codeworxtech@users.sourceforge.net"
+                },
+                {
+                    "name": "Brent R. Matzelle"
+                }
+            ],
+            "description": "PHPMailer is a full-featured email creation and transfer class for PHP",
+            "support": {
+                "issues": "https://github.com/PHPMailer/PHPMailer/issues",
+                "source": "https://github.com/PHPMailer/PHPMailer/tree/v6.9.1"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/Synchro",
+                    "type": "github"
+                }
+            ],
+            "install-path": "../phpmailer/phpmailer"
+        }
+    ],
+    "dev": false,
+    "dev-package-names": []
+}

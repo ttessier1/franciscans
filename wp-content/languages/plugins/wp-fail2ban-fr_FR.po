@@ -1,0 +1,331 @@
+# Translation of Plugins - WP fail2ban &#8211; Advanced Security Plugin - Stable (latest release) in French (France)
+# This file is distributed under the same license as the Plugins - WP fail2ban &#8211; Advanced Security Plugin - Stable (latest release) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2022-10-25 15:58:37+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n > 1;\n"
+"X-Generator: GlotPress/4.0.0-beta.2\n"
+"Language: fr\n"
+"Project-Id-Version: Plugins - WP fail2ban &#8211; Advanced Security Plugin - Stable (latest release)\n"
+
+#: admin/widgets.php:141
+msgid "<span>[<i>WPf2b</i>] Last 5 Messages</span>"
+msgstr "<span>[<i>WPf2b</i>] 5 derniers messages</span>"
+
+#: admin/widgets.php:63
+msgid "Upgrade for a full log of new events"
+msgstr "Mise à niveau pour un journal complet des nouveaux évènements"
+
+#: admin/lib/tab.php:111 admin/lib/tab.php:455
+msgid "Reference"
+msgstr "Référence"
+
+#: admin/lib/about.php:347
+msgid "Database table"
+msgstr "Table de la base de données"
+
+#: admin/config/remote-ips.php:49
+msgid "Trusted IPs"
+msgstr "Les IPs de confiance"
+
+#: admin/config/plugins.php:56
+msgid "Other"
+msgstr "Autre"
+
+#: admin/config.php:94 lib/site-health.php:186 lib/site-health.php:230
+#: lib/site-health.php:463 lib/site-health.php:578 lib/site-health.php:686
+#: lib/site-health.php:754 lib/site-health.php:814 lib/site-health.php:888
+msgid "Security"
+msgstr "Sécurité"
+
+#. Author URI of the plugin
+msgid "https://invis.net/"
+msgstr "https://invis.net/"
+
+#: lib/loader.php:765
+msgid "Log comments marked as spam."
+msgstr "Enregistrer les commentaires marqués comme spam."
+
+#: lib/loader.php:763
+msgid "Logins and attempted logins."
+msgstr "Connexions et tentatives de connexion."
+
+#: admin/config/plugins.php:32
+msgid "Plugins"
+msgstr "Extensions"
+
+#: admin/config/syslog.php:113
+msgid "include PID with each message"
+msgstr "inclure le PID avec chaque message"
+
+#: admin/config/remote-ips.php:52
+msgid "Remote IPs"
+msgstr "IP distantes"
+
+#: admin/admin.php:418
+msgid "Last 5 Messages"
+msgstr "5 derniers messages"
+
+#: admin/widgets.php:48
+msgid "No messages found."
+msgstr "Aucun message trouvé."
+
+#: admin/widgets.php:31
+msgid "Message"
+msgstr "Message"
+
+#: admin/widgets.php:30
+msgid "Priority"
+msgstr "Priorité"
+
+#: admin/widgets.php:29
+msgid "Date/Time"
+msgstr "Date / Heure"
+
+#: admin/lib/logging.php:96
+msgid "Enable logging"
+msgstr "Activer la journalisation"
+
+#: admin/lib/tab.php:110
+msgid "Documentation"
+msgstr "Documentation"
+
+#: admin/lib/tab.php:334
+msgid ""
+"The Free version of <em>WP fail2ban</em> is configured by defining constants in <code>wp-config.php</code>;\n"
+"                these tabs reflect those values."
+msgstr ""
+"La version gratuite de <em> WP fail2ban </em> est configurée en définissant des constantes dans <code> wp-config.php </code>;\n"
+"                ces onglets reflètent ces valeurs."
+
+#: admin/lib/tab.php:333
+msgid "Note"
+msgstr "Note"
+
+#: admin/lib/tab.php:112
+msgid "Support"
+msgstr "Support"
+
+#: admin/config/syslog.php:129
+msgid "When all else fails, this allows you to truncate the hostname after a number of characters."
+msgstr "Lorsque tout le reste échoue, cela vous autorise à tronquer le nom d’hôte après un certain nombre de caractères."
+
+#: admin/config/syslog.php:119
+msgid "Some syslog implementations assume that the first part of the message (the tag) won&lsquo;t exceed some (small) number of characters. This option tells <em>WPf2b</em> to use <tt>wp</tt> instead of <tt>wordpress</tt>, thereby saving 7 characters; this may be enough to make syslog happy."
+msgstr "Certaines implémentations de Syslog supposent que la première partie du message (le tag) ne dépassera pas un (petit) nombre de caractères. Cette option indique à <em>WPf2b</em> d’utiliser <tt>wp</tt> au lieu de <tt>wordpress</tt>, économisant ainsi 7 caractères ; cela peut suffire à rendre syslog heureux."
+
+#: admin/config/syslog.php:112
+msgid "print log message also to standard error"
+msgstr "Afficher aussi le message de journal comme une erreur standard"
+
+#: admin/config/syslog.php:139
+msgid "By far the most common limitation is the length of the initial information fields; these options provide ways to shorten the data in those fields."
+msgstr "La limitation de loin la plus courante est la longueur des champs d’information initiaux ; ces options permettent de raccourcir les données de ces champs."
+
+#: admin/config/syslog.php:111
+msgid "(default) delay opening the connection until the first message is logged"
+msgstr "(par défaut) retarder l’ouverture de la connexion jusqu’à ce que le premier message soit enregistré"
+
+#: admin/config/syslog.php:110
+msgid "open the connection to the logger immediately"
+msgstr "ouvrir immédiatement la connexion à l’enregistreur"
+
+#: admin/config/syslog.php:109
+msgid "if there is an error while sending data to the system logger, write directly to the system console"
+msgstr "s’il y a une erreur lors de l’envoi des données à l’enregistreur système, écrivez directement dans la console système"
+
+#: admin/config/syslog.php:93
+msgid "Used to indicate what logging options will be used when generating a log message."
+msgstr "Utilisé pour indiquer quelles options de journalisation seront utilisées lors de la génération d’un message de journal."
+
+#: admin/config/block.php:107
+msgid "It is sometimes not possible to block user enumeration (for example, if your theme provides Author profiles). An alternative is to require users to login with their email address."
+msgstr "Il n’est parfois pas possible de bloquer l’énumération des identufuants (par exemple, si votre thème fournit des profils d’auteur/autrice). Une alternative consiste à demander aux utilisateurs de se connecter avec leur adresse e-mail."
+
+#: admin/config/block.php:103
+msgid "Blacklisted usernames are blocked early in the login process, reducing server load."
+msgstr "Les identifiants figurant sur la liste noire sont bloqués au début du processus de connexion, ce qui réduit la charge du serveur."
+
+#: admin/config/block.php:102
+msgid "Automated brute-force attacks (\"bots\") will often use well-known usernames, e.g. <tt>admin</tt>."
+msgstr "Les attaques automatisées par force brute (« bots ») utiliseront souvent des identifiants bien connus, par exemple <tt> admin </tt>."
+
+#: admin/config/block.php:51
+msgid "Block username logins"
+msgstr "Bloquer les connexions par identifiants"
+
+#: admin/config/block.php:50
+msgid "Blacklisted Usernames"
+msgstr "Identifiants sur liste de blocage"
+
+#: admin/config/block.php:49
+msgid "Block User Enumeration"
+msgstr "Bloquer l’énumération des comptes"
+
+#: admin/config/block.php:48
+msgid "Users"
+msgstr "Comptes"
+
+#: admin/admin.php:407
+msgid "Shows the last 5 messages sent to <code>syslog</code> - provides simple status at a glance and can be helpful for debugging."
+msgstr "Affiche les 5 derniers messages envoyés à <code>syslog</code> - fournit un état simple en un coup d’œil et peut être utile pour le débogage."
+
+#: admin/lib/tab.php:471
+msgid "See also:"
+msgstr "Voir également :"
+
+#: admin/lib/tab.php:109
+msgid "For more information:"
+msgstr "Pour plus d’informations :"
+
+#: lib/loader.php:769
+msgid "Allow <b>email addresses only</b> for login."
+msgstr "Autoriser <b>uniquement les adresses e-mail</b> pour se connecter."
+
+#: lib/loader.php:767
+msgid "Stop attackers listing existing usernames."
+msgstr "Empêchez les attaquants de lister les identifiants existants."
+
+#: admin/config/block.php:93
+msgid "Blocking user enumeration can force attackers to guess usernames, making these attacks much less likely to succeed."
+msgstr "Le blocage de l’énumération des comptes peut forcer les attaquants à deviner les identifiants, ce qui rend ces attaques beaucoup moins susceptibles de réussir."
+
+#: admin/config/block.php:92
+msgid "Automated brute-force attacks (\"bots\") typically start by getting a list of valid usernames (\"user enumeration\")."
+msgstr "Les attaques automatisées par force brute (« bots ») commencent généralement par obtenir une liste d’identifiants valides (« énumération de comptes »)."
+
+#: admin/lib/tab.php:336
+msgid "Upgrade to the Premium version to enable this interface."
+msgstr "Passez à la version Premium pour activer cette interface."
+
+#: admin/admin.php:202 admin/admin.php:203 admin/admin.php:375
+#: admin/admin.php:378 admin/config.php:138
+msgid "Settings"
+msgstr "Paramètres"
+
+#: admin/admin.php:305
+msgid "Welcome"
+msgstr "Bienvenue"
+
+#: admin/config/plugins.php:53
+msgid "REST"
+msgstr "REST"
+
+#: admin/config/plugins.php:52
+msgid "Password"
+msgstr "mot de passe"
+
+#: admin/config/plugins.php:51
+msgid "Comment"
+msgstr "Commentaire"
+
+#: admin/config/logging.php:47 admin/config/plugins.php:49
+msgid "Authentication"
+msgstr "Authentication"
+
+#: admin/config/logging.php:46
+msgid "What & Where"
+msgstr "Où et Quoi"
+
+#: admin/config/syslog.php:47 admin/config/syslog.php:49
+msgid "Options"
+msgstr "Options"
+
+#: admin/lib/logging.php:42
+msgid " (default)"
+msgstr "(par défaut)"
+
+#: lib/activation.php:68
+msgid "A conflicting file was found in <tt>mu-plugins</tt>:"
+msgstr "Un fichier en conflit a été trouvé dans <tt> extension indispensable </tt> :"
+
+#: lib/activation.php:38
+msgid "A conflicting symbolic link was found in <tt>mu-plugins</tt>:"
+msgstr "Un lien symbolique conflictuel a été trouvé dans <tt> extension indispensable </tt> :"
+
+#: lib/activation.php:26
+msgid "A broken symbolic link was found in <tt>mu-plugins</tt>:"
+msgstr "Un lien symbolique rompu a été trouvé dans <tt> extension indispensable </tt> :"
+
+#: admin/config/logging.php:155
+msgid "Use facility"
+msgstr "Utiliser l’installation"
+
+#: admin/config/plugins.php:84
+msgid "Facilities to use for plugin-generated messages. The defaults follow the Core defaults."
+msgstr "Outils à utiliser pour les messages générés par l’extension. Les valeurs par défaut suivent les valeurs par défaut du cœur."
+
+#: admin/config/plugins.php:48
+msgid "Event Class Facilities"
+msgstr "Event Class Facilities"
+
+#: admin/config/remote-ips.php:48
+msgid "Proxies"
+msgstr "Proxies"
+
+#: admin/config/block.php:54 admin/config/plugins.php:50
+msgid "Block"
+msgstr "Bloquer"
+
+#: admin/config/syslog.php:52 admin/config/syslog.php:231
+msgid "Truncate Host"
+msgstr "Tronquer le nom d’hôte"
+
+#: admin/config/syslog.php:50 admin/config/syslog.php:227
+msgid "Short Tag"
+msgstr "Balise courte"
+
+#: admin/config/syslog.php:48
+msgid "Workarounds"
+msgstr "Solutions de contournement"
+
+#: admin/config/logging.php:52
+msgid "Pingbacks"
+msgstr "Rétroliens"
+
+#: admin/config/logging.php:51
+msgid "Password Requests"
+msgstr "Demandes de mot de passe"
+
+#: admin/config/logging.php:48
+msgid "Comments"
+msgstr "Commentaires"
+
+#: admin/config/logging.php:55
+msgid "Logging"
+msgstr "Journalisation"
+
+#. Author of the plugin
+msgid "Charles Lecklider"
+msgstr "Charles Lecklider"
+
+#. Description of the plugin
+msgid "Write a myriad of WordPress events to syslog for integration with fail2ban."
+msgstr "Enregistrez une multitude d’événements de WordPress vers syslog pour une intégration avec fail2ban."
+
+#. Plugin URI of the plugin
+msgid "https://wp-fail2ban.com/"
+msgstr "https://wp-fail2ban.com/"
+
+#. Plugin Name of the plugin
+msgid "WP fail2ban"
+msgstr "WP Fail2ban"
+
+#: admin/config/syslog.php:51 admin/config/syslog.php:229
+msgid "Specify Host"
+msgstr "Spécifier l’hôte"
+
+#: admin/config/logging.php:50 admin/config/plugins.php:54
+msgid "Spam"
+msgstr "Indésirable"
+
+#: admin/config/syslog.php:46
+msgid "Connection"
+msgstr "Connexion"
+
+#: admin/config/syslog.php:184 admin/config/syslog.php:185
+msgid "default"
+msgstr "par défaut"

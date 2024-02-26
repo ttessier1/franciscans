@@ -1,0 +1,1142 @@
+# Translation of Plugins - WP-Optimize – Cache, Compress images, Minify &amp; Clean database to boost page speed &amp; performance - Stable (latest release) in Hungarian
+# This file is distributed under the same license as the Plugins - WP-Optimize – Cache, Compress images, Minify &amp; Clean database to boost page speed &amp; performance - Stable (latest release) package.
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2023-09-03 06:25:37+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: GlotPress/4.0.0-beta.2\n"
+"Language: hu\n"
+"Project-Id-Version: Plugins - WP-Optimize – Cache, Compress images, Minify &amp; Clean database to boost page speed &amp; performance - Stable (latest release)\n"
+
+#: templates/images/smush-details.php:9
+msgid "Compressed"
+msgstr "Tömörített"
+
+#: templates/images/smush-details.php:8
+msgid "Original"
+msgstr "Eredeti"
+
+#: templates/images/smush-details.php:7
+msgid "Size name"
+msgstr "Méret neve"
+
+#: optimizations/optimizetables.php:85 optimizations/orphanedtables.php:35
+#: optimizations/orphanedtables.php:54
+msgid "The table \"%s\" does not exist."
+msgstr "A tábla %s nem létezik."
+
+#: includes/class-updraft-smush-manager.php:745
+msgid "Less"
+msgstr "Kevesebb"
+
+#: includes/class-updraft-smush-manager.php:744
+#: templates/images/smush-details.php:2
+msgid "More"
+msgstr "Még több"
+
+#: templates/images/smush.php:83
+msgid "WebP conversion"
+msgstr "WebP konverzió"
+
+#: templates/images/smush.php:92
+msgid "Create WebP version of image"
+msgstr "WebP létrehozása a képből"
+
+#: wp-optimize.php:796
+msgid "Added to the list"
+msgstr "Hozzáadva a listához"
+
+#: templates/minify/cached-file.php:8 wp-optimize.php:798
+msgid "Save the changes"
+msgstr "Módosítások mentése"
+
+#: templates/minify/cached-file-log.php:21
+msgid "Exclude"
+msgstr "Kizárás"
+
+#: optimizations/unapproved.php:84
+msgid "Post"
+msgstr "Bejegyzés"
+
+#: templates/notices/horizontal-notice.php:75
+msgid "Read more."
+msgstr "Bővebben."
+
+#: templates/minify/advanced-tab.php:78
+msgid "Advanced options"
+msgstr "Haladó beállítások"
+
+#: wp-optimize.php:777
+msgid "Cancelling..."
+msgstr "Megszakítás..."
+
+#: templates/notices/horizontal-notice.php:25
+msgid "Never"
+msgstr "Soha"
+
+#: templates/notices/horizontal-notice.php:22
+msgid "Maybe later"
+msgstr "Talán később"
+
+#: templates/cache/page-cache-cloudflare-placeholder.php:2
+msgid "Cloudflare settings"
+msgstr "Cloudflare beállítások"
+
+#: optimizations/optimizetables.php:118
+msgid "Optimized table:"
+msgstr "Optimalizált tábla:"
+
+#: templates/minify/settings-tab.php:71
+msgid "Currently: %s"
+msgstr "Jelenleg: %s"
+
+#: templates/minify/font-settings-tab.php:29
+msgid "Do not load Google Fonts"
+msgstr "Ne töltse be a Google betűtípusokat"
+
+#: includes/class-wp-optimize-admin.php:62
+msgid "Fonts"
+msgstr "Betűtípusok"
+
+#: includes/class-wp-optimize-admin.php:61
+msgid "CSS"
+msgstr "CSS"
+
+#: includes/class-wp-optimize-admin.php:60
+#: includes/class-wp-optimize-admin.php:61
+msgid "Disabled"
+msgstr "Letiltva"
+
+#: includes/class-wp-optimize-admin.php:60
+msgid "JavaScript"
+msgstr "JavaScript"
+
+#: templates/database/tables-list-after.php:37
+msgid "Are you sure?"
+msgstr "Biztos vagy benne?"
+
+#: templates/database/optimize-table.php:8 templates/database/tables.php:5
+#: wp-optimize.php:802
+msgid "Loading data..."
+msgstr "Adatok betöltése..."
+
+#: templates/minify/js-settings-tab.php:99
+msgid "e.g.: /js/main.js"
+msgstr "pl..: /js/main.js"
+
+#: templates/database/tables.php:24
+msgid "Refresh data"
+msgstr "Adatok frissítése"
+
+#: templates/minify/settings-tab.php:6
+msgid "Miscellaneous"
+msgstr "Egyéb"
+
+#: templates/minify/advanced-tab.php:278
+msgid "CDN Options"
+msgstr "CDN beállítások"
+
+#: templates/minify/advanced-tab.php:273
+msgid "e.g.: example.com"
+msgstr "pl.: pelda.com"
+
+#: templates/minify/advanced-tab.php:113
+msgid "Enable debug mode"
+msgstr "Hibakeresési mód engedélyezése"
+
+#: templates/minify/advanced-tab.php:10
+msgid "none"
+msgstr "Semmi"
+
+#: templates/minify/advanced-tab.php:18
+msgid "JavaScript files"
+msgstr "JavaScript fájlok"
+
+#: cache/class-wp-optimize-cache-commands.php:133
+msgid "Number of files: %s"
+msgstr "Fájlok száma: %s"
+
+#: templates/minify/css-settings-tab.php:5
+msgid "CSS options"
+msgstr "CSS beállítások"
+
+#: templates/minify/js-settings-tab.php:5
+msgid "JavaScript options"
+msgstr "JavaScript beállítások"
+
+#: templates/minify/font-settings-tab.php:91
+msgid "Font Awesome"
+msgstr "Font Awesome"
+
+#: templates/images/smush.php:129
+msgid "or"
+msgstr "vagy"
+
+#: templates/images/smush.php:129 templates/minify/advanced-tab.php:92
+msgid "days"
+msgstr "nap"
+
+#: templates/admin-page-header-tabs.php:33
+msgid "Feedback"
+msgstr "Visszajelzés"
+
+#: templates/cache/page-cache.php:17 templates/images/smush.php:10
+#: templates/minify/status-tab.php:11
+msgid "Open the video in a new window"
+msgstr "Videó megnyitása új ablakban"
+
+#: templates/cache/page-cache.php:64 wp-optimize.php:793
+msgid "Number of files:"
+msgstr "Fájlok száma:"
+
+#: includes/class-wp-optimize-admin.php:49
+msgid "Lazy-load"
+msgstr "Lazy-load"
+
+#: templates/cache/page-cache.php:97
+msgid "Months"
+msgstr "hónap"
+
+#: templates/cache/page-cache.php:96
+msgid "Days"
+msgstr "nap"
+
+#: templates/cache/page-cache.php:95
+msgid "Hours"
+msgstr "óra"
+
+#: templates/cache/page-cache-preload.php:49 templates/cache/page-cache.php:109
+msgid "Save changes"
+msgstr "Módosítások mentése"
+
+#: templates/admin-metabox-smush.php:20
+msgid "Restore"
+msgstr "Visszaállítás"
+
+#: templates/cache/page-cache-preload.php:7 templates/minify/preload-tab.php:26
+#: wp-optimize.php:789
+msgid "Run now"
+msgstr "Futtatás most"
+
+#: templates/images/unused.php:59
+msgid "Remove selected sizes"
+msgstr "Kiválasztott méretek törlése"
+
+#: templates/images/unused.php:22
+msgid "Image sizes"
+msgstr "Képméretek"
+
+#: templates/images/unused.php:4
+msgid "Unused images"
+msgstr "Nem használt képek"
+
+#: templates/images/lazyload.php:14
+msgid "Lazy-load images"
+msgstr "Lazy-load képbetöltődés"
+
+#: includes/class-updraft-smush-manager.php:739
+msgid "View Image"
+msgstr "Kép megtekintése"
+
+#: templates/images/smush.php:168
+msgid "Select none"
+msgstr "Nincs kiválasztás"
+
+#: templates/images/smush.php:167
+msgid "Select all"
+msgstr "Összes kijelölése"
+
+#: central/translations-central.php:16 templates/admin-metabox-smush.php:112
+#: templates/cache/page-cache.php:11 templates/images/smush.php:4
+#: templates/images/smush.php:236 templates/images/smush.php:242
+#: templates/images/smush.php:247 templates/minify/status-tab.php:5
+#: templates/modal.php:4
+msgid "Close"
+msgstr "Bezárás"
+
+#: templates/admin-metabox-smush.php:61 templates/images/smush.php:112
+msgid "reSmush.it"
+msgstr "reSmush.it"
+
+#: templates/admin-metabox-smush.php:64
+msgid "Other options"
+msgstr "Egyéb beállítások"
+
+#: templates/images/smush.php:146
+msgid "Save options"
+msgstr "Mentési beállítások"
+
+#: includes/class-wp-optimize-admin.php:645
+#: includes/class-wp-optimize-admin.php:646 templates/images/lazyload.php:27
+msgid "Images"
+msgstr "Képek"
+
+#: templates/admin-metabox-smush.php:39 templates/images/smush.php:66
+msgid "Custom"
+msgstr "Egyedi"
+
+#: templates/cache/browser-cache.php:20
+msgid "disabled"
+msgstr "Letiltva"
+
+#: templates/cache/browser-cache.php:19
+msgid "enabled"
+msgstr "engedélyezve"
+
+#: templates/database/tables-body.php:59
+msgid "inactive"
+msgstr "inaktív"
+
+#: templates/database/tables-body.php:57
+msgid "not installed"
+msgstr "Nincs telepítve"
+
+#: templates/admin-page-header-tabs.php:8 templates/pages-menu.php:5
+msgid "Menu"
+msgstr "Menü"
+
+#: includes/class-wp-optimize-admin.php:687
+msgid "Help"
+msgstr "Súgó"
+
+#: includes/class-wp-optimize-admin.php:636
+#: includes/class-wp-optimize-admin.php:637
+msgid "Database"
+msgstr "Adatbázis"
+
+#: wp-optimize.php:898
+msgid "Remove"
+msgstr "Eltávolítás"
+
+#: templates/cache/browser-cache.php:39 wp-optimize.php:788
+msgid "Update"
+msgstr "Frissítés"
+
+#: optimizations/transient.php:144 optimizations/transient.php:150
+msgid "Value"
+msgstr "Érték"
+
+#: optimizations/transient.php:143 optimizations/transient.php:149
+msgid "Name"
+msgstr "Név"
+
+#: optimizations/postmeta.php:46
+msgid "Post ID"
+msgstr "Bejegyzés ID"
+
+#: optimizations/pingbacks.php:53 optimizations/spam.php:87
+#: optimizations/trackbacks.php:54 optimizations/unapproved.php:83
+msgid "Comment"
+msgstr "Hozzászólás"
+
+#: optimizations/autodraft.php:66 optimizations/commentmeta.php:74
+#: optimizations/pingbacks.php:51 optimizations/postmeta.php:45
+#: optimizations/revisions.php:62 optimizations/spam.php:85
+#: optimizations/trackbacks.php:52 optimizations/transient.php:142
+#: optimizations/transient.php:148 optimizations/trash.php:81
+#: optimizations/unapproved.php:81 optimizations/usermeta.php:45
+msgid "ID"
+msgstr "ID"
+
+#: optimizations/autodraft.php:68 optimizations/revisions.php:64
+#: optimizations/trash.php:83 optimizations/unapproved.php:85
+msgid "Date"
+msgstr "Dátum"
+
+#: optimizations/autodraft.php:67 optimizations/revisions.php:63
+#: optimizations/trash.php:82
+msgid "Title"
+msgstr "Cím"
+
+#: includes/class-updraft-smush-manager.php:732
+msgid "Please try again later."
+msgstr "Kérlek, próbáld újra később."
+
+#: templates/database/status-box-contents.php:27
+msgid "There was no scheduled optimization"
+msgstr "Nincs ütemezett optimalizálás"
+
+#: wp-optimize.php:889
+msgid "Repair"
+msgstr "Javítás"
+
+#: templates/settings/settings-logging.php:42
+msgid "Inactive"
+msgstr "Inaktív"
+
+#: templates/settings/settings-logging.php:23
+msgid "Options"
+msgstr "Beállítások"
+
+#: templates/settings/settings-logging.php:22
+msgid "Destination"
+msgstr "Cél"
+
+#: includes/class-wpo-activation.php:38
+msgid "go back"
+msgstr "vissza"
+
+#: templates/settings/may-also-like.php:84
+#: templates/settings/may-also-like.php:97
+#: templates/settings/may-also-like.php:110
+#: templates/settings/may-also-like.php:123
+#: templates/settings/may-also-like.php:136
+#: templates/settings/may-also-like.php:149
+#: templates/settings/may-also-like.php:162
+#: templates/settings/may-also-like.php:175
+#: templates/settings/may-also-like.php:188
+#: templates/settings/may-also-like.php:201
+#: templates/settings/may-also-like.php:214
+#: templates/settings/may-also-like.php:227
+#: templates/settings/may-also-like.php:240
+#: templates/settings/may-also-like.php:253
+#: templates/settings/may-also-like.php:266
+msgid "No"
+msgstr "Nem"
+
+#: templates/settings/may-also-like.php:35
+#: templates/settings/may-also-like.php:278
+msgid "Upgrade now"
+msgstr "Frissítés most"
+
+#: templates/settings/may-also-like.php:32
+#: templates/settings/may-also-like.php:275
+msgid "Installed"
+msgstr "Telepítve"
+
+#: templates/settings/may-also-like.php:24
+msgid "WP-Optimize Premium"
+msgstr "WP-Optimize Prémium"
+
+#: templates/settings/may-also-like.php:21
+msgid "Free"
+msgstr "Ingyenes"
+
+#: templates/settings/may-also-like.php:10
+msgid "Ask a pre-sales question"
+msgstr "Vásárlás előtti kérdés"
+
+#: templates/settings/may-also-like.php:4
+msgid "WP-Optimize free / premium comparison"
+msgstr "WP-Optimize ingyenes / prémium összehasonlítás"
+
+#: templates/admin-page-header.php:29 templates/settings/may-also-like.php:26
+#: wp-optimize.php:866
+msgid "Premium"
+msgstr "Prémium"
+
+#: templates/settings/settings-logging.php:42
+#: templates/settings/settings-logging.php:91
+msgid "Active"
+msgstr "Aktív"
+
+#: includes/class-wp-optimize-commands.php:461
+#: includes/class-wp-optimize-commands.php:468
+msgid "Please upload a valid settings file."
+msgstr "Kérlek, tölts fel egy érvényes fájlt."
+
+#: templates/take-a-backup.php:17
+msgid "Backup before running optimizations"
+msgstr "Biztonsági mentés az optimalizálás futtatása előtt"
+
+#: templates/take-a-backup.php:54
+msgid "Take a backup with UpdraftPlus before doing this"
+msgstr "Az optimalizáció előtt ajánlott a biztonsági másolat készítése az UpdraftPlus használatával."
+
+#: templates/take-a-backup.php:72
+msgid "Follow this link to install UpdraftPlus, to take a backup before optimization"
+msgstr "Kövessük ezt a hivatkozást az UpdraftPlus telepítéséhez, az optimalizáció előtt készítsünk biztonsági másolatot"
+
+#: templates/take-a-backup.php:88
+msgid "UpdraftPlus needs to be updated to 1.12.33 or higher in order to backup the database before optimization."
+msgstr "Az UpdraftPlus bővítményt frissíteni kell az 1.12.33-as vagy újabb verziójú bővítményére az adatbázis optimalizálása előtt történő mentéshez."
+
+#: templates/take-a-backup.php:88
+msgid "Please update UpdraftPlus to the latest version."
+msgstr "Frissítsük az UpdraftPlus-t a legújabb verzióra."
+
+#: templates/database/optimize-table.php:67
+msgid "You may wish to run a backup before optimizing."
+msgstr "Érdemes lehet biztonsági másolatot készíteni az adatbázisról, mielőtt az optimalizációt elindítjuk."
+
+#: wp-optimize.php:769
+msgid "An unexpected response was received."
+msgstr "Váratlan válasz érkezett."
+
+#: wp-optimize.php:770
+msgid "Optimization complete"
+msgstr "Optimalizációsikeresen befejezve"
+
+#: optimizations/spam.php:251
+msgid "Remove spam and trashed comments which are older than %d weeks"
+msgstr "%d hetesnél régebbi spam és lomtárban lévő hozzászólások eltávolítása"
+
+#: optimizations/spam.php:253 optimizations/spam.php:258
+msgid "Remove spam and trashed comments"
+msgstr "Spam és lomtárban lévő hozzászólások eltávolítása"
+
+#: templates/database/settings-general.php:6
+msgid "Whether manually or on a schedule, these settings apply whenever a relevant optimization is run."
+msgstr "Függetlenül attól, hogy kézi vagy ütemezésben lévő, ezek a beállítások akkor alkalmazandók, amikor a releváns optimalizálás fut."
+
+#: templates/settings/settings-logging.php:3
+msgid "Logging settings"
+msgstr "Naplózási beállítások"
+
+#: optimizations/optimizetables.php:175
+msgid "Tables will be optimized (%s)."
+msgstr "(%d) tábla optimalizálva lesz."
+
+#: includes/class-wp-optimize-options.php:157
+msgid "Auto backup option updated."
+msgstr "Automatikus biztonsági mentés beállítás frissítve."
+
+#: includes/class-updraft-php-logger.php:24
+msgid "Log events into the PHP error log"
+msgstr "Naplózási események a PHP hiba naplóba"
+
+#: wp-optimize.php:772
+msgid "Optimizing table:"
+msgstr "Optimalizáló táblázat:"
+
+#: templates/settings/settings-trackback-and-comments.php:46
+msgid "Use these buttons to enable or disable any future comments on all your previously published posts."
+msgstr "Ezekkel a gombokkal engedélyezheti vagy letilthatja a jövőbeni hozzászólásokat minden korábban közzétett bejegyzésnél."
+
+#: templates/settings/may-also-like.php:296
+msgid "UpdraftPlus"
+msgstr "UpdraftPlus"
+
+#: templates/notices/horizontal-notice.php:8
+#: templates/notices/horizontal-notice.php:38
+msgid "notice image"
+msgstr "figyelmeztető kép"
+
+#: templates/notices/horizontal-notice.php:48
+#: templates/notices/horizontal-notice.php:50
+#: templates/notices/install-or-update-notice.php:27
+#: templates/notices/install-or-update-notice.php:47
+msgid "Dismiss"
+msgstr "Bezárás"
+
+#: templates/notices/horizontal-notice.php:63
+msgid "Get UpdraftCentral"
+msgstr "UpdraftCentral beszerzése."
+
+#: templates/notices/horizontal-notice.php:65
+msgid "Get UpdraftPlus"
+msgstr "UpdraftPlus beszerzése"
+
+#: templates/notices/horizontal-notice.php:67
+msgid "Sign up"
+msgstr "Regisztráció"
+
+#: templates/notices/horizontal-notice.php:69
+msgid "Go there"
+msgstr "Gyerünk oda"
+
+#: templates/notices/thanks-for-using-main-dash.php:5
+msgid "Dismiss (for %s months)"
+msgstr "Elvetése (a következő %s hónapban)"
+
+#: templates/admin-page-header.php:16 templates/pages-menu.php:35
+msgid "Newsletter"
+msgstr "Hírlevél"
+
+#: templates/notices/thanks-for-using-main-dash.php:30
+msgid "More quality plugins"
+msgstr "További minőségi bővítmények"
+
+#: templates/notices/thanks-for-using-main-dash.php:30
+msgid "Premium WooCommerce plugins"
+msgstr "Prémium WooCommerce bővítmények"
+
+#: templates/database/optimizations-table.php:7
+msgid "Optimization"
+msgstr "Optimalizáció"
+
+#: templates/database/optimizations-table.php:66
+msgid "Run optimization"
+msgstr "Optimalizálás indítása most"
+
+#: templates/database/optimizations-table.php:68
+msgid "Go"
+msgstr "Gyerünk!"
+
+#: includes/class-wp-optimize-admin.php:42
+#: templates/database/optimize-table.php:38
+msgid "Optimizations"
+msgstr "Optimalizációk"
+
+#: templates/database/optimize-table.php:42
+msgid "Run all selected optimizations"
+msgstr "Összes kiválasztott optimalizáció indítása"
+
+#: optimizations/spam.php:197
+msgid "No trashed comments found"
+msgstr "A lomtárban nem találhatóak hozzászólások"
+
+#: optimizations/spam.php:189
+msgid "%s trashed comment found"
+msgid_plural "%s trashed comments found"
+msgstr[0] "%d lomtárban lévő hozzászólás található"
+msgstr[1] "%d lomtárban lévő hozzászólás található"
+
+#: templates/settings/settings-trackback-and-comments.php:9
+msgid "Trackbacks"
+msgstr "Visszakövetések"
+
+#: templates/settings/settings-trackback-and-comments.php:14
+msgid "Use these buttons to enable or disable any future trackbacks on all your previously published posts."
+msgstr "Ezekkel a gombokkal engedélyezhetjük vagy letilthatjuk a korábban közzétett bejegyzések bármely jövőbeni visszakövetését."
+
+#: central/modules/comments.php:350
+#: templates/settings/settings-trackback-and-comments.php:42
+msgid "Comments"
+msgstr "Hozzászólások"
+
+#: optimizations/trash.php:89 optimizations/trash.php:169
+msgid "No trashed posts found"
+msgstr "A lomtárban nem találhatóak bejegyzések"
+
+#: includes/class-wp-optimizer.php:590
+msgid "Trackbacks have now been enabled on all current and previously published posts."
+msgstr "A visszakövetések mostantól engedélyezve vannak az aktuális és a korábban közzétett bejegyzéseknél."
+
+#: includes/class-wp-optimizer.php:586
+msgid "Trackbacks have now been disabled on all current and previously published posts."
+msgstr "A visszakövetések mostantól le vannak tiltva az aktuális és korábban közzétett bejegyzéseknél."
+
+#: includes/class-wp-optimize-notices.php:48
+msgid "UpdraftPlus is the world's most trusted backup plugin from the owners of WP-Optimize"
+msgstr "Az UpdraftPlus a világ legmegbízhatóbb biztonsági bővítménye a WP-Optimize tulajdonosainak"
+
+#: includes/class-wp-optimizer.php:578
+msgid "Comments have now been enabled on all current and previously published posts."
+msgstr "A hozzászólások mostantól engedélyezve vannak az aktuális és a korábban közzétett bejegyzésekben."
+
+#: optimizations/trash.php:167
+msgid "%s trashed post in your database"
+msgid_plural "%s trashed posts in your database"
+msgstr[0] "%d lomtárban lévő bejegyzés van az adatbázisban"
+msgstr[1] "%d lomtárban lévő bejegyzés van az adatbázisban"
+
+#: includes/class-wp-optimize-notices.php:47
+msgid "Make sure you backup before you optimize your database"
+msgstr "Győződjünk meg arról, hogy biztonsági másolat készült az adatbázisról optimalizáció előtt"
+
+#: includes/class-wp-optimizer.php:574
+msgid "Comments have now been disabled on all current and previously published posts."
+msgstr "A hozzászólásokat most letiltottuk minden aktuális és korábban közzétett bejegyzésnél."
+
+#: wp-optimize.php:873
+msgid "Optimize"
+msgstr "Optimalizáció"
+
+#: includes/class-wp-optimize-commands.php:221
+#: includes/class-wp-optimize-commands.php:269
+#: includes/class-wp-optimize-commands.php:311
+msgid "No optimization was indicated."
+msgstr "Az optimalizálás nem volt jelezve."
+
+#: templates/settings/system-status.php:6
+msgid "running on:"
+msgstr "fut jelenleg ezen a rendszeren:"
+
+#: templates/settings/support-and-faqs.php:3
+msgid "Support and feedback"
+msgstr "Támogatás és visszajelzés"
+
+#: templates/settings/support-and-faqs.php:10
+msgid "If you like WP-Optimize,"
+msgstr "Amennyiben kedveljük a WP-Optimize bővítményt,"
+
+#: templates/settings/support-and-faqs.php:10
+msgid "please give us a positive review, here."
+msgstr "abban az esetben a pozitív visszajelzéseket itt várjuk."
+
+#: templates/settings/support-and-faqs.php:11
+msgid "Or, if you did not like it,"
+msgstr "Vagy ha nem tetszik benne valami,"
+
+#: templates/settings/support-and-faqs.php:11
+msgid "please tell us why at this link."
+msgstr "akkor kérjük, mondja el nekünk, miért van ez így ezen a hivatkozáson keresztül."
+
+#: templates/settings/support-and-faqs.php:8
+msgid "Support is available here."
+msgstr "A támogatás itt érhető el."
+
+#. Author of the plugin
+msgid "David Anderson, Ruhani Rabin, Team Updraft"
+msgstr "David Anderson, Ruhani Rabin, Updraft csapat"
+
+#. Author URI of the plugin
+msgid "https://updraftplus.com"
+msgstr "https://updraftplus.com"
+
+#: wp-optimize.php:1112
+msgid "Error:"
+msgstr "Hiba:"
+
+#: wp-optimize.php:1112
+msgid "template not found"
+msgstr "témakör nem található"
+
+#: templates/database/settings-general.php:21
+msgid "This option will, where relevant, retain data from the chosen period, and remove any garbage data before that period."
+msgstr "Ez a beállítás - adott esetben - megőrzi az adatokat a kiválasztott időszakból, és eltávolítja a szemét adatait az adott időszak előtt."
+
+#: templates/admin-page-header.php:6 templates/pages-menu.php:25
+msgid "Home"
+msgstr "Kezdőlap"
+
+#: optimizations/transient.php:465 optimizations/transient.php:469
+msgid "Remove expired transient options"
+msgstr "Tranziens beállítások eltávolítása"
+
+#: templates/admin-page-header.php:14
+#: templates/notices/install-or-update-notice.php:52
+#: templates/pages-menu.php:33
+msgid "Support"
+msgstr "Támogatás"
+
+#: optimizations/transient.php:254
+msgid "%s network-wide transient option deleted"
+msgid_plural "%s network-wide transient options deleted"
+msgstr[0] "%d honlap szintű tranziens beállítás törölve"
+msgstr[1] "%d honlap szintű tranziens beállítás törölve"
+
+#: templates/admin-page-header.php:12 templates/pages-menu.php:31
+msgid "Twitter"
+msgstr "Twitter"
+
+#: templates/database/settings-general.php:21
+#: templates/database/settings-general.php:36
+msgid "This will also affect Auto Clean-up process"
+msgstr "Ez hatással lesz az automatikus tisztítási folyamatra is"
+
+#: templates/database/settings-general.php:21
+#: templates/database/settings-general.php:36
+msgid "If the option is not active, then all garbage data will be removed."
+msgstr "Ha a beállítás nem aktív, akkor az összes szemét adatai eltávolításra kerül."
+
+#: templates/admin-page-header.php:22 templates/pages-menu.php:41
+msgid "More plugins"
+msgstr "További bővítmények"
+
+#: templates/admin-page-header.php:10 templates/pages-menu.php:29
+msgid "News"
+msgstr "Hírek"
+
+#: templates/admin-page-header.php:20 templates/pages-menu.php:39
+#: templates/settings/may-also-like.php:8
+msgid "FAQs"
+msgstr "GYIK"
+
+#: includes/class-wp-optimize-admin.php:344
+#: templates/database/settings-auto-cleanup.php:27
+msgid "Daily"
+msgstr "Naponta"
+
+#: includes/class-wp-optimize-admin.php:345
+#: templates/database/settings-auto-cleanup.php:28
+msgid "Weekly"
+msgstr "Hetente"
+
+#: includes/class-wp-optimize-admin.php:346
+#: templates/database/settings-auto-cleanup.php:29
+msgid "Fortnightly"
+msgstr "Kéthetente"
+
+#: includes/class-wp-optimize-admin.php:347
+#: templates/database/settings-auto-cleanup.php:30
+msgid "Monthly (approx. - every 30 days)"
+msgstr "Havonta (kb. - 30 naponta)"
+
+#: templates/database/settings.php:19 templates/minify/advanced-tab.php:334
+#: templates/minify/css-settings-tab.php:173
+#: templates/minify/font-settings-tab.php:140
+#: templates/minify/js-settings-tab.php:183
+#: templates/minify/settings-tab.php:108 templates/settings/settings.php:47
+msgid "Save settings"
+msgstr "Beállítások mentése"
+
+#: optimizations/optimizetables.php:159
+msgid "Total gain:"
+msgstr "Összes visszanyert tárhely mérete:"
+
+#: includes/class-wp-optimizer.php:147 includes/class-wp-optimizer.php:153
+msgid "No such optimization"
+msgstr "Nincs ilyen optimalizáció"
+
+#: templates/database/status-box-contents.php:14
+#: templates/settings/settings-logging.php:24
+msgid "Status"
+msgstr "Állapot"
+
+#: optimizations/optimizetables.php:164
+msgid "Tables using the InnoDB engine (%d) will not be optimized."
+msgstr "A (%d) InnoDB motort használó táblákat nem optimalizáljuk."
+
+#: optimizations/commentmeta.php:160
+msgid "%s orphaned comment meta data in your database"
+msgid_plural "%s orphaned comment meta data in your database"
+msgstr[0] "%d árván maradt hozzászólás meta adat törölve az adatbázisból"
+msgstr[1] "%d árván maradt hozzászólás meta adat törölve az adatbázisból"
+
+#: optimizations/postmeta.php:122
+msgid "Clean post meta data"
+msgstr "Bejegyzés meta adatok tisztítása"
+
+#: optimizations/orphandata.php:65
+msgid "Clean orphaned relationship data"
+msgstr "Árván maradt kapcsolat viszonyban lévő adatok tisztítása"
+
+#: optimizations/orphandata.php:44
+msgid "No orphaned relationship data in your database"
+msgstr "Nincs árván maradt kapcsolat viszonyban lévő adat az adatbázisban"
+
+#: optimizations/orphandata.php:42
+msgid "%s orphaned relationship data in your database"
+msgid_plural "%s orphaned relationship data in your database"
+msgstr[0] "%d árván maradt kapcsolat viszonyban lévő adat törölve"
+msgstr[1] "%d árván maradt kapcsolat viszonyban lévő adat törölve"
+
+#: optimizations/postmeta.php:62
+msgid "%s orphaned post meta data deleted"
+msgid_plural "%s orphaned post meta data deleted"
+msgstr[0] "%d árván maradt meta adat törölve"
+msgstr[1] "%d árván maradt meta adat törölve"
+
+#: optimizations/commentmeta.php:83 optimizations/commentmeta.php:162
+msgid "No orphaned comment meta data in your database"
+msgstr "Nincs árván maradt hozzászólás meta adat az adatbázisban"
+
+#: optimizations/commentmeta.php:206 optimizations/commentmeta.php:210
+msgid "Clean comment meta data"
+msgstr "Hozzászólás meta adatok tisztítása"
+
+#: templates/database/settings-general.php:15
+msgid "Keep last %s weeks data"
+msgstr "Az utolsó %s hét adatainak megtartása"
+
+#: templates/database/status-box-contents.php:87
+msgid "Keeping last %s weeks data"
+msgstr "Az utolsó %s hét adatainak megtartása"
+
+#: optimizations/pingbacks.php:67
+msgid "%s pingback deleted"
+msgid_plural "%s pingbacks deleted"
+msgstr[0] "%d visszajelzés törölve"
+msgstr[1] "%d visszajelzés törölve"
+
+#: optimizations/trackbacks.php:68
+msgid "%s trackback deleted"
+msgid_plural "%s trackbacks deleted"
+msgstr[0] "%d visszakövetés törölve"
+msgstr[1] "%d visszakövetés törölve"
+
+#: optimizations/pingbacks.php:111
+msgid "%s pingback found"
+msgid_plural "%s pingbacks found"
+msgstr[0] "%d visszajelzés található"
+msgstr[1] "%d visszajelzés található"
+
+#: optimizations/trackbacks.php:113
+msgid "%s Trackback found"
+msgid_plural "%s Trackbacks found"
+msgstr[0] "%d visszakövetés található"
+msgstr[1] "%d visszakövetés található"
+
+#: templates/cache/browser-cache.php:39 templates/cache/gzip-compression.php:51
+#: templates/settings/settings-trackback-and-comments.php:18
+#: templates/settings/settings-trackback-and-comments.php:49
+#: wp-optimize.php:778
+msgid "Enable"
+msgstr "Bekapcsolás"
+
+#: templates/cache/gzip-compression.php:51
+#: templates/settings/settings-trackback-and-comments.php:20
+#: templates/settings/settings-trackback-and-comments.php:51
+#: wp-optimize.php:779
+msgid "Disable"
+msgstr "Kikapcsolás"
+
+#: optimizations/revisions.php:238 optimizations/revisions.php:242
+msgid "Clean all post revisions"
+msgstr "Minden bejegyzés módosítás eltávolítása"
+
+#: optimizations/pingbacks.php:139
+msgid "Remove pingbacks"
+msgstr "Visszajelzések eltávolítása"
+
+#: optimizations/trackbacks.php:133
+msgid "Remove trackbacks"
+msgstr "Visszakövetések eltávolítása"
+
+#: templates/database/tables-body.php:94 templates/database/tables-body.php:123
+#: templates/database/tables.php:46 templates/settings/settings-logging.php:25
+msgid "Actions"
+msgstr "Műveletek"
+
+#: optimizations/optimizetables.php:180 optimizations/optimizetables.php:184
+msgid "Optimize database tables"
+msgstr "Adatbázis táblák optimalizálása"
+
+#: templates/database/optimize-table.php:60
+msgid "Warning:"
+msgstr "Figyelmeztetés:"
+
+#: templates/database/status-box-contents.php:74
+msgid "Refresh"
+msgstr "Frissítés"
+
+#: templates/database/status-box-contents.php:90
+msgid "Not keeping recent data"
+msgstr "Nem tart meg újabb adatokat"
+
+#: templates/database/settings-auto-cleanup.php:22
+msgid "Select schedule type (default is Weekly)"
+msgstr "Ütemezési ciklus kiválasztása (alapértelmezett a heti)"
+
+#: optimizations/postmeta.php:131
+msgid "Remove orphaned post meta"
+msgstr "Árván maradt bejegyzés meta adatok eltávolítása"
+
+#: optimizations/inactive-tags.php:21
+msgid "Remove unused tags"
+msgstr "Nem használt címkék eltávolítása"
+
+#: templates/database/tables.php:13
+msgid "Optimized all the tables found in the database."
+msgstr "Az adatbázisban található összes tábla optimalizált."
+
+#: templates/database/tables-body.php:29 templates/database/tables.php:39
+msgid "No."
+msgstr "No."
+
+#: templates/database/tables-body.php:68 templates/database/tables.php:41
+msgid "Records"
+msgstr "Rekordok"
+
+#: templates/database/tables-body.php:69 templates/database/tables.php:42
+msgid "Data Size"
+msgstr "Adat mérete"
+
+#: templates/database/tables-body.php:70 templates/database/tables.php:43
+msgid "Index Size"
+msgstr "Index méret"
+
+#: templates/database/tables-body.php:73 templates/database/tables-body.php:86
+#: templates/database/tables.php:44
+msgid "Type"
+msgstr "Típus"
+
+#: templates/database/tables-body.php:75 templates/database/tables-body.php:87
+#: templates/database/tables.php:45
+msgid "Overhead"
+msgstr "Megtisztított adatmennyiség"
+
+#: templates/database/tables-body.php:109
+msgid "Total:"
+msgstr "Összesen:"
+
+#: includes/class-wp-optimize-admin.php:44
+#: includes/class-wp-optimize-admin.php:63
+#: includes/class-wp-optimize-admin.php:69
+#: includes/class-wp-optimize-admin.php:677
+#: includes/class-wp-optimize-admin.php:678 templates/minify/status-tab.php:121
+#: templates/minify/status-tab.php:143 wp-optimize.php:870
+msgid "Settings"
+msgstr "Beállítások"
+
+#: optimizations/transient.php:161 optimizations/transient.php:388
+msgid "No transient options found"
+msgstr "Nem található tranziens beállítás az adatbázisban"
+
+#: optimizations/revisions.php:70 optimizations/revisions.php:165
+msgid "No post revisions found"
+msgstr "Nem található bejegyzés módosítás"
+
+#: optimizations/spam.php:181 optimizations/spam.php:194
+msgid "Review"
+msgstr "Áttekintés"
+
+#: optimizations/spam.php:185
+msgid "No spam comments found"
+msgstr "Nem található spam hozzászólás"
+
+#: optimizations/unapproved.php:91 optimizations/unapproved.php:144
+msgid "No unapproved comments found"
+msgstr "Nem található jóváhagyásra várró hozzászólás"
+
+#: optimizations/pingbacks.php:59 optimizations/pingbacks.php:113
+msgid "No pingbacks found"
+msgstr "Nem található visszajelzés"
+
+#: optimizations/trackbacks.php:60 optimizations/trackbacks.php:115
+msgid "No trackbacks found"
+msgstr "Nem található visszakövetés"
+
+#: optimizations/postmeta.php:94
+msgid "%s orphaned post meta data in your database"
+msgid_plural "%s orphaned post meta data in your database"
+msgstr[0] "%d árván maradt bejegyzés meta adat van az adatbázisban"
+msgstr[1] "%d árván maradt bejegyzés meta adat van az adatbázisban"
+
+#: templates/settings/settings-trackback-and-comments.php:6
+msgid "Trackback/comments actions"
+msgstr "Visszakövetés/hozzászólások műveletei"
+
+#: optimizations/spam.php:110
+msgid "%s comment removed from Trash"
+msgid_plural "%s comments removed from Trash"
+msgstr[0] "%d hozzászólás eltávolítva a lomtárból"
+msgstr[1] "%d hozzászólás eltávolítva a lomtárból"
+
+#: optimizations/commentmeta.php:100
+msgid "%s unused akismet comment metadata item removed"
+msgid_plural "%s unused akismet comment metadata items removed"
+msgstr[0] "%d nem használt Akismet hozzászólás metaadat elemek eltávolítva"
+msgstr[1] "%d nem használt Akismet hozzászólás metaadat elemek eltávolítva"
+
+#: optimizations/commentmeta.php:99
+msgid "%s unused comment metadata item removed"
+msgid_plural "%s unused comment metadata items removed"
+msgstr[0] "%d nem használt hozzászólás metaadat elemek eltávolítva"
+msgstr[1] "%d nem használt hozzászólás metaadat elemek eltávolítva"
+
+#: optimizations/revisions.php:231
+msgid "Clean post revisions which are older than %d weeks"
+msgstr "%d hetesnél régebbi bejegyzés módosítások eltávolítása"
+
+#: templates/database/tables-body.php:110
+msgid "%s Table"
+msgid_plural "%s Tables"
+msgstr[0] "%d Tábla"
+msgstr[1] "%d Tábla"
+
+#: optimizations/transient.php:177
+msgid "%s transient option deleted"
+msgid_plural "%s transient options deleted"
+msgstr[0] "%d tranziens beállítás törölve"
+msgstr[1] "%d tranziens beállítás törölve"
+
+#: optimizations/postmeta.php:54 optimizations/postmeta.php:96
+msgid "No orphaned post meta data in your database"
+msgstr "Nincs árván maradt bejegyzés meta adat az adatbázisban"
+
+#: templates/database/status-box-contents.php:69
+msgid "Next schedule:"
+msgstr "Következő ütemezés:"
+
+#: optimizations/unapproved.php:176
+msgid "Remove unapproved comments which are older than %d weeks"
+msgstr "%d hetesnél régebbi jóváhagyásra váró hozzászólások eltávolítása"
+
+#: includes/class-wp-optimize-options.php:285
+msgid "Settings updated."
+msgstr "Beállítások frissítve."
+
+#: templates/database/settings-general.php:3
+#: templates/settings/settings-general.php:3
+msgid "General settings"
+msgstr "Általános beállítások"
+
+#: optimizations/revisions.php:78
+msgid "%s post revision deleted"
+msgid_plural "%s post revisions deleted"
+msgstr[0] "%d bejegyzés módosítás törölve"
+msgstr[1] "%d bejegyzés módosítás törölve"
+
+#: optimizations/autodraft.php:82
+msgid "%s auto draft deleted"
+msgid_plural "%s auto drafts deleted"
+msgstr[0] "%d automatikus vázlat törölve"
+msgstr[1] "%d automatikus vázlat törölve"
+
+#: optimizations/trash.php:97
+msgid "%s post removed from Trash"
+msgid_plural "%s posts removed from Trash"
+msgstr[0] "%d elem a lomtárból eltávolítva"
+msgstr[1] "%d elem a lomtárból eltávolítva"
+
+#: optimizations/spam.php:109
+msgid "%s spam comment deleted"
+msgid_plural "%s spam comments deleted"
+msgstr[0] "%d spam hozzászólás törölve"
+msgstr[1] "%d spam hozzászólás törölve"
+
+#: optimizations/unapproved.php:99
+msgid "%s unapproved comment deleted"
+msgid_plural "%s unapproved comments deleted"
+msgstr[0] "%d nem jóváhagyott hozzászólás törölve"
+msgstr[1] "%d nem jóváhagyott hozzászólás törölve"
+
+#: optimizations/revisions.php:163
+msgid "%s post revision in your database"
+msgid_plural "%s post revisions in your database"
+msgstr[0] "%d hozzászólás módosítás van az adatbázisban"
+msgstr[1] "%d hozzászólás módosítás van az adatbázisban"
+
+#: optimizations/autodraft.php:124
+msgid "%s auto draft post in your database"
+msgid_plural "%s auto draft posts in your database"
+msgstr[0] "%d automatikus vázlat van az adatbázisban"
+msgstr[1] "%d automatikus vázlat van az adatbázisban"
+
+#: optimizations/spam.php:176
+msgid "%s spam comment found"
+msgid_plural "%s spam comments found"
+msgstr[0] "%d spam hozzászólás található"
+msgstr[1] "%d spam hozzászólás található"
+
+#: optimizations/unapproved.php:142
+msgid "%s unapproved comment found"
+msgid_plural "%s unapproved comments found"
+msgstr[0] "%d nem jóváhagyott hozzászólás található"
+msgstr[1] "%d nem jóváhagyott hozzászólás található"
+
+#: templates/database/tables.php:24
+msgid "Database name:"
+msgstr "Adatbázis neve:"
+
+#: templates/database/tables-body.php:30 templates/database/tables.php:40
+msgid "Table"
+msgstr "Adatbázis tábla"
+
+#: templates/database/tables-list-after.php:10
+msgid "Total size of database:"
+msgstr "Adatbázis teljes mérete:"
+
+#: templates/database/tables-list-after.php:22
+msgid "Optimization results:"
+msgstr "Optimalizálási eredmények:"
+
+#: optimizations/autodraft.php:74 optimizations/autodraft.php:126
+msgid "No auto draft posts found"
+msgstr "Nem található automatikus vázlat"
+
+#: optimizations/trash.php:208
+msgid "Clean trashed posts which are older than %d weeks"
+msgstr "Tisztítsa meg a %d hétnél régebbi kukába helyezett üzeneteket"
+
+#: templates/database/tables.php:31
+msgid "Note:"
+msgstr "Megjegyzések:"
+
+#: cache/class-wpo-page-cache.php:1384 cache/class-wpo-page-cache.php:1405
+msgid "WP-Optimize:"
+msgstr "WP-Optimalizálás:"
+
+#: templates/settings/settings-general.php:8
+msgid "Enable admin bar menu"
+msgstr "Engedélyezze az adminisztrációs sáv menüjét"
+
+#: optimizations/unapproved.php:178 optimizations/unapproved.php:183
+msgid "Remove unapproved comments"
+msgstr "Nem jóváhagyott hozzászólások eltávolítása"

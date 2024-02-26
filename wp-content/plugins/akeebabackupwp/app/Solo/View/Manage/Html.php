@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -9,9 +9,7 @@ namespace Solo\View\Manage;
 
 use Akeeba\Engine\Factory;
 use Akeeba\Engine\Platform;
-use Awf\Date\Date;
 use Awf\Html\Select;
-use Awf\Mvc\Model;
 use Awf\Mvc\View;
 use Awf\Pagination\Pagination;
 use Awf\Text\Text;
@@ -120,6 +118,24 @@ class Html extends View
 	 */
 	public $enginesPerProfile = [];
 
+	/**
+	 * Should I show the browser download buttons in WordPress?
+	 *
+	 * @var   bool
+	 * @since 7.6.1
+	 */
+	public $showBrowserDownload;
+
+	/**
+	 * Is PHP set up to output error to the browser?
+	 *
+	 * -1: Don't know; 0: no; 1 yes
+	 *
+	 * @var   int
+	 * @since 7.6.1
+	 */
+	public $phpErrorDisplay = -1;
+
 	public function __construct($container = null)
 	{
 		parent::__construct($container);
@@ -158,31 +174,24 @@ class Html extends View
 
 		$this->items = $model->getStatisticsListWithMeta(false, $filters, $ordering);
 
-		$containerClone               = clone $this->getContainer();
-		$containerClone['mvc_config'] = [
-			'modelTemporaryInstance' => true,
-			'modelClearState'        => true,
-			'modelClearInput'        => true,
-		];
-
 		/** @var Profiles $profileModel */
-		$profileModel         = Model::getInstance(null, 'Profiles', $containerClone);
+		$profileModel         = $this->container->mvcFactory->makeTempModel('Profiles');
 		$this->profiles       = $profileModel->get(true);
 		$this->profilesList   = [];
-		$this->profilesList[] = Select::option('', '&mdash;');
+		$this->profilesList[] = $this->getContainer()->html->select->option( '', '&mdash;');
 
 		if (!empty($this->profiles))
 		{
 			foreach ($this->profiles as $profile)
 			{
-				$this->profilesList[] = Select::option($profile->id, $profile->description);
+				$this->profilesList[] = $this->getContainer()->html->select->option( $profile->id, $profile->description);
 			}
 		}
 
 		$this->frozenList = [
-			Select::option('', '–' . Text::_('COM_AKEEBA_BUADMIN_LABEL_FROZEN_SELECT') . '–'),
-			Select::option('1', Text::_('COM_AKEEBA_BUADMIN_LABEL_FROZEN_FROZEN')),
-			Select::option('2', Text::_('COM_AKEEBA_BUADMIN_LABEL_FROZEN_UNFROZEN')),
+			$this->getContainer()->html->select->option( '', '–' . Text::_('COM_AKEEBA_BUADMIN_LABEL_FROZEN_SELECT') . '–'),
+			$this->getContainer()->html->select->option( '1', Text::_('COM_AKEEBA_BUADMIN_LABEL_FROZEN_FROZEN')),
+			$this->getContainer()->html->select->option( '2', Text::_('COM_AKEEBA_BUADMIN_LABEL_FROZEN_UNFROZEN')),
 		];
 
 		$this->pagination = $model->getPagination($filters);
@@ -198,8 +207,16 @@ class Html extends View
 
 		$this->enginesPerProfile = $model->getPostProcessingEnginePerProfile();
 
+		$this->showBrowserDownload = $this->container->appConfig->get('showBrowserDownload', 0) == 1;
+
+		if (function_exists('ini_get'))
+		{
+			$this->phpErrorDisplay = (ini_get('display_errors') ?: 0) ? 1 : 0;
+		}
+
 		// "Show warning first" download button.
-		Text::script('COM_AKEEBA_BUADMIN_LOG_DOWNLOAD_CONFIRM', false);
+		$doc = $this->container->application->getDocument();
+		$doc->lang('COM_AKEEBA_BUADMIN_LOG_DOWNLOAD_CONFIRM', false);
 		$document->addScriptOptions('akeeba.Manage.downloadURL', $router->route('index.php?option=com_akeeba&view=Manage&task=download&format=raw'));
 
 		$buttons = [
@@ -400,10 +417,25 @@ JS;
 	protected function getTimeInformation($record)
 	{
 		$utcTimeZone = new DateTimeZone('UTC');
-		$startTime   = new Date($record['backupstart'], $utcTimeZone);
-		$endTime     = new Date($record['backupend'], $utcTimeZone);
+		try
+		{
+			$startTime = $this->container->dateFactory($record['backupstart'], $utcTimeZone);
+		}
+		catch (\Throwable $e)
+		{
+			$startTime = null;
+		}
 
-		$duration = $endTime->toUnix() - $startTime->toUnix();
+		try
+		{
+			$endTime = $this->container->dateFactory($record['backupend'], $utcTimeZone);
+		}
+		catch (\Throwable $e)
+		{
+			$endTime = null;
+		}
+
+		$duration = (is_null($startTime) || is_null($endTime)) ? 0 : $endTime->toUnix() - $startTime->toUnix();
 
 		if ($duration > 0)
 		{
@@ -431,7 +463,11 @@ JS;
 		}
 
 		$tzObject = new DateTimeZone($tz);
-		$startTime->setTimezone($tzObject);
+
+		if ($startTime !== null)
+		{
+			$startTime->setTimezone($tzObject);
+		}
 
 		$timeZoneSuffix = '';
 
@@ -441,7 +477,7 @@ JS;
 		}
 
 		return [
-			$startTime->format($this->dateFormat, $this->useLocalTime),
+			is_null($startTime) ? '&nbsp;' : $startTime->format($this->dateFormat, $this->useLocalTime),
 			$duration,
 			$timeZoneSuffix,
 		];
@@ -534,6 +570,10 @@ JS;
 
 			case 'cli':
 				$originIcon = 'akion-ios-paper-outline';
+				break;
+
+			case 'wpcron':
+				$originIcon = 'akion-ios-alarm';
 				break;
 
 			default:

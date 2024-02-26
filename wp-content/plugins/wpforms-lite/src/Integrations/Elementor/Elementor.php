@@ -3,6 +3,7 @@
 namespace WPForms\Integrations\Elementor;
 
 use Elementor\Plugin as ElementorPlugin;
+use WPForms\Frontend\CSSVars;
 use WPForms\Integrations\IntegrationInterface;
 
 /**
@@ -21,7 +22,7 @@ class Elementor implements IntegrationInterface {
 	 */
 	public function allow_load() {
 
-		return did_action( 'elementor/loaded' );
+		return (bool) did_action( 'elementor/loaded' );
 	}
 
 	/**
@@ -50,7 +51,10 @@ class Elementor implements IntegrationInterface {
 		add_action( 'elementor/frontend/after_enqueue_scripts', [ $this, 'preview_assets' ] );
 		add_action( 'elementor/frontend/after_enqueue_scripts', [ $this, 'frontend_assets' ] );
 		add_action( 'elementor/editor/after_enqueue_styles', [ $this, 'editor_assets' ] );
-		add_action( 'elementor/widgets/widgets_registered', [ $this, 'register_widget' ] );
+
+		version_compare( ELEMENTOR_VERSION, '3.5.0', '>=' ) ?
+			add_action( 'elementor/widgets/register', [ $this, 'register_widget' ] ) :
+			add_action( 'elementor/widgets/widgets_registered', [ $this, 'register_widget' ] );
 
 		add_action( 'wp_ajax_wpforms_admin_get_form_selector_options', [ $this, 'ajax_get_form_selector_options' ] );
 	}
@@ -68,18 +72,18 @@ class Elementor implements IntegrationInterface {
 		 *
 		 * @since 1.6.0
 		 *
-		 * @param bool $use_compat
+		 * @param bool $use_compat Use compatibility.
 		 */
-		$use_compat = apply_filters( 'wpforms_apply_elementor_preview_compat', true );
+		$use_compat = (bool) apply_filters( 'wpforms_apply_elementor_preview_compat', true );
 
-		if ( true !== $use_compat ) {
+		if ( $use_compat !== true ) {
 			return;
 		}
 
 		// Load WPForms assets globally on Elementor Preview panel only.
 		add_filter( 'wpforms_global_assets', '__return_true' );
 
-		// Hide reCAPTCHA badge on Elementor Preview panel.
+		// Hide CAPTCHA badge on Elementor Preview panel.
 		add_filter( 'wpforms_frontend_recaptcha_disable', '__return_true' );
 	}
 
@@ -111,6 +115,26 @@ class Elementor implements IntegrationInterface {
 			true
 		);
 
+		if ( $this->is_modern_widget() ) {
+			wp_enqueue_script(
+				'wpforms-elementor-modern',
+				WPFORMS_PLUGIN_URL . "assets/js/integrations/elementor/editor-modern{$min}.js",
+				[ 'wpforms-elementor' ],
+				WPFORMS_VERSION,
+				true
+			);
+		}
+
+		// Define strings for JS.
+		$strings = [
+			'heads_up'                    => esc_html__( 'Heads up!', 'wpforms-lite' ),
+			'cancel'                      => esc_html__( 'Cancel', 'wpforms-lite' ),
+			'confirm'                     => esc_html__( 'Confirm', 'wpforms-lite' ),
+			'reset_style_settings'        => esc_html__( 'Reset Style Settings', 'wpforms-lite' ),
+			'reset_settings_confirm_text' => esc_html__( 'Are you sure you want to reset the style settings for this form? All your current styling will be removed and canʼt be recovered.', 'wpforms-lite' ),
+			'copy_paste_error'            => esc_html__( 'There was an error parsing your JSON code. Please check your code and try again.', 'wpforms-lite' ),
+		];
+
 		wp_localize_script(
 			'wpforms-elementor',
 			'wpformsElementorVars',
@@ -121,6 +145,12 @@ class Elementor implements IntegrationInterface {
 				'add_form_url'  => admin_url( 'admin.php?page=wpforms-builder&view=setup' ),
 				'css_url'       => WPFORMS_PLUGIN_URL . "assets/css/admin-integrations{$min}.css",
 				'debug'         => wpforms_debug(),
+				'strings'       => $strings,
+				'sizes'         => [
+					'field-size'  => CSSVars::FIELD_SIZE,
+					'label-size'  => CSSVars::LABEL_SIZE,
+					'button-size' => CSSVars::BUTTON_SIZE,
+				],
 			]
 		);
 	}
@@ -150,13 +180,14 @@ class Elementor implements IntegrationInterface {
 			'wpforms-elementor',
 			'wpformsElementorVars',
 			[
-				'recaptcha_type' => wpforms_setting( 'recaptcha-type', 'v2' ),
+				'captcha_provider' => wpforms_setting( 'captcha-provider', 'recaptcha' ),
+				'recaptcha_type'   => wpforms_setting( 'recaptcha-type', 'v2' ),
 			]
 		);
 	}
 
 	/**
-	 * Load an integration css in the elementor document.
+	 * Load assets in the elementor document.
 	 *
 	 * @since 1.6.2
 	 */
@@ -180,10 +211,16 @@ class Elementor implements IntegrationInterface {
 	 * Register WPForms Widget.
 	 *
 	 * @since 1.6.2
+	 * @since 1.7.6 Added support for new registration method since 3.5.0.
+	 * @since 1.8.3 Added a condition for selecting the required widget instance.
 	 */
 	public function register_widget() {
 
-		ElementorPlugin::instance()->widgets_manager->register_widget_type( new Widget() );
+		$widget_instance = $this->is_modern_widget() ? new WidgetModern() : new Widget();
+
+		version_compare( ELEMENTOR_VERSION, '3.5.0', '>=' ) ?
+			ElementorPlugin::instance()->widgets_manager->register( $widget_instance ) :
+			ElementorPlugin::instance()->widgets_manager->register_widget_type( $widget_instance );
 	}
 
 	/**
@@ -196,5 +233,15 @@ class Elementor implements IntegrationInterface {
 		check_ajax_referer( 'wpforms-elementor-integration', 'nonce' );
 
 		wp_send_json_success( ( new Widget() )->get_form_selector_options() );
+	}
+
+	/**
+	 * Detect modern Widget.
+	 *
+	 * @since 1.8.3
+	 */
+	protected function is_modern_widget() {
+
+		return wpforms_get_render_engine() === 'modern' && (int) wpforms_setting( 'disable-css', '1' ) === 1;
 	}
 }

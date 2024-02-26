@@ -17,8 +17,6 @@ class PLL_Settings_Module {
 	public $options;
 
 	/**
-	 * Instance of PLL_Model.
-	 *
 	 * @var PLL_Model
 	 */
 	public $model;
@@ -33,7 +31,7 @@ class PLL_Settings_Module {
 	/**
 	 * Stores if the module is active.
 	 *
-	 * @var bool
+	 * @var string|false
 	 */
 	public $active_option;
 
@@ -48,7 +46,7 @@ class PLL_Settings_Module {
 	 * Stores the module name.
 	 * It must be unique.
 	 *
-	 * @var string
+	 * @var string|null
 	 */
 	public $module;
 
@@ -83,7 +81,7 @@ class PLL_Settings_Module {
 	/**
 	 * Stores html form when provided by a child class.
 	 *
-	 * @var bool|string
+	 * @var string|false
 	 */
 	protected $form = false;
 
@@ -92,8 +90,13 @@ class PLL_Settings_Module {
 	 *
 	 * @since 1.8
 	 *
-	 * @param object $polylang Polylang object
-	 * @param array  $args
+	 * @param object $polylang The Polylang object.
+	 * @param array  $args {
+	 *   @type string       $module        Unique module name.
+	 *   @type string       $title         The title of the settings module.
+	 *   @type string       $description   The description of the settings module.
+	 *   @type string|false $active_option Optional option name storing if the module is active, false if not used.
+	 * }
 	 */
 	public function __construct( &$polylang, $args ) {
 		$this->options = &$polylang->options;
@@ -161,6 +164,8 @@ class PLL_Settings_Module {
 	 * Activates the module
 	 *
 	 * @since 1.8
+	 *
+	 * @return void
 	 */
 	public function activate() {
 		if ( ! empty( $this->active_option ) ) {
@@ -173,6 +178,8 @@ class PLL_Settings_Module {
 	 * Deactivates the module
 	 *
 	 * @since 1.8
+	 *
+	 * @return void
 	 */
 	public function deactivate() {
 		if ( ! empty( $this->active_option ) ) {
@@ -185,6 +192,8 @@ class PLL_Settings_Module {
 	 * Protected method to display a configuration form
 	 *
 	 * @since 1.8
+	 *
+	 * @return void
 	 */
 	protected function form() {
 		// Child classes can provide a form
@@ -209,21 +218,23 @@ class PLL_Settings_Module {
 	}
 
 	/**
-	 * Allows child classes to validate their options before saving
+	 * Allows child classes to validate their options before saving.
 	 *
 	 * @since 1.8
 	 *
-	 * @param array $options Raw options
+	 * @param array $options Unsanitized options to save.
 	 * @return array Options
 	 */
-	protected function update( $options ) {
-		return array(); // It's responsibility of the child class to decide what is saved
+	protected function update( $options ) { // phpcs:ignore VariableAnalysis.CodeAnalysis.VariableAnalysis.UnusedVariable
+		return array(); // It's responsibility of the child class to decide what is saved.
 	}
 
 	/**
 	 * Ajax method to save the options
 	 *
 	 * @since 1.8
+	 *
+	 * @return void
 	 */
 	public function save_options() {
 		check_ajax_referer( 'pll_options', '_pll_nonce' );
@@ -245,9 +256,10 @@ class PLL_Settings_Module {
 			// Don't use flush_rewrite_rules as we don't have the right links model and permastruct
 			delete_option( 'rewrite_rules' );
 
+
 			ob_start();
 
-			if ( ! get_settings_errors() ) {
+			if ( empty( get_settings_errors() ) ) {
 				// Send update message
 				add_settings_error( 'general', 'settings_updated', __( 'Settings saved.', 'polylang' ), 'updated' );
 				settings_errors();
@@ -263,11 +275,11 @@ class PLL_Settings_Module {
 	}
 
 	/**
-	 * Get the row actions
+	 * Get the row actions.
 	 *
 	 * @since 1.8
 	 *
-	 * @return array
+	 * @return string[]
 	 */
 	protected function get_actions() {
 		$actions = array();
@@ -288,11 +300,11 @@ class PLL_Settings_Module {
 	}
 
 	/**
-	 * Get the actions links
+	 * Get the actions links.
 	 *
 	 * @since 1.8
 	 *
-	 * @return array
+	 * @return string[] Action links.
 	 */
 	public function get_action_links() {
 		return array_intersect_key( $this->action_links, array_flip( $this->get_actions() ) );
@@ -326,11 +338,11 @@ class PLL_Settings_Module {
 	}
 
 	/**
-	 * Get the buttons
+	 * Get the buttons.
 	 *
 	 * @since 1.9
 	 *
-	 * @return array
+	 * @return string[] An array of html fragment for the buttons.
 	 */
 	public function get_buttons() {
 		return $this->buttons;

@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -9,9 +9,7 @@ namespace Solo\Session;
 
 use Awf\Session\CsrfToken;
 use Awf\Session\CsrfTokenFactory;
-use Awf\Session\Randval;
 use Awf\Session\SegmentInterface;
-use Awf\Utils\Phpfunc;
 
 class Manager extends \Awf\Session\Manager
 {
@@ -323,9 +321,7 @@ END_HEADERS;
 	 */
 	public function regenerateId()
 	{
-		$phpfunc         = new Phpfunc();
-		$randval         = new Randval($phpfunc);
-		$this->sessionId = md5($randval->generate());
+		$this->sessionId = md5(random_bytes(32));
 
 		if ($this->csrf_token)
 		{

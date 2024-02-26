@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -35,7 +35,7 @@ abstract class AbstractOracle implements OracleInterface
 	 *
 	 * @param   string  $path  The directory path to scan
 	 */
-	public function __construct($path)
+	public function __construct(string $path)
 	{
 		$this->path = $path;
 	}
@@ -45,7 +45,7 @@ abstract class AbstractOracle implements OracleInterface
 	 *
 	 * @return  boolean
 	 */
-	public function isRecognised()
+	public function isRecognised(): bool
 	{
 		return false;
 	}
@@ -55,7 +55,7 @@ abstract class AbstractOracle implements OracleInterface
 	 *
 	 * @return  string
 	 */
-	public function getName()
+	public function getName(): string
 	{
 		return $this->oracleName;
 	}
@@ -65,7 +65,7 @@ abstract class AbstractOracle implements OracleInterface
 	 *
 	 * @return  string
 	 */
-	public function getInstaller()
+	public function getInstaller(): string
 	{
 		if (empty($this->installerName))
 		{
@@ -80,7 +80,7 @@ abstract class AbstractOracle implements OracleInterface
 	 *
 	 * @return  array
 	 */
-	public function getDbInformation()
+	public function getDbInformation(): array
 	{
 		return array(
 			'driver'   => 'mysqli',
@@ -98,7 +98,7 @@ abstract class AbstractOracle implements OracleInterface
 	 *
 	 * @return array
 	 */
-	public function getExtradirs()
+	public function getExtradirs(): array
 	{
 		return array();
 	}
@@ -108,7 +108,7 @@ abstract class AbstractOracle implements OracleInterface
 	 *
 	 * @return array
 	 */
-	public function getExtraDb()
+	public function getExtraDb(): array
 	{
 		return array();
 	}
@@ -120,7 +120,7 @@ abstract class AbstractOracle implements OracleInterface
 	 *
 	 * @return  array  array($key, $value)
 	 */
-	protected function parseDefine($line)
+	protected function parseDefine(string $line): array
 	{
 		$pattern = '#define\s*\(\s*(["\'][A-Z_]*["\'])\s*,\s*(["\'].*["\'])\s*\)\s*;#u';
 		$numMatches = preg_match($pattern, $line, $matches);
@@ -151,7 +151,7 @@ abstract class AbstractOracle implements OracleInterface
 	 *
 	 * @return  null|string  Null if we can't parse $value as a string.
 	 */
-	protected function parseStringDefinition($value)
+	protected function parseStringDefinition(string $value): ?string
 	{
 		// At this point the value may be in the form 'foobar');#comment'gargh" if the original line was something like
 		// define('DB_NAME', 'foobar');#comment'gargh");

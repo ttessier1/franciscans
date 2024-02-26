@@ -1,12 +1,14 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
 namespace Solo;
 
+use Akeeba\Engine\Factory;
+use Akeeba\Engine\Platform;
 use Awf\Database\Installer;
 
 class PostUpgradeScript
@@ -41,22 +43,6 @@ class PostUpgradeScript
 		'media/js/solo/system.js',
 		'media/js/solo/update.js',
 		'media/js/solo/wizard.js',
-		// Removed in version 1.2 (introducing Akeeba Engine 2)
-		'Solo/engine/platform/abstract.php',
-		'Solo/engine/platform/interface.php',
-		'Solo/engine/platform/platform.php',
-		// Removed with the introduction of the new S3v4 connector for Amazon S3
-		'Solo/engine/Postproc/Connector/Amazons3.php',
-		'Solo/engine/Postproc/S3.php',
-		'Solo/engine/Postproc/s3.ini',
-		'Solo/engine/Postproc/s3.json',
-		// Dropbox v1 integration
-		'Solo/engine/Postproc/dropbox.ini',
-		'Solo/engine/Postproc/dropbox.json',
-		'Solo/engine/Postproc/Dropbox.php',
-		'Solo/engine/Postproc/Connector/Dropbox.php',
-		// Obsolete Azure files
-		'Solo/engine/Postproc/Connector/Azure/Credentials/Sharedsignature.php',
 		// Obsolete Mautic integration
 		'Solo/assets/installers/angie-mautic.ini',
 		'Solo/assets/installers/angie-mautic.jpa',
@@ -66,8 +52,6 @@ class PostUpgradeScript
 		// Obsolete AES-128 CTR implementation in Javascript
 		'media/js/solo/encryption.min.js',
 		'media/js/solo/encryption.min.map',
-		// PHP 7.2 compatibility
-		'Solo/engine/Base/Object.php',
 		// Bootstrap-based theme
 		'media/css/bootstrap.css.map',
 		'media/css/bootstrap.min.css',
@@ -126,50 +110,6 @@ class PostUpgradeScript
 		'Solo/Platform/Solo/Filter/PrestashopTableData.php',
 
 		// Migration of Akeeba Engine to JSON format
-		"Solo/engine/Dump/native.ini",
-		"Solo/engine/Dump/reverse.ini",
-		"Solo/engine/Postproc/none.ini",
-		"Solo/engine/Postproc/webdav.ini",
-		"Solo/engine/Postproc/sugarsync.ini",
-		"Solo/engine/Postproc/email.ini",
-		"Solo/engine/Postproc/box.ini",
-		"Solo/engine/Postproc/dropbox2.ini",
-		"Solo/engine/Postproc/ovh.ini",
-		"Solo/engine/Postproc/cloudme.ini",
-		"Solo/engine/Postproc/idrivesync.ini",
-		"Solo/engine/Postproc/ftpcurl.ini",
-		"Solo/engine/Postproc/dreamobjects.ini",
-		"Solo/engine/Postproc/azure.ini",
-		"Solo/engine/Postproc/sftp.ini",
-		"Solo/engine/Postproc/amazons3.ini",
-		"Solo/engine/Postproc/cloudfiles.ini",
-		"Solo/engine/Postproc/googlestorage.ini",
-		"Solo/engine/Postproc/googlestoragejson.ini",
-		"Solo/engine/Postproc/swift.ini",
-		"Solo/engine/Postproc/sftpcurl.ini",
-		"Solo/engine/Postproc/onedrive.ini",
-		"Solo/engine/Postproc/googledrive.ini",
-		"Solo/engine/Postproc/backblaze.ini",
-		"Solo/engine/Postproc/ftp.ini",
-		"Solo/engine/Archiver/zipnative.ini",
-		"Solo/engine/Archiver/directftp.ini",
-		"Solo/engine/Archiver/directsftpcurl.ini",
-		"Solo/engine/Archiver/zip.ini",
-		"Solo/engine/Archiver/directftpcurl.ini",
-		"Solo/engine/Archiver/directsftp.ini",
-		"Solo/engine/Archiver/jps.ini",
-		"Solo/engine/Archiver/jpa.ini",
-		"Solo/engine/Scan/smart.ini",
-		"Solo/engine/Scan/large.ini",
-		"Solo/engine/Filter/Stack/dateconditional.ini",
-		"Solo/engine/Filter/Stack/errorlogs.ini",
-		"Solo/engine/Filter/Stack/hoststats.ini",
-		"Solo/engine/Core/04.quota.ini",
-		"Solo/engine/Core/02.advanced.ini",
-		"Solo/engine/Core/01.basic.ini",
-		"Solo/engine/Core/scripting.ini",
-		"Solo/engine/Core/05.tuning.ini",
-
 		"Solo/Platform/Solo/Config/04.quota.ini",
 		"Solo/Platform/Solo/Config/02.advanced.ini",
 		"Solo/Platform/Solo/Config/Pro/04.quota.ini",
@@ -183,25 +123,9 @@ class PostUpgradeScript
 		"Solo/Platform/Solo/Filter/Stack/myjoomla.ini",
 		"Solo/Platform/Solo/Filter/Stack/actionlogs.ini",
 
-		// PostgreSQL and MS SQL Server support
-		'Solo/engine/Driver/Pgsql.php',
-		'Solo/engine/Driver/Postgresql.php',
-		'Solo/engine/Driver/Sqlazure.php',
-		'Solo/engine/Driver/Sqlsrv.php',
-		'Solo/engine/Driver/Query/Pgsql.php',
-		'Solo/engine/Driver/Query/Postgresql.php',
-		'Solo/engine/Driver/Query/Sqlazure.php',
-		'Solo/engine/Driver/Query/Sqlsrv.php',
-		'Solo/engine/Dump/reverse.json',
-		'Solo/engine/Dump/Reverse.php',
-		'Solo/engine/Dump/Native/Postgresql.php',
-		'Solo/engine/Dump/Native/Sqlsrv.php',
-
+		// Removed PostgreSQL and MS SQL Server support
 		'Solo/assets/sql/xml/postgresql.xml',
 		'Solo/assets/sql/xml/sqlsrv.xml',
-
-		// Engine 7
-		'Solo/engine/Base/BaseObject.php',
 
 		// ALICE refactoring
 		"media/js/solo/alice.min.js",
@@ -226,8 +150,25 @@ class PostUpgradeScript
 		// Obsolete scripts
 		"Solo/ViewTemplates/Backup/script.blade.php",
 
-		// Obsolete copy of the cacert.pem file
-		"Solo/engine/cacert.pem",
+		// Changelog PNG images
+		'media/image/changelog.png',
+
+		// Remove piecon
+		'media/js/piecon.min.js',
+
+		// Remove legacy filters
+		"Solo/Platform/Solo/Filter/Stack/myjoomla.json",
+		"Solo/Platform/Solo/Filter/Stack/StackMyjoomla.php",
+
+		// HHVM is no longer PHP compatible, why do we even have this?
+		"hhvm.php",
+
+		// Leftover vendor files in 8.0.0
+		"vendor/akeeba/engine/.gitattributes",
+		"vendor/akeeba/engine/.gitignore",
+		"vendor/akeeba/engine/icon.png",
+		"vendor/akeeba/engine/rector.php",
+		"vendor/akeeba/s3/.gitignore",
 	];
 
 	/**
@@ -241,19 +182,6 @@ class PostUpgradeScript
 	 * @var array Folders to remove from all versions
 	 */
 	protected $removeFoldersAllVersions = [
-		// Removed in version 1.2 (introducing Akeeba Engine 2)
-		'Solo/engine/platform/solo',
-		'Solo/engine/abstract',
-		'Solo/engine/drivers',
-		'Solo/engine/engines',
-		'Solo/engine/filters',
-		'Solo/engine/plugins',
-		'Solo/engine/utils',
-		// Removed with new S3v4 connector for Amazon S3
-		'Solo/engine/Postproc/Connector/Amazon',
-		'Solo/engine/Postproc/Connector/Amazons3',
-		// Dropbox v1 integration
-		'Solo/engine/Postproc/Connector/Dropbox',
 		// Bootstrap-based theme
 		'media/css/selectize',
 		'media/less',
@@ -292,12 +220,31 @@ class PostUpgradeScript
 		'Solo/View/Users/tmpl',
 		'Solo/View/Wizard/tmpl',
 
-		// Precompiled tempaltes
+		// Precompiled templates
 		'Solo/PrecompiledTemplates',
+		'tmp/compiled_templates',
 
 		// Obsolete jQuery stuff
 		'media/js/datepicker',
 		'media/js/dist',
+
+		// Removed the “Archive integrity check” feature.
+		'Solo/Platform/Solo/Finalization',
+
+		// AWF is installed via Composer now
+		'Awf',
+		'awf',
+
+		// Akeeba Engine is installed via Composer now
+		'Solo/engine',
+
+		// Leftover vendor folders in 8.0.0
+		"vendor/akeeba/engine/.idea",
+		"vendor/akeeba/engine/binned_ideas",
+		"vendor/akeeba/engine/connector_development",
+		"vendor/akeeba/engine/Test",
+		"vendor/akeeba/engine/tools",
+		"vendor/akeeba/s3/minitest",
 	];
 
 	/**
@@ -307,8 +254,8 @@ class PostUpgradeScript
 		// CLI scripts
 		'cli',
 		// Pro engine features
-		'Solo/engine/plugins',
-		'Solo/engine/Postproc/Connector',
+		'vendor/akeeba/engine/engine/plugins',
+		'vendor/akeeba/engine/engine/Postproc/Connector',
 		'Solo/Platform/Solo/Config/Pro',
 
 		// Pro application features
@@ -345,6 +292,8 @@ class PostUpgradeScript
 		// Version 7 -- JSON and legacy API
 		'Solo/Model/Json',
 
+		// Obsolete language folder
+		'languages/akeeba',
 	];
 
 	/**
@@ -353,111 +302,113 @@ class PostUpgradeScript
 	protected $removeFilesCore = [
 		// Pro engine features
 		// -- Archivers
-		'Solo/engine/Archiver/directftp.ini',
-		'Solo/engine/Archiver/directftp.json',
-		'Solo/engine/Archiver/Directftp.php',
-		'Solo/engine/Archiver/directftpcurl.ini',
-		'Solo/engine/Archiver/directftpcurl.json',
-		'Solo/engine/Archiver/Directftpcurl.php',
-		'Solo/engine/Archiver/directsftp.ini',
-		'Solo/engine/Archiver/directsftp.json',
-		'Solo/engine/Archiver/Directsftp.php',
-		'Solo/engine/Archiver/directsftpcurl.ini',
-		'Solo/engine/Archiver/directsftpcurl.json',
-		'Solo/engine/Archiver/Directsftpcurl.php',
-		'Solo/engine/Archiver/jps.ini',
-		'Solo/engine/Archiver/jps.json',
-		'Solo/engine/Archiver/Jps.php',
-		'Solo/engine/Archiver/zipnative.ini',
-		'Solo/engine/Archiver/zipnative.json',
-		'Solo/engine/Archiver/Zipnative.php',
+		'vendor/akeeba/engine/engine/Archiver/directftp.ini',
+		'vendor/akeeba/engine/engine/Archiver/directftp.json',
+		'vendor/akeeba/engine/engine/Archiver/Directftp.php',
+		'vendor/akeeba/engine/engine/Archiver/directftpcurl.ini',
+		'vendor/akeeba/engine/engine/Archiver/directftpcurl.json',
+		'vendor/akeeba/engine/engine/Archiver/Directftpcurl.php',
+		'vendor/akeeba/engine/engine/Archiver/directsftp.ini',
+		'vendor/akeeba/engine/engine/Archiver/directsftp.json',
+		'vendor/akeeba/engine/engine/Archiver/Directsftp.php',
+		'vendor/akeeba/engine/engine/Archiver/directsftpcurl.ini',
+		'vendor/akeeba/engine/engine/Archiver/directsftpcurl.json',
+		'vendor/akeeba/engine/engine/Archiver/Directsftpcurl.php',
+		'vendor/akeeba/engine/engine/Archiver/jps.ini',
+		'vendor/akeeba/engine/engine/Archiver/jps.json',
+		'vendor/akeeba/engine/engine/Archiver/Jps.php',
+		'vendor/akeeba/engine/engine/Archiver/zipnative.ini',
+		'vendor/akeeba/engine/engine/Archiver/zipnative.json',
+		'vendor/akeeba/engine/engine/Archiver/Zipnative.php',
 		// -- Filters
-		'Solo/engine/Filter/Extradirs.php',
-		'Solo/engine/Filter/Multidb.php',
-		'Solo/engine/Filter/Regexdirectories.php',
-		'Solo/engine/Filter/Regexfiles.php',
-		'Solo/engine/Filter/Regexskipdirs.php',
-		'Solo/engine/Filter/Regexskipfiles.php',
-		'Solo/engine/Filter/Regexskiptabledata.php',
-		'Solo/engine/Filter/Regexskiptables.php',
+		'vendor/akeeba/engine/engine/Filter/Extradirs.php',
+		'vendor/akeeba/engine/engine/Filter/Multidb.php',
+		'vendor/akeeba/engine/engine/Filter/Regexdirectories.php',
+		'vendor/akeeba/engine/engine/Filter/Regexfiles.php',
+		'vendor/akeeba/engine/engine/Filter/Regexskipdirs.php',
+		'vendor/akeeba/engine/engine/Filter/Regexskipfiles.php',
+		'vendor/akeeba/engine/engine/Filter/Regexskiptabledata.php',
+		'vendor/akeeba/engine/engine/Filter/Regexskiptables.php',
 		// -- Post-processing engines
-		'Solo/engine/Postproc/amazons3.ini',
-		'Solo/engine/Postproc/amazons3.json',
-		'Solo/engine/Postproc/Amazons3.php',
-		'Solo/engine/Postproc/azure.ini',
-		'Solo/engine/Postproc/azure.json',
-		'Solo/engine/Postproc/Azure.php',
-		'Solo/engine/Postproc/backblaze.ini',
-		'Solo/engine/Postproc/backblaze.json',
-		'Solo/engine/Postproc/Backblaze.php',
-		'Solo/engine/Postproc/box.ini',
-		'Solo/engine/Postproc/box.json',
-		'Solo/engine/Postproc/Box.php',
-		'Solo/engine/Postproc/cloudfiles.ini',
-		'Solo/engine/Postproc/cloudfiles.json',
-		'Solo/engine/Postproc/Cloudfiles.php',
-		'Solo/engine/Postproc/cloudme.ini',
-		'Solo/engine/Postproc/cloudme.json',
-		'Solo/engine/Postproc/Cloudme.php',
-		'Solo/engine/Postproc/dreamobjects.ini',
-		'Solo/engine/Postproc/dreamobjects.json',
-		'Solo/engine/Postproc/Dreamobjects.php',
-		'Solo/engine/Postproc/dropbox.ini',
-		'Solo/engine/Postproc/dropbox.json',
-		'Solo/engine/Postproc/Dropbox.php',
-		'Solo/engine/Postproc/dropbox2.ini',
-		'Solo/engine/Postproc/dropbox2.json',
-		'Solo/engine/Postproc/Dropbox2.php',
-		'Solo/engine/Postproc/ftp.ini',
-		'Solo/engine/Postproc/ftp.json',
-		'Solo/engine/Postproc/Ftp.php',
-		'Solo/engine/Postproc/ftpcurl.ini',
-		'Solo/engine/Postproc/ftpcurl.json',
-		'Solo/engine/Postproc/Ftpcurl.php',
-		'Solo/engine/Postproc/googledrive.ini',
-		'Solo/engine/Postproc/googledrive.json',
-		'Solo/engine/Postproc/Googledrive.php',
-		'Solo/engine/Postproc/googlestorage.ini',
-		'Solo/engine/Postproc/googlestorage.json',
-		'Solo/engine/Postproc/Googlestorage.php',
-		'Solo/engine/Postproc/googlestoragejson.ini',
-		'Solo/engine/Postproc/googlestoragejson.json',
-		'Solo/engine/Postproc/Googlestoragejson.php',
-		'Solo/engine/Postproc/idrivesync.ini',
-		'Solo/engine/Postproc/idrivesync.json',
-		'Solo/engine/Postproc/Idrivesync.php',
-		'Solo/engine/Postproc/onedrive.ini',
-		'Solo/engine/Postproc/onedrive.json',
-		'Solo/engine/Postproc/Onedrive.php',
-		'Solo/engine/Postproc/onedrivebusiness.ini',
-		'Solo/engine/Postproc/onedrivebusiness.json',
-		'Solo/engine/Postproc/Onedrivebusiness.php',
-		'Solo/engine/Postproc/ovh.ini',
-		'Solo/engine/Postproc/ovh.json',
-		'Solo/engine/Postproc/Ovh.php',
-		'Solo/engine/Postproc/pcloud.ini',
-		'Solo/engine/Postproc/pcloud.json',
-		'Solo/engine/Postproc/Pcloud.php',
-		'Solo/engine/Postproc/s3.ini',
-		'Solo/engine/Postproc/s3.json',
-		'Solo/engine/Postproc/S3.php',
-		'Solo/engine/Postproc/sftp.ini',
-		'Solo/engine/Postproc/sftp.json',
-		'Solo/engine/Postproc/Sftp.php',
-		'Solo/engine/Postproc/sftpcurl.ini',
-		'Solo/engine/Postproc/sftpcurl.json',
-		'Solo/engine/Postproc/Sftpcurl.php',
-		'Solo/engine/Postproc/sugarsync.ini',
-		'Solo/engine/Postproc/sugarsync.json',
-		'Solo/engine/Postproc/Sugarsync.php',
-		'Solo/engine/Postproc/swift.ini',
-		'Solo/engine/Postproc/swift.json',
-		'Solo/engine/Postproc/Swift.php',
-		'Solo/engine/Postproc/webdav.ini',
-		'Solo/engine/Postproc/webdav.json',
-		'Solo/engine/Postproc/Webdav.php',
+		'vendor/akeeba/engine/engine/Postproc/amazons3.ini',
+		'vendor/akeeba/engine/engine/Postproc/amazons3.json',
+		'vendor/akeeba/engine/engine/Postproc/Amazons3.php',
+		'vendor/akeeba/engine/engine/Postproc/azure.ini',
+		'vendor/akeeba/engine/engine/Postproc/azure.json',
+		'vendor/akeeba/engine/engine/Postproc/Azure.php',
+		'vendor/akeeba/engine/engine/Postproc/backblaze.ini',
+		'vendor/akeeba/engine/engine/Postproc/backblaze.json',
+		'vendor/akeeba/engine/engine/Postproc/Backblaze.php',
+		'vendor/akeeba/engine/engine/Postproc/box.ini',
+		'vendor/akeeba/engine/engine/Postproc/box.json',
+		'vendor/akeeba/engine/engine/Postproc/Box.php',
+		'vendor/akeeba/engine/engine/Postproc/cloudfiles.ini',
+		'vendor/akeeba/engine/engine/Postproc/cloudfiles.json',
+		'vendor/akeeba/engine/engine/Postproc/Cloudfiles.php',
+		'vendor/akeeba/engine/engine/Postproc/cloudme.ini',
+		'vendor/akeeba/engine/engine/Postproc/cloudme.json',
+		'vendor/akeeba/engine/engine/Postproc/Cloudme.php',
+		'vendor/akeeba/engine/engine/Postproc/dreamobjects.ini',
+		'vendor/akeeba/engine/engine/Postproc/dreamobjects.json',
+		'vendor/akeeba/engine/engine/Postproc/Dreamobjects.php',
+		'vendor/akeeba/engine/engine/Postproc/dropbox.ini',
+		'vendor/akeeba/engine/engine/Postproc/dropbox.json',
+		'vendor/akeeba/engine/engine/Postproc/Dropbox.php',
+		'vendor/akeeba/engine/engine/Postproc/dropbox2.ini',
+		'vendor/akeeba/engine/engine/Postproc/dropbox2.json',
+		'vendor/akeeba/engine/engine/Postproc/Dropbox2.php',
+		'vendor/akeeba/engine/engine/Postproc/ftp.ini',
+		'vendor/akeeba/engine/engine/Postproc/ftp.json',
+		'vendor/akeeba/engine/engine/Postproc/Ftp.php',
+		'vendor/akeeba/engine/engine/Postproc/ftpcurl.ini',
+		'vendor/akeeba/engine/engine/Postproc/ftpcurl.json',
+		'vendor/akeeba/engine/engine/Postproc/Ftpcurl.php',
+		'vendor/akeeba/engine/engine/Postproc/googledrive.ini',
+		'vendor/akeeba/engine/engine/Postproc/googledrive.json',
+		'vendor/akeeba/engine/engine/Postproc/Googledrive.php',
+		'vendor/akeeba/engine/engine/Postproc/googlestorage.ini',
+		'vendor/akeeba/engine/engine/Postproc/googlestorage.json',
+		'vendor/akeeba/engine/engine/Postproc/Googlestorage.php',
+		'vendor/akeeba/engine/engine/Postproc/googlestoragejson.ini',
+		'vendor/akeeba/engine/engine/Postproc/googlestoragejson.json',
+		'vendor/akeeba/engine/engine/Postproc/Googlestoragejson.php',
+		'vendor/akeeba/engine/engine/Postproc/idrivesync.ini',
+		'vendor/akeeba/engine/engine/Postproc/idrivesync.json',
+		'vendor/akeeba/engine/engine/Postproc/Idrivesync.php',
+		'vendor/akeeba/engine/engine/Postproc/onedrive.ini',
+		'vendor/akeeba/engine/engine/Postproc/onedrive.json',
+		'vendor/akeeba/engine/engine/Postproc/Onedrive.php',
+		'vendor/akeeba/engine/engine/Postproc/onedrivebusiness.ini',
+		'vendor/akeeba/engine/engine/Postproc/onedrivebusiness.json',
+		'vendor/akeeba/engine/engine/Postproc/Onedrivebusiness.php',
+		'vendor/akeeba/engine/engine/Postproc/ovh.ini',
+		'vendor/akeeba/engine/engine/Postproc/ovh.json',
+		'vendor/akeeba/engine/engine/Postproc/Ovh.php',
+		'vendor/akeeba/engine/engine/Postproc/pcloud.ini',
+		'vendor/akeeba/engine/engine/Postproc/pcloud.json',
+		'vendor/akeeba/engine/engine/Postproc/Pcloud.php',
+		'vendor/akeeba/engine/engine/Postproc/Connector/Pcloud.php',
+		'vendor/akeeba/engine/engine/Postproc/s3.ini',
+		'vendor/akeeba/engine/engine/Postproc/s3.json',
+		'vendor/akeeba/engine/engine/Postproc/S3.php',
+		'vendor/akeeba/engine/engine/Postproc/sftp.ini',
+		'vendor/akeeba/engine/engine/Postproc/sftp.json',
+		'vendor/akeeba/engine/engine/Postproc/Sftp.php',
+		'vendor/akeeba/engine/engine/Postproc/sftpcurl.ini',
+		'vendor/akeeba/engine/engine/Postproc/sftpcurl.json',
+		'vendor/akeeba/engine/engine/Postproc/Sftpcurl.php',
+		'vendor/akeeba/engine/engine/Postproc/sugarsync.ini',
+		'vendor/akeeba/engine/engine/Postproc/sugarsync.json',
+		'vendor/akeeba/engine/engine/Postproc/Sugarsync.php',
+		'vendor/akeeba/engine/engine/Postproc/swift.ini',
+		'vendor/akeeba/engine/engine/Postproc/swift.json',
+		'vendor/akeeba/engine/engine/Postproc/Swift.php',
+		'vendor/akeeba/engine/engine/Postproc/webdav.ini',
+		'vendor/akeeba/engine/engine/Postproc/webdav.json',
+		'vendor/akeeba/engine/engine/Postproc/Webdav.php',
 		// Pro application features
 		'Solo/Controller/Alice.php',
+		'Solo/Controller/Api.php',
 		'Solo/Controller/Check.php',
 		'Solo/Controller/Discover.php',
 		'Solo/Controller/Extradirs.php',
@@ -513,13 +464,31 @@ class PostUpgradeScript
 		'media/js/jquery.min.js',
 		'media/js/jquery.min.map',
 		'media/js/jquery-migrate.min.js',
+
+		// Obsolete language file
+		'languages/akeebabackup/en-GB/en-GB.com_akeebabackup.ini',
 	];
 
 	/**
 	 * @var array Folders to remove from Pro
 	 */
 	protected $removeFoldersPro = [
+	];
 
+	/**
+	 * Files to remove only on WordPress, from both Core and Pro versions
+	 *
+	 * @var   string[]
+	 * @since 8.1.0
+	 */
+	protected $removeWordPressOnlyFilesAll = [
+		// HHVM is no longer running PHP files, so no warning necessary
+		'helpers/hhvm.php',
+
+		// Remove widgets
+		'helpers/boot_widget.php',
+		'helpers/Solo/Widget/BackupGlance.php',
+		'helpers/Solo/Widget/QuickBackup.php',
 	];
 
 	/**
@@ -545,12 +514,26 @@ class PostUpgradeScript
 			return;
 		}
 
+		// Invalidate the Composer files' OPCache.
+		if (function_exists('opcache_invalidate'))
+		{
+			@opcache_invalidate(APATH_BASE . '/../vendor/autoload.php', true);
+			@opcache_invalidate(APATH_BASE . '/../vendor/composer/autoload_classmap.php', true);
+			@opcache_invalidate(APATH_BASE . '/../vendor/composer/autoload_namespaces.php', true);
+			@opcache_invalidate(APATH_BASE . '/../vendor/composer/autoload_psr4.php', true);
+			@opcache_invalidate(APATH_BASE . '/../vendor/composer/autoload_real.php', true);
+			@opcache_invalidate(APATH_BASE . '/../vendor/composer/autoload_static.php', true);
+		}
+
+		// Migrate secretkey.php
+		$this->migrateSecretKeyFile();
+
 		// Special handling for running the Solo application inside WordPress.
 		if ($this->container->segment->get('insideCMS', false))
 		{
 			if (defined('WPINC'))
 			{
-				$this->_WordPressActions();
+				$this->WordPressActions();
 			}
 		}
 
@@ -569,10 +552,47 @@ class PostUpgradeScript
 	}
 
 	/**
+	 * Upgrades the frontend_enable option into the two separate legacyapi_enabled and jsonapi_enabled options.
+	 *
+	 * Before version 7 we had a single option to control both frontend backup APIs. Starting version 7 we can enable
+	 * and disable them separately.
+	 */
+	public function upgradeFrontendEnable()
+	{
+		$currentValue = $this->container->appConfig->get('options.frontend_enable', null);
+
+		if (is_null($currentValue))
+		{
+			return;
+		}
+
+		$this->container->appConfig->set('options.frontend_enable', null);
+		$this->container->appConfig->set('options.legacyapi_enabled', $currentValue);
+		$this->container->appConfig->set('options.jsonapi_enabled', $currentValue);
+
+		$this->container->appConfig->saveConfiguration();
+	}
+
+	/**
 	 * Removes obsolete files, depending on the edition (core or pro)
 	 */
 	protected function processRemoveFiles()
 	{
+		if (defined('WPINC'))
+		{
+			$basePath = rtrim($this->container->filesystemBase, '/' . DIRECTORY_SEPARATOR) . '/../';
+
+			foreach ($this->removeWordPressOnlyFilesAll as $file)
+			{
+				$filePath = $basePath . $file;
+
+				if (file_exists($filePath))
+				{
+					@unlink($filePath);
+				}
+			}
+		}
+
 		$removeFiles = $this->removeFilesAllVersions;
 
 		if (defined('AKEEBABACKUP_PRO') && AKEEBABACKUP_PRO)
@@ -609,11 +629,11 @@ class PostUpgradeScript
 	/**
 	 * Specific actions to execute when we are running inside WordPress
 	 */
-	private function _WordPressActions()
+	private function WordPressActions()
 	{
-		$this->_WordPressUpgradeToUtf8mb4();
-		$this->_WordPressRemoveFolders();
-		$this->_WordPressRemoveFiles();
+		$this->WordPressUpgradeToUtf8mb4();
+		$this->WordPressRemoveFolders();
+		$this->WordPressRemoveFiles();
 	}
 
 	/**
@@ -621,7 +641,7 @@ class PostUpgradeScript
 	 *
 	 * @return  void
 	 */
-	private function _WordPressRemoveFolders()
+	private function WordPressRemoveFolders()
 	{
 		$removeFolders = [
 			// Standalone platform
@@ -633,11 +653,13 @@ class PostUpgradeScript
 		// Remove WordPress-specific features from the Core release
 		if (defined('AKEEBABACKUP_PRO') && !AKEEBABACKUP_PRO)
 		{
-			$removeFolders = array_merge([
-				'helpers/assets/mu-plugins',
-				'wpcli'
+			$removeFolders = array_merge(
+				[
+					'helpers/assets/mu-plugins',
+					'wpcli',
 
-			], $removeFolders);
+				], $removeFolders
+			);
 		}
 
 		$fsBase = rtrim($this->container->filesystemBase, '/' . DIRECTORY_SEPARATOR) . '/../';
@@ -654,7 +676,7 @@ class PostUpgradeScript
 	 *
 	 * @return  void
 	 */
-	private function _WordPressRemoveFiles()
+	private function WordPressRemoveFiles()
 	{
 		$removeFiles = [
 			// Migrating INI files to .json files
@@ -698,10 +720,9 @@ class PostUpgradeScript
 	/**
 	 * Update WordPress tables to utf8mb4 if required
 	 */
-	private function _WordPressUpgradeToUtf8mb4()
+	private function WordPressUpgradeToUtf8mb4()
 	{
-		/** @var  wpdb $wpdb */
-		global $wpdb;
+		/** @var  wpdb $wpdb */ global $wpdb;
 
 		// Is it really WordPress?
 		if (!is_object($wpdb))
@@ -785,8 +806,9 @@ class PostUpgradeScript
 
 	/**
 	 * Migrates existing backup profiles. The changes currently made are:
-	 * – Change post-processing from "s3" (legacy) to "amazons3" (current version)
-	 * – Fix profiles with invalid embedded installer settings
+	 * * Change post-processing from "s3" (legacy) to "amazons3" (current version).
+	 * * Fix profiles with invalid embedded installer settings.
+	 * * Migrate to separate local and remote quota settings.
 	 *
 	 * @return  void
 	 */
@@ -794,9 +816,7 @@ class PostUpgradeScript
 	{
 		// Get a list of backup profiles
 		$db       = $this->container->db;
-		$query    = $db->getQuery(true)
-			->select($db->qn('id'))
-			->from($db->qn('#__ak_profiles'));
+		$query    = $db->getQuery(true)->select($db->qn('id'))->from($db->qn('#__ak_profiles'));
 		$profiles = $db->setQuery($query)->loadColumn();
 
 		// Normally this should never happen as we're supposed to have at least profile #1
@@ -812,14 +832,18 @@ class PostUpgradeScript
 			$dirty = false;
 
 			// Load the profile configuration
-			\Akeeba\Engine\Platform::getInstance()->load_configuration($profile);
-			$config = \Akeeba\Engine\Factory::getConfiguration();
+			Platform::getInstance()->load_configuration($profile);
+			$config = Factory::getConfiguration();
+
+			// Remove key protection
+			$protected = $config->getProtectedKeys();
+			$config->setProtectedKeys([]);
 
 			// -- Migrate obsolete "s3" engine to "amazons3"
-			$postProcType = $config->get('akeeba.advanced.postproc_engine', '');
-
-			if ($postProcType == 's3')
+			if ($config->get('akeeba.advanced.postproc_engine', '') == 's3')
 			{
+				$dirty = true;
+
 				$config->setKeyProtection('akeeba.advanced.postproc_engine', false);
 				$config->setKeyProtection('engine.postproc.amazons3.signature', false);
 				$config->setKeyProtection('engine.postproc.amazons3.accesskey', false);
@@ -839,52 +863,230 @@ class PostUpgradeScript
 				$config->set('engine.postproc.amazons3.bucket', $config->get('engine.postproc.s3.bucket'));
 				$config->set('engine.postproc.amazons3.directory', $config->get('engine.postproc.s3.directory'));
 				$config->set('engine.postproc.amazons3.rrs', $config->get('engine.postproc.s3.rrs'));
-				$config->set('engine.postproc.amazons3.customendpoint', $config->get('engine.postproc.s3.customendpoint'));
+				$config->set(
+					'engine.postproc.amazons3.customendpoint', $config->get('engine.postproc.s3.customendpoint')
+				);
 				$config->set('engine.postproc.amazons3.legacy', $config->get('engine.postproc.s3.legacy'));
-
-				$dirty = true;
 			}
 
 			// Fix profiles with invalid embedded installer settings
 			$embeddedInstaller = $config->get('akeeba.advanced.embedded_installer');
 
-			if (empty($embeddedInstaller) || ($embeddedInstaller == 'angie-joomla') || (
-					(substr($embeddedInstaller, 0, 5) != 'angie') && ($embeddedInstaller != 'none')
-				))
+			if (empty($embeddedInstaller) || ($embeddedInstaller == 'angie-joomla')
+			    || ((substr(
+				         $embeddedInstaller, 0, 5
+			         ) != 'angie')
+			        && ($embeddedInstaller != 'none')))
 			{
+				$dirty = true;
+
 				$config->setKeyProtection('akeeba.advanced.embedded_installer', false);
 				$config->set('akeeba.advanced.embedded_installer', 'angie');
-				$dirty = true;
 			}
+
+			// Transcribe the local quota to remote quota settings if the legacy "Enable remote quotas" option is on.
+			if ($config->get('akeeba.quota.remote', 0) == 1)
+			{
+				$dirty = true;
+
+				$config->set('akeeba.quota.remote', null);
+				$config->set('akeeba.quota.remotely.maxage.enable', $config->get('akeeba.quota.maxage.enable', 0));
+				$config->set('akeeba.quota.remotely.maxage.maxdays', $config->get('akeeba.quota.maxage.maxdays', 31));
+				$config->set('akeeba.quota.remotely.maxage.keepday', $config->get('akeeba.quota.maxage.keepday', 1));
+				$config->set('akeeba.quota.remotely.enable_size_quota', $config->get('akeeba.quota.enable_size_quota', 0));
+				$config->set('akeeba.quota.remotely.size_quota', $config->get('akeeba.quota.size_quota', 15728640));
+				$config->set('akeeba.quota.remotely.enable_count_quota', $config->get('akeeba.quota.enable_count_quota', 1));
+				$config->set('akeeba.quota.remotely.count_quota', $config->get('akeeba.quota.count_quota', 3));
+			}
+
+			// Restore key protection
+			$config->setProtectedKeys($protected);
 
 			// Save dirty records
 			if ($dirty)
 			{
-				\Akeeba\Engine\Platform::getInstance()->save_configuration($profile);
+				Platform::getInstance()->save_configuration($profile);
 			}
 		}
 	}
 
 	/**
-	 * Upgrades the frontend_enable option into the two separate legacyapi_enabled and jsonapi_enabled options.
+	 * Migrate the settings encryption key file, if needed
 	 *
-	 * Before version 7 we had a single option to control both frontend backup APIs. Starting version 7 we can enable
-	 * and disable them separately.
+	 * @return  void
+	 * @since   8.0.0
 	 */
-	public function upgradeFrontendEnable()
+	private function migrateSecretKeyFile(): void
 	{
-		$currentValue = $this->container->appConfig->get('options.frontend_enable', null);
+		$oldFile = $this->findBestSecretKeyFile();
+		$newFile = APATH_BASE . '/Solo/secretkey.php';
 
-		if (is_null($currentValue))
+		// Different secretkey.php when using WordPress
+		if (defined('ABSPATH'))
+		{
+			$newFile = rtrim(
+				            (defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : (rtrim(ABSPATH, '/') . '/wp-content')),
+				            '/'
+			            ) . '/akeebabackup_secretkey.php';
+		}
+
+		if (empty($oldFile) || !file_exists($oldFile))
 		{
 			return;
 		}
 
-		$this->container->appConfig->set('options.frontend_enable', null);
-		$this->container->appConfig->set('options.legacyapi_enabled', $currentValue);
-		$this->container->appConfig->set('options.jsonapi_enabled', $currentValue);
+		if ($oldFile !== $newFile)
+		{
+			if (@copy($oldFile, $newFile))
+			{
+				@unlink($oldFile);
+			}
+		}
 
-		$this->container->appConfig->saveConfiguration();
+		Factory::getSecureSettings()->setKeyFilename($newFile);
 	}
 
+	/**
+	 * Find the secret key file which decrypts the most backup profiles.
+	 *
+	 * @return  string|null  The path the best key file. NULL if there's no file, or encryption is disabled.
+	 * @since   8.1.0
+	 */
+	private function findBestSecretKeyFile(): ?string
+	{
+		// If encryption is not supported, or disabled, there's nothing I need to do. Right?
+		$secureSettings = Factory::getSecureSettings();
+
+		if (!$secureSettings->supportsEncryption())
+		{
+			return null;
+		}
+
+		// Extract the keys from the different possible files
+		$files = [
+			APATH_BASE . '/Solo/engine/secretkey.php',
+			APATH_BASE . '/Solo/secretkey.php',
+		];
+
+		// Different secretkey.php when using WordPress
+		if (defined('ABSPATH'))
+		{
+			$files[] = rtrim(
+				            (defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : (rtrim(ABSPATH, '/') . '/wp-content')),
+				            '/'
+			            ) . '/akeebabackup_secretkey.php';
+		}
+
+		$keys = array_combine(
+			$files,
+			array_map([$this, 'getSecretKeyFromFile'], $files)
+		);
+
+		// Remove empty keys (file cannot be read, or does not exist).
+		$keys = array_filter($keys);
+
+		// Get the backup profile configuration from the database
+		$platform = Platform::getInstance();
+		$db = $this->container->db;
+		try
+		{
+			$sql = $db->getQuery(true)
+				->select([
+					$db->quoteName('id'),
+					$db->quoteName('configuration'),
+				])
+				->from($db->qn($platform->tableNameProfiles));
+
+			$encryptedProfiles = $db->setQuery($sql)->loadAssocList('id', 'configuration');
+		}
+		catch (\Throwable $e)
+		{
+			return false;
+		}
+
+		// For each key file, try to decrypt the backup profiles and assign it the number of profiles it decrypted
+		$keys = array_map(function ($key) use ($encryptedProfiles, $secureSettings) {
+			$test = array_map(function($data) use ($secureSettings, $key) {
+				$data = $secureSettings->decryptSettings($data, $key);
+				try
+				{
+					$data = json_decode($data, true, 512, JSON_THROW_ON_ERROR);
+
+					if (!is_array($data) || empty($data))
+					{
+						return 0;
+					}
+				}
+				catch (\JsonException $e)
+				{
+					return 0;
+				}
+
+				return 1;
+			}, $encryptedProfiles);
+
+			return array_sum($test);
+		}, $keys);
+
+		// Rank key files by number of decrypted profiles, ascending (best key file is last)
+		asort($keys);
+
+		// Remove key files which failed to decrypt anything
+		$keys = array_filter($keys, fn($x) => $x > 0);
+
+		// No key files succeeded. Oof.
+		if (empty($keys))
+		{
+			return null;
+		}
+
+		// Get and return the highest ranking key file.
+		$files = array_keys($keys);
+
+		return array_pop($files);
+	}
+
+	/**
+	 * Extract the secret key from a key file without including it (since we cannot redeclare constants)
+	 *
+	 * @param   string  $filePath
+	 *
+	 * @return  string|null  The key, or NULL if the file is missing, unreadable, or of an invalid format.
+	 * @since   8.1.0
+	 */
+	private function getSecretKeyFromFile(string $filePath): ?string
+	{
+		// Make sure there is a file, and we can read its contents.
+		if (!@file_exists($filePath) || !@is_file($filePath) || !@is_readable($filePath))
+		{
+			return null;
+		}
+
+		$fileContents = @file_get_contents($filePath);
+
+		if ($fileContents === false)
+		{
+			return null;
+		}
+
+		// Try to locate the key value using a RegEx
+		$pattern = '/define\s*\(\s*(\'AKEEBA_SERVERKEY\'|"AKEEBA_SERVERKEY")\s*,\s*(\'.*\'|".*")\s*\)/';
+
+		if (!preg_match($pattern, $fileContents, $matches))
+		{
+			return null;
+		}
+
+		if (!isset($matches[2]) || !is_string($matches[2]) || empty($matches[2]))
+		{
+			return null;
+		}
+
+		// The matched string is either `'SOMETHING'` or `"SOMETHING"`. We need to find the quote type and remove it.
+		$quote = substr($matches[2], 0, 1);
+
+		$encodedKey = trim($matches[2], $quote);
+
+		return base64_decode($encodedKey);
+	}
 }

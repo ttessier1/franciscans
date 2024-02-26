@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -66,11 +66,13 @@ switch ($exc->getCode())
 	<script type="text/javascript" src="<?php echo Uri::base(); ?>media/js/fef/menu.min.js"></script>
 	<script type="text/javascript" src="<?php echo Uri::base(); ?>media/js/fef/tabs.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="<?php echo Uri::base(); ?>/media/css/fef.min.css" />
+	<link rel="stylesheet" type="text/css" href="<?php echo Uri::base(); ?>/media/css/dark.min.css" />
 	<?php if (defined('AKEEBADEBUG') && AKEEBADEBUG && @file_exists(APATH_BASE . '/media/css/theme.css')): ?>
 	<link rel="stylesheet" type="text/css" href="<?php echo Uri::base(); ?>/media/css/theme.css" />
 	<?php else: ?>
 	<link rel="stylesheet" type="text/css" href="<?php echo Uri::base(); ?>/media/css/theme.min.css" />
 	<?php endif; ?>
+	<link rel="stylesheet" type="text/css" href="<?php echo Uri::base(); ?>/media/css/theme_dark.min.css" />
 </head>
 <body class="akeeba-renderer-fef" id="error-wrap">
     <div class="akeeba-panel--danger">
@@ -93,6 +95,19 @@ switch ($exc->getCode())
             </h4>
             <p>Debug backtrace</p>
             <pre class="bg-info"><?php echo $exc->getTraceAsString(); ?></pre>
+
+			<?php while($exc = $exc->getPrevious()): ?>
+				<hr/>
+				<h4>Previous exception</h4>
+				<h5 class="text-info">
+				    <?= get_class($exc) ?> <?php echo $exc->getCode() . ' :: ' . $exc->getMessage(); ?>
+					in
+				    <?php echo $exc->getFile() ?>
+					<span class="label label-info">L <?php echo $exc->getLine(); ?></span>
+				</h5>
+				<p>Debug backtrace</p>
+				<pre class="bg-info"><?php echo $exc->getTraceAsString(); ?></pre>
+			<?php endwhile ?>
 	    <?php else: ?>
             <p id="error-message-text">
 	            <?= get_class($exc) ?>: <?php echo $exc->getMessage(); ?>

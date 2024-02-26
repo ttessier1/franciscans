@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -24,10 +24,10 @@ class Wordpress
 	{
 		global $wpdb;
 
-		$options['connection'] = $wpdb->dbh;
+		$options['connection'] = (is_object($wpdb) && isset($wpdb->dbh)) ? $wpdb->dbh : null;
 		$driver = '\\Akeeba\\Engine\\Driver\\Mysqli';
 
-		if (!is_object($wpdb->dbh) || !($wpdb->dbh instanceof \mysqli))
+		if (!is_object($options['connection']) || !($options['connection'] instanceof \mysqli))
 		{
 			$driver = '\\Akeeba\\Engine\\Driver\\' .
 				(function_exists('mysql_connect') ? 'Mysql' : 'Mysqli');

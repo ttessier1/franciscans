@@ -38,7 +38,7 @@ abstract class FormBuilder implements FormBuilderInterface {
 	 *
 	 * @var array
 	 */
-	protected $form_data = array();
+	protected $form_data = [];
 
 	/**
 	 * Integrations constructor.
@@ -52,11 +52,11 @@ abstract class FormBuilder implements FormBuilderInterface {
 		$this->core = $core;
 
 		if ( ! empty( $_GET['form_id'] ) ) { // phpcs:ignore
-			$this->form_data = \wpforms()->form->get(
+			$this->form_data = wpforms()->get( 'form' )->get(
 				\absint( $_GET['form_id'] ), // phpcs:ignore
-				array(
+				[
 					'content_only' => true,
-				)
+				]
 			);
 		}
 
@@ -71,11 +71,11 @@ abstract class FormBuilder implements FormBuilderInterface {
 	protected function init_hooks() {
 
 		// Register builder HTML template(s).
-		\add_action( 'wpforms_builder_print_footer_scripts', array( $this, 'builder_templates' ), 10 );
-		\add_action( 'wpforms_builder_print_footer_scripts', array( $this, 'builder_custom_templates' ), 11 );
+		add_action( 'wpforms_builder_print_footer_scripts', [ $this, 'builder_templates' ], 10 );
+		add_action( 'wpforms_builder_print_footer_scripts', [ $this, 'builder_custom_templates' ], 11 );
 
 		// Process builder AJAX requests.
-		\add_action( "wp_ajax_wpforms_builder_provider_ajax_{$this->core->slug}", array( $this, 'process_ajax' ) );
+		add_action( "wp_ajax_wpforms_builder_provider_ajax_{$this->core->slug}", [ $this, 'process_ajax' ] );
 
 		/*
 		 * Enqueue assets.
@@ -83,9 +83,9 @@ abstract class FormBuilder implements FormBuilderInterface {
 		if (
 			( ! empty( $_GET['page'] ) && $_GET['page'] === 'wpforms-builder' ) && // phpcs:ignore
 			! empty( $_GET['form_id'] ) && // phpcs:ignore
-			\is_admin()
+			is_admin()
 		) {
-			\add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
+			add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
 		}
 	}
 
@@ -98,14 +98,14 @@ abstract class FormBuilder implements FormBuilderInterface {
 	public function builder_templates() {
 
 		$cl_builder_block = wpforms_conditional_logic()->builder_block(
-			array(
+			[
 				'form'       => $this->form_data,
 				'type'       => 'panel',
 				'parent'     => 'providers',
 				'panel'      => esc_attr( $this->core->slug ),
 				'subsection' => '%connection_id%',
 				'reference'  => esc_html__( 'Marketing provider connection', 'wpforms-lite' ),
-			),
+			],
 			false
 		);
 		?>
@@ -129,7 +129,7 @@ abstract class FormBuilder implements FormBuilderInterface {
 										<# if ( ! _.isEmpty( data.provider.fields ) ) { #>
 											<select class="wpforms-builder-provider-connection-field-name"
 												name="providers[{{ data.provider.slug }}][{{ data.connection.id }}][fields_meta][{{ meta_id }}][name]">
-												<option value=""><?php \esc_attr_e( '--- Select Field ---', 'wpforms-lite' ); ?></option>
+												<option value=""><# if ( ! _.isEmpty( data.provider.placeholder ) ) { #>{{ data.provider.placeholder }}<# } else { #><?php esc_html_e( '--- Select Field ---', 'wpforms-lite' ); ?><# } #></option>
 
 												<# _.each( data.provider.fields, function( field_name, field_id ) { #>
 													<option value="{{ field_id }}"
@@ -151,16 +151,16 @@ abstract class FormBuilder implements FormBuilderInterface {
 									<td>
 										<select class="wpforms-builder-provider-connection-field-value"
 											name="providers[{{ data.provider.slug }}][{{ data.connection.id }}][fields_meta][{{ meta_id }}][field_id]">
-											<option value=""><?php \esc_html_e( '--- Select Field ---', 'wpforms-lite' ); ?></option>
+											<option value=""><?php esc_html_e( '--- Select Form Field ---', 'wpforms-lite' ); ?></option>
 
 											<# _.each( data.fields, function( field, key ) { #>
 												<option value="{{ field.id }}"
 														<# if ( field.id === item.field_id ) { #>selected="selected"<# } #>
 												>
-												<# if ( ! wpf.empty( field.label ) ) { #>
-													{{ field.label }}
+												<# if ( ! _.isUndefined( field.label ) && field.label.toString().trim() !== '' ) { #>
+													{{ field.label.toString().trim() }}
 												<# } else { #>
-													{{ window.wpforms_builder.field + ' #' + field.id }}
+													{{ wpforms_builder.field + ' #' + key }}
 												<# } #>
 												</option>
 											<# } ); #>
@@ -186,7 +186,7 @@ abstract class FormBuilder implements FormBuilderInterface {
 									<# if ( ! _.isEmpty( data.provider.fields ) ) { #>
 										<select class="wpforms-builder-provider-connection-field-name"
 											name="providers[{{ data.provider.slug }}][{{ data.connection.id }}][fields_meta][0][name]">
-											<option value=""><?php \esc_attr_e( '--- Select Field ---', 'wpforms-lite' ); ?></option>
+											<option value=""><# if ( ! _.isEmpty( data.provider.placeholder ) ) { #>{{ data.provider.placeholder }}<# } else { #><?php esc_html_e( '--- Select Field ---', 'wpforms-lite' ); ?><# } #></option>
 
 											<# _.each( data.provider.fields, function( field_name, field_id ) { #>
 												<option value="{{ field_id }}">
@@ -206,14 +206,14 @@ abstract class FormBuilder implements FormBuilderInterface {
 								<td>
 									<select class="wpforms-builder-provider-connection-field-value"
 										name="providers[{{ data.provider.slug }}][{{ data.connection.id }}][fields_meta][0][field_id]">
-										<option value=""><?php \esc_html_e( '--- Select Field ---', 'wpforms-lite' ); ?></option>
+										<option value=""><?php esc_html_e( '--- Select Form Field ---', 'wpforms-lite' ); ?></option>
 
 										<# _.each( data.fields, function( field, key ) { #>
 											<option value="{{ field.id }}">
-												<# if ( ! wpf.empty( field.label ) ) { #>
-													{{ field.label }}
+												<# if ( ! _.isUndefined( field.label ) && field.label.toString().trim() !== '' ) { #>
+													{{ field.label.toString().trim() }}
 												<# } else { #>
-													{{ window.wpforms_builder.field + ' #' + field.id }}
+													{{ wpforms_builder.field + ' #' + key }}
 												<# } #>
 											</option>
 										<# } ); #>
@@ -268,7 +268,7 @@ abstract class FormBuilder implements FormBuilderInterface {
 		\wp_enqueue_script(
 			'wpforms-admin-builder-templates',
 			WPFORMS_PLUGIN_URL . "assets/js/components/admin/builder/templates{$min}.js",
-			array( 'wp-util' ),
+			[ 'wp-util' ],
 			WPFORMS_VERSION,
 			true
 		);
@@ -276,7 +276,7 @@ abstract class FormBuilder implements FormBuilderInterface {
 		\wp_enqueue_script(
 			'wpforms-admin-builder-providers',
 			WPFORMS_PLUGIN_URL . "assets/js/components/admin/builder/providers{$min}.js",
-			array( 'wpforms-utils', 'wpforms-builder', 'wpforms-admin-builder-templates' ),
+			[ 'wpforms-utils', 'wpforms-builder', 'wpforms-admin-builder-templates' ],
 			WPFORMS_VERSION,
 			true
 		);
@@ -295,14 +295,14 @@ abstract class FormBuilder implements FormBuilderInterface {
 		// Check for permissions.
 		if ( ! \wpforms_current_user_can( 'edit_forms' ) ) {
 			\wp_send_json_error(
-				array(
+				[
 					'error' => \esc_html__( 'You do not have permission to perform this action.', 'wpforms-lite' ),
-				)
+				]
 			);
 		}
 
 		// Process required values.
-		$error = array( 'error' => \esc_html__( 'Something went wrong while performing an AJAX request.', 'wpforms-lite' ) );
+		$error = [ 'error' => esc_html__( 'Something went wrong while performing an AJAX request.', 'wpforms-lite' ) ];
 
 		if (
 			empty( $_POST['id'] ) ||
@@ -312,16 +312,19 @@ abstract class FormBuilder implements FormBuilderInterface {
 		}
 
 		$form_id = (int) $_POST['id'];
-		$task    = \sanitize_key( $_POST['task'] );
-		$data    = null;
+		$task    = sanitize_key( $_POST['task'] );
 
-		// Setup form data based on the ID, that we got from AJAX request.
-		$this->form_data = \wpforms()->form->get(
-			$form_id,
-			array(
-				'content_only' => true,
-			)
-		);
+		$revisions = wpforms()->get( 'revisions' );
+		$revision  = $revisions ? $revisions->get_revision() : null;
+
+		if ( $revision ) {
+			// Setup form data based on the revision_id, that we got from AJAX request.
+			$this->form_data = wpforms_decode( $revision->post_content );
+		} else {
+			// Setup form data based on the ID, that we got from AJAX request.
+			$form_handler    = wpforms()->get( 'form' );
+			$this->form_data = $form_handler ? $form_handler->get( $form_id, [ 'content_only' => true ] ) : [];
+		}
 
 		// Do not allow to proceed further, as form_id may be incorrect.
 		if ( empty( $this->form_data ) ) {
@@ -353,12 +356,12 @@ abstract class FormBuilder implements FormBuilderInterface {
 			$configured = 'configured';
 		}
 
-		$classes = array(
+		$classes = [
 			'wpforms-panel-sidebar-section',
 			'icon',
 			$configured,
 			'wpforms-panel-sidebar-section-' . $this->core->slug,
-		);
+		];
 		?>
 
 		<a href="#" class="<?php echo \esc_attr( \implode( ' ', $classes ) ); ?>"
@@ -390,7 +393,19 @@ abstract class FormBuilder implements FormBuilderInterface {
 		<div class="wpforms-panel-content-section wpforms-builder-provider wpforms-panel-content-section-<?php echo \esc_attr( $this->core->slug ); ?>" id="<?php echo \esc_attr( $this->core->slug ); ?>-provider" data-provider="<?php echo \esc_attr( $this->core->slug ); ?>">
 
 			<!-- Provider content goes here. -->
-			<?php $this->display_content_header(); ?>
+			<?php
+
+			$this->display_content_header();
+
+			$form_id = ! empty( $this->form_data['id'] ) ? $this->form_data['id'] : '';
+
+			self::display_content_default_screen(
+				Status::init( $this->core->slug )->is_ready( $form_id ),
+				$this->core->slug,
+				$this->core->name,
+				$this->core->icon
+			);
+			?>
 
 			<div class="wpforms-builder-provider-body">
 				<div class="wpforms-provider-connections-wrap wpforms-clear">
@@ -404,6 +419,45 @@ abstract class FormBuilder implements FormBuilderInterface {
 	}
 
 	/**
+	 * Display provider default screen.
+	 *
+	 * @since 1.6.8
+	 *
+	 * @param bool   $is_connected True if connections are configured.
+	 * @param string $slug         Provider slug.
+	 * @param string $name         Provider name.
+	 * @param string $icon         Provider icon.
+	 */
+	public static function display_content_default_screen( $is_connected, $slug, $name, $icon ) {
+
+		// Hide provider default settings screen when it's already connected.
+		$class = $is_connected ? ' wpforms-hidden' : '';
+		?>
+		<div class="wpforms-builder-provider-connections-default<?php echo esc_attr( $class ); ?>">
+			<img src="<?php echo esc_url( $icon ); ?>">
+			<div class="wpforms-builder-provider-settings-default-content">
+				<?php
+				/*
+				 * Allows developers to change the default content of the provider's settings default screen.
+				 *
+				 * @since 1.6.8
+				 *
+				 * @param string $content Content of the provider's settings default screen.
+				 */
+				echo apply_filters( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+					"wpforms_providers_provider_settings_formbuilder_display_content_default_screen_{$slug}",
+					sprintf( /* translators: %s - provider name. */
+						'<p>' . esc_html__( 'Get the most out of WPForms &mdash; use it with an active %s account.', 'wpforms-lite' ) . '</p>',
+						esc_html( $name )
+					)
+				);
+				?>
+			</div>
+		</div>
+		<?php
+	}
+
+	/**
 	 * Section content header.
 	 *
 	 * @since 1.4.7
@@ -413,12 +467,12 @@ abstract class FormBuilder implements FormBuilderInterface {
 		$is_configured = Status::init( $this->core->slug )->is_configured();
 		?>
 
-		<div class="wpforms-builder-provider-title">
+		<div class="wpforms-builder-provider-title wpforms-panel-content-section-title">
 
 			<?php echo \esc_html( $this->core->name ); ?>
 
 			<span class="wpforms-builder-provider-title-spinner">
-				<i class="fa fa-refresh fa-spin"></i>
+				<i class="wpforms-loading-spinner wpforms-loading-md wpforms-loading-inline"></i>
 			</span>
 
 			<button class="wpforms-builder-provider-title-add js-wpforms-builder-provider-connection-add <?php echo $is_configured ? '' : 'hidden'; ?>"

@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -11,8 +11,6 @@ use Akeeba\Engine\Factory;
 use Akeeba\Engine\Platform;
 use Akeeba\Engine\Util\RandomValue;
 use AkeebaBackupWPUpdater;
-use Awf\Application\Application;
-use Awf\Mvc\Model;
 use Awf\Text\Text;
 use Exception;
 use RuntimeException;
@@ -26,7 +24,7 @@ class Main extends ControllerDefault
 		$this->csrfProtection();
 
 		// Switch the active profile
-		$session          = Application::getInstance()->getContainer()->segment;
+		$session          = $this->getContainer()->segment;
 		$session->profile = $this->input->getInt('profile', 1);
 
 		// Redirect
@@ -59,7 +57,7 @@ class Main extends ControllerDefault
 		$inCMS = $this->container->segment->get('insideCMS', false);
 
 		/** @var Update $updateModel */
-		$updateModel      = Model::getTmpInstance($this->container->application_name, 'Update', $this->container);
+		$updateModel      = $this->container->mvcFactory->makeTempModel('Update');
 		$ret['hasUpdate'] = $updateModel->getUpdateInformation()->get('hasUpdate', false);
 		$ret['version']   = $updateModel->getUpdateInformation()->get('version', 'dev');
 
@@ -84,7 +82,7 @@ class Main extends ControllerDefault
 HTML;
 		}
 
-		echo '###' . json_encode($ret) . '###';
+		echo '#"\#\"#' . json_encode($ret) . '#"\#\"#';
 		$this->container->application->close();
 	}
 
@@ -114,7 +112,7 @@ HTML;
 			$transient = (object) [
 				'response' => [],
 			];
-			AkeebaBackupWPUpdater::getupdates($transient);
+			AkeebaBackupWPUpdater::getUpdateInformation($transient);
 		}
 
 		// Redirect
@@ -156,6 +154,8 @@ HTML;
 		$config->saveConfiguration();
 
 		$msg = Text::sprintf('COM_AKEEBA_CPANEL_MSG_FESECRETWORD_RESET', $newSecret);
+
+		$session->set('newSecretWord', null);
 
 		$url = $this->container->router->route('index.php?view=Main');
 		$this->setRedirect($url, $msg);
@@ -245,7 +245,7 @@ HTML;
 
 		@ob_end_clean();
 
-		echo '###' . json_encode($result) . '###';
+		echo '#"\#\"#' . json_encode($result) . '#"\#\"#';
 
 		$this->container->application->close();
 	}
@@ -335,10 +335,23 @@ HTML;
 		}
 
 		// Run the update scripts, if necessary
-		if ($model->postUpgradeActions())
+		if ($model->postUpgradeActions(false))
 		{
 			$url = $this->container->router->route('index.php?view=main');
 			$this->container->application->redirect($url);
+		}
+
+		// Let's make sure the temporary and output directories are set correctly and writable...
+		/** @var \Solo\Model\Wizard $wizmodel */
+		$wizmodel = $this->getContainer()->mvcFactory->makeTempModel('Wizard');
+		$wizmodel->autofixDirectories();
+
+		// Rebase Off-site Folder Inclusion filters to use site path variables
+		if (class_exists('\Solo\Model\Extradirs'))
+		{
+
+			$incFoldersModel = $this->getContainer()->mvcFactory->makeTempModel('Extradirs');
+			$incFoldersModel->rebaseFiltersToSiteDirs();
 		}
 
 		// Apply settings encryption preferences

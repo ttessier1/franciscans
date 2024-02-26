@@ -87,6 +87,15 @@ class Task {
 	private $interval;
 
 	/**
+	 * Task meta.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @var Meta
+	 */
+	private $meta;
+
+	/**
 	 * Task constructor.
 	 *
 	 * @since 1.5.9
@@ -103,6 +112,7 @@ class Task {
 		}
 
 		$this->action = sanitize_key( $action );
+		$this->meta   = new Meta();
 
 		if ( empty( $this->action ) ) {
 			throw new \UnexpectedValueException( 'Task action cannot be empty.' );
@@ -192,8 +202,7 @@ class Task {
 
 		// Save data to tasks meta table.
 		if ( $this->params !== null ) {
-			$task_meta     = new Meta();
-			$this->meta_id = $task_meta->add(
+			$this->meta_id = $this->meta->add(
 				[
 					'action' => $this->action,
 					'data'   => $this->params,
@@ -207,6 +216,7 @@ class Task {
 
 		// Prevent 500 errors when Action Scheduler tables don't exist.
 		try {
+
 			switch ( $this->type ) {
 				case self::TYPE_ASYNC:
 					$action_id = $this->register_async();
@@ -297,15 +307,27 @@ class Task {
 	 *
 	 * @return null|bool|string Null if no matching action found,
 	 *                          false if AS library is missing,
+	 *                          true if scheduled task has no params,
 	 *                          string of the scheduled action ID if a scheduled action was found and unscheduled.
 	 */
 	public function cancel() {
 
-		// Exit if AS function does not exist.
 		if ( ! function_exists( 'as_unschedule_all_actions' ) ) {
 			return false;
 		}
 
-		return as_unschedule_all_actions( $this->action );
+		if ( $this->params === null ) {
+			as_unschedule_all_actions( $this->action );
+
+			return true;
+		}
+
+		$this->meta_id = $this->meta->get_meta_id( $this->action, $this->params );
+
+		if ( $this->meta_id === null ) {
+			return null;
+		}
+
+		return as_unschedule_action( $this->action, [ 'tasks_meta_id' => $this->meta_id ], Tasks::GROUP );
 	}
 }

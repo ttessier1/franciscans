@@ -1,16 +1,20 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
 namespace Solo\Application;
 
+use Awf\Container\ContainerAwareInterface;
+use Awf\Container\ContainerAwareTrait;
 use Awf\User\Authentication;
 
-abstract class UserAuthenticationOtep extends Authentication
+abstract class UserAuthenticationOtep extends Authentication implements ContainerAwareInterface
 {
+	use ContainerAwareTrait;
+
 	/**
 	 * Validates an OTEP. If the OTEP is valid it will be removed from the list of OTEPs and the user account will be
 	 * saved with the updated list of OTEPs.
@@ -60,7 +64,7 @@ abstract class UserAuthenticationOtep extends Authentication
 		// Save the modified user
 		$this->user->getParameters()->set('tfa.otep', $temp);
 
-		$userManager = \Awf\Application\Application::getInstance()->getContainer()->userManager;
+		$userManager = $this->getContainer()->userManager;
 		$userManager->saveUser($this->user);
 
 		// OK, we can authenticate

@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -87,7 +87,7 @@ class Html extends View
 		}
 
 		// Load the Javascript
-		Template::addJs('media://js/solo/log.min.js');
+		Template::addJs('media://js/solo/log.min.js', $this->container->application);
 
 		$document = $this->container->application->getDocument();
 		$src      = $this->container->router->route('index.php?view=Log&task=iframe&format=raw&tag=' . urlencode($this->tag));

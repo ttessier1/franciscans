@@ -1,0 +1,55 @@
+================================================================================
+Reading from remote (S)FTP
+================================================================================
+The path override would need to be ftp://path/to/site or sftp://path/to/site
+The other connection information would be additional information entered in the root override / root definition part of the config page
+
+--------------------------------------------------------------------------------
+*** I forgot about filtering :( ***
+--------------------------------------------------------------------------------
+
+We use the filters everywhere to check whether a directory has to be scanned or a file to be backed up
+
+Pack::getCleanDirectoryComponents
+Akeeba\Engine\Filter\Base::treatDirectory
+
+We also have the interface for letting the user interactively filter files / directories
+
+We also have inclusion filters
+
+All of these would require support for (S)FTP :/
+
+
+--------------------------------------------------------------------------------
+Archivers
+--------------------------------------------------------------------------------
+BaseArchiver
+    443: $udata = @file_get_contents($sourceNameOrData);
+    584: $sourceFilePointer = @fopen($sourceNameOrData, "rb");
+
+Jps
+    776: $zdatafp = @fopen($sourceNameOrData, "rb");
+
+Directftp
+Directsftp
+Directftpcurl
+Directsftpcurl
+    upload() needs to support fake remote file pointers (sftp://path/to/file). Is it feasible?
+
+Zipnative
+    Can it support translated fake remote pointers at all...?
+
+--------------------------------------------------------------------------------
+Filesystem scanners
+--------------------------------------------------------------------------------
+Large and Smart
+    Incompatible. Map them to their Remote counterparts (LargeRemote and SmartRemote; they will not be selectable in the interface).
+
+LargeRemote and SmartRemote
+    TODO: How do I list the contents of remote directories?
+
+--------------------------------------------------------------------------------
+Oracle (for Solo's wizard)
+--------------------------------------------------------------------------------
+
+TODO

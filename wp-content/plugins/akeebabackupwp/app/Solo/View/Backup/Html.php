@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -39,13 +39,7 @@ class Html extends View
 
 	public $profileName;
 
-	public $showJPSPassword = 0;
-
-	public $jpsPassword;
-
-	public $showANGIEPassword;
-
-	public $ANGIEPassword;
+	public $hasANGIEPassword;
 
 	public $autoStart;
 
@@ -91,7 +85,7 @@ class Html extends View
 		$model = $this->getModel();
 
 		// Load the Status Helper
-		$helper = Status::getInstance();
+		$helper = Status::getInstance($this->container);
 
 		// Determine default description
 		$default_description = $this->getDefaultDescription();
@@ -120,16 +114,7 @@ class Html extends View
 		$this->unwriteableOutput            = $unwritableOutput;
 		$this->autoStart                    = $model->getState('autostart', 0, 'boolean');
 		$this->promptForConfigurationWizard = $engineConfiguration->get('akeeba.flag.confwiz', 0) == 0;
-
-		if ($engineConfiguration->get('akeeba.advanced.archiver_engine', 'jpa') == 'jps')
-		{
-			$this->showJPSPassword = 1;
-			$this->jpsPassword     = $engineConfiguration->get('engine.archiver.jps.key', '');
-		}
-
-		// Always show ANGIE password: we add that feature to the Core version as well
-		$this->showANGIEPassword = 1;
-		$this->ANGIEPassword     = $engineConfiguration->get('engine.installer.angie.key', '');
+		$this->hasANGIEPassword = !empty(trim($engineConfiguration->get('engine.installer.angie.key', '')));
 
 		// Push the return URL for POST redirects
 		$this->returnForm = $model->getState('returnform', '');
@@ -152,7 +137,7 @@ class Html extends View
 
 		// Push the list of profiles
 		/** @var Main $cpanelModel */
-		$cpanelModel       = Model::getInstance($this->container->application_name, 'Main', $this->container);
+		$cpanelModel       = $this->container->mvcFactory->makeModel('Main');
 		$this->profileList = $cpanelModel->getProfileList();
 
 		if (!$this->hasCriticalErrors)
@@ -161,15 +146,16 @@ class Html extends View
 		}
 
 		// Push language strings to Javascript
-		Text::script('COM_AKEEBA_BACKUP_TEXT_LASTRESPONSE');
-		Text::script('COM_AKEEBA_BACKUP_TEXT_BACKUPSTARTED');
-		Text::script('COM_AKEEBA_BACKUP_TEXT_BACKUPFINISHED');
-		Text::script('COM_AKEEBA_BACKUP_TEXT_BACKUPHALT');
-		Text::script('COM_AKEEBA_BACKUP_TEXT_BACKUPRESUME');
-		Text::script('COM_AKEEBA_BACKUP_TEXT_BACKUPHALT_DESC');
-		Text::script('COM_AKEEBA_BACKUP_TEXT_BACKUPFAILED');
-		Text::script('COM_AKEEBA_BACKUP_TEXT_BACKUPWARNING');
-		Text::script('COM_AKEEBA_BACKUP_TEXT_AVGWARNING');
+		$doc = $this->container->application->getDocument();
+		$doc->lang('COM_AKEEBA_BACKUP_TEXT_LASTRESPONSE');
+		$doc->lang('COM_AKEEBA_BACKUP_TEXT_BACKUPSTARTED');
+		$doc->lang('COM_AKEEBA_BACKUP_TEXT_BACKUPFINISHED');
+		$doc->lang('COM_AKEEBA_BACKUP_TEXT_BACKUPHALT');
+		$doc->lang('COM_AKEEBA_BACKUP_TEXT_BACKUPRESUME');
+		$doc->lang('COM_AKEEBA_BACKUP_TEXT_BACKUPHALT_DESC');
+		$doc->lang('COM_AKEEBA_BACKUP_TEXT_BACKUPFAILED');
+		$doc->lang('COM_AKEEBA_BACKUP_TEXT_BACKUPWARNING');
+		$doc->lang('COM_AKEEBA_BACKUP_TEXT_AVGWARNING');
 
 		$document = $this->container->application->getDocument();
 		$router   = $this->getContainer()->router;
@@ -182,8 +168,7 @@ class Html extends View
 		$document->addScriptOptions('akeeba.Backup.defaultDescription', $this->defaultDescription);
 		$document->addScriptOptions('akeeba.Backup.currentDescription', empty($this->description) ? $this->defaultDescription : $this->description);
 		$document->addScriptOptions('akeeba.Backup.currentComment', $this->comment);
-		$document->addScriptOptions('akeeba.Backup.config_angiekey', $this->ANGIEPassword);
-		$document->addScriptOptions('akeeba.Backup.jpsKey', $this->showJPSPassword ? $this->jpsPassword : '');
+		$document->addScriptOptions('akeeba.Backup.hasAngieKey', $this->hasANGIEPassword);
 		$document->addScriptOptions('akeeba.Backup.resume.enabled', (bool) $autoResume);
 		$document->addScriptOptions('akeeba.Backup.resume.timeout', (int) $autoResumeTimeout);
 		$document->addScriptOptions('akeeba.Backup.resume.maxRetries', (int) $autoResumeRetries);

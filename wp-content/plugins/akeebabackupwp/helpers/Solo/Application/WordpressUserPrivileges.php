@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -47,7 +47,7 @@ class WordpressUserPrivileges extends Privilege
 
 		// Single site defaults:
 		// -- Backup privilege: editor and above
-		$this->privileges['backup'] = $isEditor;
+		$this->privileges['backup'] = $isAdmin;
 		// -- Download privilege: administrators and above
 		$this->privileges['download'] = $isAdmin;
 		// -- Configure privilege: administrator and above

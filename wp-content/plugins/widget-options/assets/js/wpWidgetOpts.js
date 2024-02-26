@@ -55,7 +55,7 @@ wpWidgetOpts = {
 
 			//add link to settings page on title
 			if( title.length > 0 ){
-				title.after('<a href="'+ widgetopts10n.opts_page +'" class="page-title-action hide-if-no-customize">'+ widgetopts10n.translation.manage_settings +'</a>');
+				title.after('<a href="'+ widgetopts10n.opts_page +'" class="page-title-action hide-if-no-customize widgetopts-super">'+ widgetopts10n.translation.manage_settings +'</a>');
 			}
 
 			//live search filter
@@ -70,6 +70,8 @@ wpWidgetOpts = {
 			//add sidebar options
 			self.sidebarOptions();
 			self.removeSidebarWidgets();
+			self.initPageDropdown('');
+			self.initTaxonomyDropdown('');
 
 	},
 	loaded : function( widget, action ){
@@ -170,9 +172,12 @@ wpWidgetOpts = {
 				$(this).find( selectedsettings ).val( $(this).tabs('option', 'active') );
 			}
 		});
+
+		this.initPageDropdown(widget_id);
+		this.initTaxonomyDropdown(widget_id);
 	},
 	live_search : function(){
-		if ( typeof $.fn.liveFilter !== 'undefined' && $.isFunction( $.fn.liveFilter ) && $( '#widgetopts-widgets-search' ).length > 0 ) {
+		if ( typeof $.fn.liveFilter !== 'undefined' && $( '#widgetopts-widgets-search' ).length > 0 ) {
 			// Add separator to distinguish between visible and hidden widgets
 			$('.widget:last-of-type').after('<div class="widgetopts-separator" />');
 
@@ -260,7 +265,7 @@ wpWidgetOpts = {
 			var $element 	= $( element ),
 				name 		= $element.find( '.sidebar-name h2' ).text(),
 				id 			= $element.find( '.widgets-sortables' ).attr( 'id' ),
-				li 			= $('<li tabindex="0">').text( $.trim( name ) );
+				li 			= $('<li tabindex="0">').text(name.trim());
 
 			if ( index === 0 ) {
 				li.addClass( 'widgetopts-chooser-selected' );
@@ -375,8 +380,9 @@ wpWidgetOpts = {
 		var self = this;
 		if( widgetopts10n.sidebaropts.length > 0 ){
 			$( '#widgets-right .widgets-holder-wrap' ).each( function( index, element ) {
+				var sidebar_opts_h2 = $(this).find('.widgets-sortables h2').text();
 				dl_link = widgetopts10n.sidebaropts.replace( '__sidebaropts__', $(this).find('.widgets-sortables').attr('id') );
-				dl_link = dl_link.replace( '__sidebar_opts__', $.trim( $(this).find('.widgets-sortables h2').text() ) );
+				dl_link = dl_link.replace( '__sidebar_opts__', sidebar_opts_h2.trim() );
 				$(this).append( dl_link );
 			});
 		}
@@ -412,6 +418,71 @@ wpWidgetOpts = {
 
 			e.preventDefault();
 		});
+	},
+	initPageDropdown : function(widget_id) {
+		var args = {
+			ajax: {
+		    	url: widgetopts10n.ajax_url,
+		    	dataType: 'json',
+		    	delay: 250,
+		    	type: 'POST',
+		    	data: function (params) {
+			    	var query = {
+			        	action: 'widgetopts_ajax_page_search',
+			        	term: params.term
+			      	}
+
+			      	return query;
+			    }
+		  	},
+		  	placeholder: 'Search for Pages',
+		  	minimumInputLength: 3,
+		  	language: {
+		        searching: function() {
+		            return 'Searching...';
+		        }
+		    },
+		}
+
+		if ( widget_id != '' ) {
+			$( widget_id ).find( '.extended-widget-opts-select2-page-dropdown' ).select2(args);
+		}
+		else {
+			$( '.widget-liquid-right .extended-widget-opts-select2-page-dropdown' ).select2(args);
+		}
+	},
+	initTaxonomyDropdown : function(widget_id) {
+		var args = {
+			ajax: {
+		    	url: widgetopts10n.ajax_url,
+		    	dataType: 'json',
+		    	delay: 250,
+		    	type: 'POST',
+		    	data: function (params) {
+			    	var query = {
+			        	action: 'widgetopts_ajax_taxonomy_search',
+			        	term: params.term,
+			        	taxonomy: $(this).data('taxonomy')
+			      	}
+
+			      	return query;
+			    }
+		  	},
+		  	placeholder: 'Search for Terms',
+		  	minimumInputLength: 3,
+		  	language: {
+		        searching: function() {
+		            return 'Searching...';
+		        }
+		    },
+		}
+
+		if ( widget_id != '' ) {
+			$( widget_id ).find( '.extended-widget-opts-select2-taxonomy-dropdown' ).select2(args);
+		}
+		else {
+			$( '.widget-liquid-right .extended-widget-opts-select2-taxonomy-dropdown' ).select2(args);
+		}
 	}
 };
 

@@ -10,7 +10,12 @@
  * @since 2.6
  */
 class PLL_AS3CF {
-	private $is_media_translated;
+	/**
+	 * Stores if a media is translated when it is deleted.
+	 *
+	 * @var bool[]
+	 */
+	private $is_media_translated = array();
 
 	/**
 	 * Initializes filters and actions.

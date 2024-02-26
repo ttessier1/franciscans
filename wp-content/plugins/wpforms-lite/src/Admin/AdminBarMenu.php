@@ -2,6 +2,8 @@
 
 namespace WPForms\Admin;
 
+use WP_Admin_Bar;
+
 /**
  * WPForms admin bar menu.
  *
@@ -16,6 +18,10 @@ class AdminBarMenu {
 	 */
 	public function init() {
 
+		if ( ! $this->has_access() ) {
+			return;
+		}
+
 		$this->hooks();
 	}
 
@@ -26,15 +32,16 @@ class AdminBarMenu {
 	 */
 	public function hooks() {
 
-		add_action( 'wp_enqueue_scripts', [ $this, 'enqueues' ] );
-
-		add_action( 'admin_enqueue_scripts', [ $this, 'enqueues' ] );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_css' ] );
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_css' ] );
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_js' ] );
 
 		add_action( 'admin_bar_menu', [ $this, 'register' ], 999 );
+		add_action( 'wpforms_wp_footer_end', [ $this, 'menu_forms_data_html' ] );
 	}
 
 	/**
-	 * Check if current user has access to see admin bar menu.
+	 * Determine whether the current user has access to see admin bar menu.
 	 *
 	 * @since 1.6.0
 	 *
@@ -45,18 +52,18 @@ class AdminBarMenu {
 		$access = false;
 
 		if (
-			is_user_logged_in() &&
+			is_admin_bar_showing() &&
 			wpforms_current_user_can() &&
 			! wpforms_setting( 'hide-admin-bar', false )
 		) {
 			$access = true;
 		}
 
-		return apply_filters( 'wpforms_admin_adminbarmenu_has_access', $access );
+		return (bool) apply_filters( 'wpforms_admin_adminbarmenu_has_access', $access );
 	}
 
 	/**
-	 * Check if new notifications are available.
+	 * Determine whether new notifications are available.
 	 *
 	 * @since 1.6.0
 	 *
@@ -68,15 +75,11 @@ class AdminBarMenu {
 	}
 
 	/**
-	 * Enqueue styles.
+	 * Enqueue CSS styles.
 	 *
 	 * @since 1.6.0
 	 */
-	public function enqueues() {
-
-		if ( ! $this->has_access() ) {
-			return;
-		}
+	public function enqueue_css() {
 
 		$min = wpforms_get_min_suffix();
 
@@ -86,28 +89,78 @@ class AdminBarMenu {
 			[],
 			WPFORMS_VERSION
 		);
+
+		// Apply WordPress pre/post 5.7 accent color, only when admin bar is displayed on the frontend or we're
+		// inside the Form Builder - it does not load some WP core admin styles, including themes.
+		if ( wpforms_is_admin_page( 'builder' ) || ! is_admin() ) {
+			wp_add_inline_style(
+				'wpforms-admin-bar',
+				sprintf(
+					'#wpadminbar .wpforms-menu-notification-counter, #wpadminbar .wpforms-menu-notification-indicator {
+						background-color: %s !important;
+						color: #ffffff !important;
+					}',
+					version_compare( get_bloginfo( 'version' ), '5.7', '<' ) ? '#ca4a1f' : '#d63638'
+				)
+			);
+		}
 	}
 
 	/**
-	 * Register and render admin menu bar items.
+	 * Enqueue JavaScript files.
+	 *
+	 * @since 1.6.5
+	 */
+	public function enqueue_js() {
+
+		// In WordPress 5.3.1 the `admin-bar.js` file was rewritten and removed all jQuery dependencies.
+		$is_wp_531_plus = version_compare( get_bloginfo( 'version' ), '5.3.1', '>=' );
+		$inline_script  = sprintf(
+			"( function() {
+				function wpforms_admin_bar_menu_init() {
+					var template = document.getElementById( 'tmpl-wpforms-admin-menubar-data' ),
+						notifications = document.getElementById( 'wp-admin-bar-wpforms-notifications' );
+
+					if ( ! template ) {
+						return;
+					}
+
+					if ( ! notifications ) {
+						var menu = document.getElementById( 'wp-admin-bar-wpforms-menu-default' );
+
+						if ( ! menu ) {
+							return;
+						}
+
+						menu.insertAdjacentHTML( 'afterBegin', template.innerHTML );
+					} else {
+						notifications.insertAdjacentHTML( 'afterend', template.innerHTML );
+					}
+				};
+				%s
+			}() );",
+			$is_wp_531_plus ? "document.addEventListener( 'DOMContentLoaded', wpforms_admin_bar_menu_init );" : "if ( typeof( jQuery ) != 'undefined' ) { jQuery( wpforms_admin_bar_menu_init ); } else { document.addEventListener( 'DOMContentLoaded', wpforms_admin_bar_menu_init ); }"
+		);
+
+		wp_add_inline_script( 'admin-bar', $inline_script, 'before' );
+	}
+
+	/**
+	 * Register and render admin bar menu items.
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function register( \WP_Admin_Bar $wp_admin_bar ) {
+	public function register( WP_Admin_Bar $wp_admin_bar ) {
 
-		if ( ! $this->has_access() ) {
-			return;
-		}
-
-		$items = apply_filters(
+		$items = (array) apply_filters(
 			'wpforms_admin_adminbarmenu_register',
 			[
 				'main_menu',
 				'notification_menu',
-				'forms_menu',
 				'all_forms_menu',
+				'all_payments_menu',
 				'add_new_menu',
 				'community_menu',
 				'support_menu',
@@ -124,19 +177,20 @@ class AdminBarMenu {
 	}
 
 	/**
-	 * Render primary top-level admin menu bar item.
+	 * Render primary top-level admin bar menu item.
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function main_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function main_menu( WP_Admin_Bar $wp_admin_bar ) {
 
-		$indicator = '';
+		$indicator     = '';
+		$notifications = $this->has_notifications();
 
-		if ( $this->has_notifications() ) {
-			$count     = $this->has_notifications() < 10 ? $this->has_notifications() : '!';
-			$indicator = ' <div class="wpforms-menu-notification-counter"><span>' . $count . '</span></div>';
+		if ( $notifications ) {
+			$count     = $notifications < 10 ? $notifications : '!';
+			$indicator = ' <div class="wp-core-ui wp-ui-notification wpforms-menu-notification-counter">' . $count . '</div>';
 		}
 
 		$wp_admin_bar->add_menu(
@@ -149,13 +203,13 @@ class AdminBarMenu {
 	}
 
 	/**
-	 * Render Notifications admin menu bar item.
+	 * Render Notifications admin bar menu item.
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function notification_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function notification_menu( WP_Admin_Bar $wp_admin_bar ) {
 
 		if ( ! $this->has_notifications() ) {
 			return;
@@ -165,129 +219,88 @@ class AdminBarMenu {
 			[
 				'parent' => 'wpforms-menu',
 				'id'     => 'wpforms-notifications',
-				'title'  => __( 'Notifications', 'wpforms-lite' ) . ' <div class="wpforms-menu-notification-indicator"></div>',
+				'title'  => esc_html__( 'Notifications', 'wpforms-lite' ) . ' <div class="wp-core-ui wp-ui-notification wpforms-menu-notification-indicator"></div>',
 				'href'   => admin_url( 'admin.php?page=wpforms-overview' ),
 			]
 		);
 	}
 
 	/**
-	 * Render individual forms admin menu bar items and sub-items.
+	 * Render All Forms admin bar menu item.
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function forms_menu( \WP_Admin_Bar $wp_admin_bar ) {
-
-		if ( is_admin() ) {
-			return;
-		}
-
-		$forms = wpforms()->frontend->forms;
-		$x     = 0;
-
-		if ( empty( $forms ) ) {
-			return;
-		}
-
-		foreach ( $forms as $form ) {
-
-			$x++;
-
-			$form_id                = absint( $form['id'] );
-			$class                  = 'wpforms-menu-form';
-			$this->displaying_forms = true;
-
-			if ( $this->has_notifications() && $x === 1 ) {
-				$class .= ' wpforms-menu-form-notifications';
-			}
-
-			if ( $x === count( $forms ) ) {
-				$class .= ' wpforms-menu-form-last';
-			}
-
-			// Shrink the long form title.
-			$form_title = sanitize_text_field( $form['settings']['form_title'] );
-			$form_title = mb_strlen( $form_title ) > 99 ? mb_substr( $form_title, 0, 99 ) . '&hellip;' : $form_title;
-
-			$wp_admin_bar->add_menu(
-				[
-					'parent' => 'wpforms-menu',
-					'id'     => 'wpforms-form-id-' . $form_id,
-					'title'  => $form_title,
-					'href'   => '#wpforms-' . $form_id,
-					'meta'   => [
-						'class' => $class,
-					],
-				]
-			);
-
-			$wp_admin_bar->add_menu(
-				[
-					'parent' => 'wpforms-form-id-' . $form_id,
-					'id'     => 'wpforms-edit-form-id-' . $form_id,
-					'title'  => __( 'Edit Form', 'wpforms-lite' ),
-					'href'   => admin_url( 'admin.php?page=wpforms-builder&view=fields&form_id=' . $form_id ),
-				]
-			);
-
-			do_action( 'wpforms_admin_adminbarmenu_forms_menu_after', $wp_admin_bar, $form );
-		}
-	}
-
-	/**
-	 * Render All Forms admin menu bar item.
-	 *
-	 * @since 1.6.0
-	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
-	 */
-	public function all_forms_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function all_forms_menu( WP_Admin_Bar $wp_admin_bar ) {
 
 		$wp_admin_bar->add_menu(
 			[
 				'parent' => 'wpforms-menu',
 				'id'     => 'wpforms-forms',
-				'title'  => __( 'All Forms', 'wpforms-lite' ),
+				'title'  => esc_html__( 'All Forms', 'wpforms-lite' ),
 				'href'   => admin_url( 'admin.php?page=wpforms-overview' ),
 			]
 		);
 	}
 
 	/**
-	 * Render Add New admin menu bar item.
+	 * Render All Payments admin bar menu item.
+	 *
+	 * @since 1.8.4
+	 *
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 */
+	public function all_payments_menu( WP_Admin_Bar $wp_admin_bar ) {
+
+		$wp_admin_bar->add_menu(
+			[
+				'parent' => 'wpforms-menu',
+				'id'     => 'wpforms-payments',
+				'title'  => esc_html__( 'Payments', 'wpforms-lite' ),
+				'href'   => add_query_arg(
+					[
+						'page' => 'wpforms-payments',
+					],
+					admin_url( 'admin.php' )
+				),
+			]
+		);
+	}
+
+	/**
+	 * Render Add New admin bar menu item.
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function add_new_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function add_new_menu( WP_Admin_Bar $wp_admin_bar ) {
 
 		$wp_admin_bar->add_menu(
 			[
 				'parent' => 'wpforms-menu',
 				'id'     => 'wpforms-add-new',
-				'title'  => __( 'Add New', 'wpforms-lite' ),
+				'title'  => esc_html__( 'Add New', 'wpforms-lite' ),
 				'href'   => admin_url( 'admin.php?page=wpforms-builder' ),
 			]
 		);
 	}
 
 	/**
-	 * Render Community admin menu bar item.
+	 * Render Community admin bar menu item.
 	 *
 	 * @since 1.6.0
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function community_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function community_menu( WP_Admin_Bar $wp_admin_bar ) {
 
 		$wp_admin_bar->add_menu(
 			[
 				'parent' => 'wpforms-menu',
 				'id'     => 'wpforms-community',
-				'title'  => __( 'Community', 'wpforms-lite' ),
+				'title'  => esc_html__( 'Community', 'wpforms-lite' ),
 				'href'   => 'https://www.facebook.com/groups/wpformsvip/',
 				'meta'   => [
 					'target' => '_blank',
@@ -298,25 +311,129 @@ class AdminBarMenu {
 	}
 
 	/**
-	 * Render Support admin menu bar item.
+	 * Render Support admin bar menu item.
 	 *
 	 * @since 1.6.0
+	 * @since 1.7.4 Update the `Support` item title to `Help Docs`.
 	 *
-	 * @param \WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
+	 * @param WP_Admin_Bar $wp_admin_bar WordPress Admin Bar object.
 	 */
-	public function support_menu( \WP_Admin_Bar $wp_admin_bar ) {
+	public function support_menu( WP_Admin_Bar $wp_admin_bar ) {
+
+		$href = add_query_arg(
+			[
+				'utm_campaign' => wpforms()->is_pro() ? 'plugin' : 'liteplugin',
+				'utm_medium'   => 'admin-bar',
+				'utm_source'   => 'WordPress',
+				'utm_content'  => 'Documentation',
+			],
+			'https://wpforms.com/docs/'
+		);
 
 		$wp_admin_bar->add_menu(
 			[
 				'parent' => 'wpforms-menu',
-				'id'     => 'wpforms-support',
-				'title'  => __( 'Support', 'wpforms-lite' ),
-				'href'   => 'https://wpforms.com/docs/',
+				'id'     => 'wpforms-help-docs',
+				'title'  => esc_html__( 'Help Docs', 'wpforms-lite' ),
+				'href'   => $href,
 				'meta'   => [
 					'target' => '_blank',
 					'rel'    => 'noopener noreferrer',
 				],
 			]
+		);
+	}
+
+	/**
+	 * Get form data for JS to modify the admin bar menu.
+	 *
+	 * @since 1.6.5
+	 * @since 1.8.4 Added the View Payments link.
+	 *
+	 * @param array $forms Forms array.
+	 *
+	 * @return array
+	 */
+	protected function get_forms_data( $forms ) {
+
+		$data = [
+			'has_notifications' => $this->has_notifications(),
+			'edit_text'         => esc_html__( 'Edit Form', 'wpforms-lite' ),
+			'entry_text'        => esc_html__( 'View Entries', 'wpforms-lite' ),
+			'payment_text'      => esc_html__( 'View Payments', 'wpforms-lite' ),
+			'survey_text'       => esc_html__( 'Survey Results', 'wpforms-lite' ),
+			'forms'             => [],
+		];
+
+		$admin_url = admin_url( 'admin.php' );
+
+		foreach ( $forms as $form ) {
+			$form_id = absint( $form['id'] );
+
+			if ( empty( $form_id ) ) {
+				continue;
+			}
+
+			/* translators: %d - form ID. */
+			$form_title = sprintf( esc_html__( 'Form ID: %d', 'wpforms-lite' ), $form_id );
+
+			if ( ! empty( $form['settings']['form_title'] ) ) {
+				$form_title = wp_html_excerpt(
+					sanitize_text_field( $form['settings']['form_title'] ),
+					99,
+					'&hellip;'
+				);
+			}
+
+			$has_payments = wpforms()->get( 'payment' )->get_by( 'form_id', $form_id );
+
+			$data['forms'][] = apply_filters(
+				'wpforms_admin_adminbarmenu_get_form_data',
+				[
+					'form_id'      => $form_id,
+					'title'        => $form_title,
+					'edit_url'     => add_query_arg(
+						[
+							'page'    => 'wpforms-builder',
+							'view'    => 'fields',
+							'form_id' => $form_id,
+						],
+						$admin_url
+					),
+					'payments_url' => $has_payments ? add_query_arg(
+						[
+							'page'    => 'wpforms-payments',
+							'form_id' => $form_id,
+						],
+						$admin_url
+					) : '',
+				]
+			);
+		}
+
+		return $data;
+	}
+
+	/**
+	 * Add form(s) data to the page.
+	 *
+	 * @since 1.6.5
+	 *
+	 * @param array $forms Forms array.
+	 */
+	public function menu_forms_data_html( $forms ) {
+
+		if ( empty( $forms ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo wpforms_render(
+			'admin-bar-menu',
+			[
+				'forms_data' => $this->get_forms_data( $forms ),
+			],
+			true
 		);
 	}
 }

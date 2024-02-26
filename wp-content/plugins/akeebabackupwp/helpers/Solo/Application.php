@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -9,18 +9,24 @@ namespace Solo;
 
 use Akeeba\Engine\Factory;
 use Akeeba\Engine\Platform;
-use Awf\Html\Grid;
 use Awf\Text\Text;
+use Awf\User\ManagerInterface as UserManagerInterface;
+use Solo\Helper\Html\FEFSelect as FEFSelectHtmlHelper;
+use Solo\Helper\Html\Setup as SetupHtmlHelper;
 use Solo\Helper\SecretWord;
 
 class Application extends \Awf\Application\Application
 {
-	const secretKeyRelativePath = '/engine/secretkey.php';
+	private static $loadedLanguages = false;
 
 	public function initialise()
 	{
+		// Register additional HTML Helpers
+		$this->getContainer()->html->registerHelperClass(SetupHtmlHelper::class);
+		$this->getContainer()->html->registerHelperClass(FEFSelectHtmlHelper::class);
+
 		// Let AWF know that the prefix for our system JavaScript is 'akeeba.System.'
-		Grid::$javascriptPrefix = 'akeeba.System.';
+		$this->getContainer()->html->grid->setJavascriptPrefix('akeeba.System.');
 
 		// Put a small marker to indicate that we run inside another CMS
 		$isCMS = $this->setIsCMSFlag();
@@ -34,25 +40,17 @@ class Application extends \Awf\Application\Application
 			$this->setTemplate('wp');
 		}
 
-		// Load language files
-		$this->loadLanguages();
-
 		// Load the configuration file if it's present
 		$this->container->appConfig->loadConfiguration();
 
-		// Load Akeeba Engine's settings encryption preferences
-		$this->loadEngineEncryptionKey();
+		// Load language files
+		$this->loadLanguages();
 
 		// Enforce encryption of the front-end Secret Word
-		SecretWord::enforceEncryption('frontend_secret_word');
+		SecretWord::enforceEncryption('frontend_secret_word', $this->container);
 
 		// Load Akeeba Engine's configuration
 		$this->loadBackupProfile();
-
-		// Attach the user privileges to the user manager
-		$manager = $this->container->userManager;
-
-		$this->attachPrivileges($manager);
 
 		// Set up the media query key
 		$this->setupMediaVersioning();
@@ -97,7 +95,7 @@ class Application extends \Awf\Application\Application
 	/**
 	 * @return void
 	 */
-	private function setupUpdatePlatform()
+	public function setupUpdatePlatform()
 	{
 		$platformVersion = function_exists('get_bloginfo') ? get_bloginfo('version') : '0.0';
 		$this->container->segment->set('platformNameForUpdates', 'wordpress');
@@ -109,28 +107,14 @@ class Application extends \Awf\Application\Application
 	 */
 	private function loadLanguages()
 	{
-		// Manually load Solo text files, since we changed them in "com_akeebabackup"
-		Text::loadLanguage(null, 'akeebabackup', '.com_akeebabackup.ini', false, $this->container->languagePath);
-		Text::loadLanguage('en-GB', 'akeebabackup', '.com_akeebabackup.ini', false, $this->container->languagePath);
-
-		// Load the extra language files
-		Text::loadLanguage(null, 'akeeba', '.com_akeeba.ini', false, $this->container->languagePath);
-		Text::loadLanguage('en-GB', 'akeeba', '.com_akeeba.ini', false, $this->container->languagePath);
-	}
-
-	/**
-	 * @return void
-	 */
-	private function loadEngineEncryptionKey()
-	{
-		$secretKeyFile = $this->container->basePath . static::secretKeyRelativePath;
-
-		if (@file_exists($secretKeyFile))
+		if (self::$loadedLanguages)
 		{
-			require_once $secretKeyFile;
+			return;
 		}
 
-		Factory::getSecureSettings()->setKeyFilename('secretkey.php');
+		self::$loadedLanguages = true;
+
+		$this->getContainer()->language->loadLanguage(null, $this->container->languagePath . '/akeebabackup', true, true, [[$this, 'processLanguageIniFile']]);
 	}
 
 	/**
@@ -146,16 +130,6 @@ class Application extends \Awf\Application\Application
 		{
 			// Ignore database exceptions, they simply mean we need to install or update the database
 		}
-	}
-
-	/**
-	 * @param $manager
-	 *
-	 * @return void
-	 */
-	private function attachPrivileges($manager)
-	{
-		$manager->registerPrivilegePlugin('akeeba', '\\Solo\\Application\\WordpressUserPrivileges');
 	}
 
 	/**

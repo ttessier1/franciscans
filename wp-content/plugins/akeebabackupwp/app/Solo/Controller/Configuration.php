@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -141,9 +141,9 @@ class Configuration extends ControllerDefault
 		$model->setState('user', $this->input->get('user', '', 'raw'));
 		$model->setState('pass', $this->input->get('pass', '', 'raw'));
 		$model->setState('initdir', $this->input->get('initdir', '', 'raw'));
-		$model->setState('usessl', $this->input->get('usessl', '', 'raw') == 'true');
-		$model->setState('passive', $this->input->get('passive', '', 'raw') == 'true');
-		$model->setState('passive_mode_workaround', $this->input->get('passive_mode_workaround', '', 'raw') == 'true');
+		$model->setState('usessl', (bool) $this->input->getInt('usessl', 0));
+		$model->setState('passive', (bool) $this->input->getInt('passive', 0));
+		$model->setState('passive_mode_workaround', (bool) $this->input->getInt('passive_mode_workaround', 0));
 
 		$result = true;
 
@@ -158,7 +158,9 @@ class Configuration extends ControllerDefault
 
 		@ob_end_clean();
 
-		echo '###' . json_encode($result) . '###';
+		echo '#"\#\"#' . json_encode([
+                'status' => $result
+            ]) . '#"\#\"#';
 
 		flush();
 		$this->container->application->close();
@@ -196,7 +198,9 @@ class Configuration extends ControllerDefault
 
 		@ob_end_clean();
 
-		echo '###' . json_encode($result) . '###';
+		echo '#"\#\"#' . json_encode([
+                'status' => $result
+            ]) . '#"\#\"#';
 
 		flush();
 		$this->container->application->close();
@@ -237,9 +241,16 @@ class Configuration extends ControllerDefault
 		$model->setState('method', $this->input->getVar('method', '', 'raw'));
 		$model->setState('params', $this->input->get('params', array(), 'array'));
 
+        $result = $model->dpeCustomAPICall();
+
+        if (is_array($result) && $this->isNumericIndexedArray($result))
+        {
+            $result = ['list' => $result];
+        }
+
 		@ob_end_clean();
 
-		echo '###' . json_encode($model->dpeCustomAPICall()) . '###';
+		echo '#"\#\"#' . json_encode($result) . '#"\#\"#';
 
 		flush();
 
@@ -268,4 +279,15 @@ class Configuration extends ControllerDefault
 
 		$this->container->application->close();
 	}
+
+    private function isNumericIndexedArray(array $result)
+    {
+        return array_reduce(
+            array_keys($result),
+            function (bool $carry, $key) {
+                return $carry || (is_numeric($key) && intval($key) == $key);
+            },
+            false
+        );
+    }
 }

@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -47,7 +47,7 @@ class Sftpbrowser extends ControllerDefault
 
 		@ob_end_clean();
 
-		echo '###'.json_encode($ret).'###';
+		echo '#"\#\"#'.json_encode($ret).'#"\#\"#';
 
 		flush();
 

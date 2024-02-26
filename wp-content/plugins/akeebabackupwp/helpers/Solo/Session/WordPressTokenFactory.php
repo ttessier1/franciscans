@@ -1,7 +1,7 @@
 <?php
-/*
+/**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -26,7 +26,7 @@ class WordPressTokenFactory extends CsrfTokenFactory
 	{
 		$segment = $manager->newSegment(__NAMESPACE__ . '\WordPressToken');
 
-		return new WordPressToken($segment, $this->randval);
+		return new WordPressToken($segment);
 	}
 
 }

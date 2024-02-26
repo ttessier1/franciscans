@@ -1,30 +1,42 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
 namespace Solo;
 
-use Akeeba\Engine\Factory;
 use Akeeba\Engine\Platform;
 use Awf\Application\TransparentAuthentication;
-use Awf\Text\Text;
 use Awf\Uri\Uri;
+use Awf\User\ManagerInterface as UserManagerInterface;
+use Solo\Application\UserAuthenticationGoogle;
+use Solo\Application\UserAuthenticationPassword;
+use Solo\Application\UserAuthenticationYubikey;
+use Solo\Application\UserPrivileges;
+use Solo\Helper\Html\FEFSelect as FEFSelectHtmlHelper;
+use Solo\Helper\Html\Setup as SetupHtmlHelper;
 use Solo\Helper\SecretWord;
 
 class Application extends \Awf\Application\Application
 {
-	const secretKeyRelativePath = '/engine/secretkey.php';
+	private static $loadedLanguages = false;
 
 	public function initialise()
 	{
-		// Let AWF know that the prefix for our system JavaScript is 'akeeba.System.'
-		\Awf\Html\Grid::$javascriptPrefix = 'akeeba.System.';
+		// Load the language files
+		$this->loadLanguages();
 
-		// This line must appear before the user manager initializes, or it won't find the users table!
-		$this->container->appConfig->set('user_table', '#__ak_users');
+		// Redirect to the setup page if the configuration does not exist yet
+		$isSetupTakingPlace = $this->isSetupTakingPlace();
+
+		// Register additional HTML Helpers
+		$this->getContainer()->html->registerHelperClass(SetupHtmlHelper::class);
+		$this->getContainer()->html->registerHelperClass(FEFSelectHtmlHelper::class);
+
+		// Let AWF know that the prefix for our system JavaScript is 'akeeba.System.'
+		$this->getContainer()->html->grid->setJavascriptPrefix('akeeba.System.');
 
 		// If the PHP session save path is not writeable we will use the 'session' subdirectory inside our tmp directory
 		$this->discoverSessionSavePath();
@@ -32,28 +44,14 @@ class Application extends \Awf\Application\Application
 		// Set up the template (theme) to use
 		$this->setTemplate('default');
 
-		// Load the language files
-		$this->loadLanguages();
-
-		// Redirect to the setup page if the configuration does not exist yet
-		$configPath = $this->container->appConfig->getDefaultPath();
-
-		$this->redirectToSetup($configPath);
-
 		// Load the configuration if it's present
-		if (@file_exists($configPath))
+		if (!$isSetupTakingPlace)
 		{
-			// Load the application's configuration
-			$this->container->appConfig->loadConfiguration();
-
 			// Apply the timezone
 			$this->applyTimezonePreference();
 
-			// Load Akeeba Engine's settings encryption preferences
-			$this->loadEngineEncryptionKey();
-
 			// Enforce encryption of the front-end Secret Word
-			SecretWord::enforceEncryption('frontend_secret_word');
+			SecretWord::enforceEncryption('frontend_secret_word', $this->container);
 
 			// Load Akeeba Engine's configuration
 			$this->loadBackupProfile();
@@ -64,14 +62,6 @@ class Application extends \Awf\Application\Application
 
 		// Load the application routes
 		$this->loadRoutes();
-
-		// Attach the user privileges to the user manager
-		$manager = $this->container->userManager;
-
-		$this->attachPrivileges($manager);
-
-		// Only apply TFA when debug mode has not been enabled
-		$this->applyTwoFactorAuthentication($manager);
 
 		// Show the login page when necessary
 		$this->redirectToLogin();
@@ -94,8 +84,8 @@ class Application extends \Awf\Application\Application
 	{
 		foreach ($strings as $k => $v)
 		{
-			$v = str_replace('_QQ_', '"', $v);
-			$v = str_replace('Akeeba Backup', 'Akeeba Solo', $v);
+			$v           = str_replace('_QQ_', '"', $v);
+			$v           = str_replace('Akeeba Backup', 'Akeeba Solo', $v);
 			$strings[$k] = $v;
 		}
 
@@ -108,7 +98,7 @@ class Application extends \Awf\Application\Application
 	public function applySessionTimeout()
 	{
 		// Get the session timeout
-		$sessionTimeout = (int)$this->container->appConfig->get('session_timeout', 1440);
+		$sessionTimeout = (int) $this->container->appConfig->get('session_timeout', 1440);
 
 		// Get the base URL and set the cookie path
 		$uri = new Uri(Uri::base(false, $this->container), $this);
@@ -116,20 +106,20 @@ class Application extends \Awf\Application\Application
 		// Force the cookie timeout to coincide with the session timeout
 		if ($sessionTimeout > 0)
 		{
-			$this->container->session->setCookieParams(array(
-				'lifetime'	=> $sessionTimeout * 60,
-				'path'		=> $uri->getPath(),
-				'domain'	=> $uri->getHost(),
-				'secure'	=> $uri->getScheme() == 'https',
-				'httponly'	=> true,
-			));
+			$this->container->session->setCookieParams([
+				'lifetime' => $sessionTimeout * 60,
+				'path'     => $uri->getPath(),
+				'domain'   => $uri->getHost(),
+				'secure'   => $uri->getScheme() == 'https',
+				'httponly' => true,
+			]);
 		}
 
 		// Calculate a hash for the current user agent and IP address
-		$ip = \Awf\Utils\Ip::getUserIP();
+		$ip         = \Awf\Utils\Ip::getUserIP();
 		$user_agent = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : '';
-		$uniqueData = $ip . $user_agent . $this->container->basePath . Application::secretKeyRelativePath;
-		$hash_algos = function_exists('hash_algos') ? hash_algos() : array();
+		$uniqueData = $ip . $user_agent . APATH_BASE;
+		$hash_algos = function_exists('hash_algos') ? hash_algos() : [];
 
 		// Prefer SHA-512...
 		if (in_array('sha512', $hash_algos))
@@ -190,7 +180,7 @@ class Application extends \Awf\Application\Application
 
 		// What is the last session timestamp?
 		$lastCheck = $this->container->segment->get('session_timestamp', 0);
-		$now = time();
+		$now       = time();
 
 		// If there is a session timestamp make sure it's valid, otherwise trash the session and restart
 		if (($lastCheck != 0) && (($now - $lastCheck) > ($sessionTimeout * 60)))
@@ -219,7 +209,7 @@ class Application extends \Awf\Application\Application
 	{
 		try
 		{
-			$fs = $this->container->fileSystem;
+			$fs            = $this->container->fileSystem;
 			$protectFolder = false;
 
 			if (!@is_dir($path))
@@ -263,6 +253,39 @@ class Application extends \Awf\Application\Application
 	}
 
 	/**
+	 * Gets the application document.
+	 *
+	 * Used to remove any views from Akeeba Solo which should not be displayed.
+	 *
+	 * This mainly required during development. The packaging of the distributed version makes sure that only the
+	 * required views are packaged with the application.
+	 *
+	 * @return  \Awf\Document\Document|null
+	 * @since   7.8.0
+	 */
+	public function getDocument()
+	{
+		$document = parent::getDocument();
+
+		if (!defined('WPINC'))
+		{
+			try
+			{
+				$menuManager = $document->getMenu();
+				$item        = $menuManager->findItem('crons');
+
+				$menuManager->removeItem($item);
+			}
+			catch (\Throwable $e)
+			{
+				// Nothing.
+			}
+		}
+
+		return $document;
+	}
+
+	/**
 	 * @return void
 	 * @throws \Exception
 	 */
@@ -283,30 +306,39 @@ class Application extends \Awf\Application\Application
 	 */
 	private function loadLanguages()
 	{
-		// Load the language files
-		Text::loadLanguage(null, 'akeebabackup', '.com_akeebabackup.ini', false, $this->container->languagePath);
-		Text::loadLanguage('en-GB', 'akeebabackup', '.com_akeebabackup.ini', false, $this->container->languagePath);
+		if (self::$loadedLanguages)
+		{
+			return;
+		}
 
-		// Load the extra language files
-		Text::loadLanguage(null, 'akeeba', '.com_akeeba.ini', false, $this->container->languagePath);
-		Text::loadLanguage('en-GB', 'akeeba', '.com_akeeba.ini', false, $this->container->languagePath);
+		self::$loadedLanguages = true;
+
+		$this->getContainer()->language
+			->loadLanguage(null, $this->container->languagePath . '/akeebabackup');
 	}
 
 	/**
-	 * @param $configPath
-	 *
-	 * @return void
+	 * @return  bool
 	 */
-	private function redirectToSetup($configPath)
+	private function isSetupTakingPlace()
 	{
-		if (!@file_exists($configPath) && !in_array($this->getContainer()->input->getCmd('view', ''), array(
-				'setup', 'ftpbrowser', 'sftpbrowser'
-			)))
+		// Setup can only take place when we don't have a config file.
+		if (!@file_exists($this->container->appConfig->getDefaultPath()))
 		{
-			$this->getContainer()->input->setData(array(
-				'view' => 'setup'
-			));
+			// If we are in a non-setup view, redirect to the Setup view.
+			if (!in_array($this->getContainer()->input->getCmd('view', ''), ['ftpbrowser', 'sftpbrowser', 'setup']))
+			{
+				$this->getContainer()->input->setData([
+					'view' => 'setup',
+				]);
+			}
+
+			// Indicate that setup is taking place, so we don't auto-update the config.php file.
+			return true;
 		}
+
+		// No, setup is not taking place
+		return false;
 	}
 
 	/**
@@ -335,21 +367,6 @@ class Application extends \Awf\Application\Application
 
 			@date_default_timezone_set($serverTimezone);
 		}
-	}
-
-	/**
-	 * @return void
-	 */
-	private function loadEngineEncryptionKey()
-	{
-		$secretKeyFile = $this->container->basePath . static::secretKeyRelativePath;
-
-		if (@file_exists($secretKeyFile))
-		{
-			require_once $secretKeyFile;
-		}
-
-		Factory::getSecureSettings()->setKeyFilename('secretkey.php');
 	}
 
 	/**
@@ -398,31 +415,6 @@ class Application extends \Awf\Application\Application
 	}
 
 	/**
-	 * @param $manager
-	 *
-	 * @return void
-	 */
-	private function attachPrivileges($manager)
-	{
-		$manager->registerPrivilegePlugin('akeeba', '\\Solo\\Application\\UserPrivileges');
-		$manager->registerAuthenticationPlugin('password', '\\Solo\\Application\\UserAuthenticationPassword');
-	}
-
-	/**
-	 * @param $manager
-	 *
-	 * @return void
-	 */
-	private function applyTwoFactorAuthentication($manager)
-	{
-		if (!defined('AKEEBADEBUG'))
-		{
-			$manager->registerAuthenticationPlugin('yubikey', '\\Solo\\Application\\UserAuthenticationYubikey');
-			$manager->registerAuthenticationPlugin('google', '\\Solo\\Application\\UserAuthenticationGoogle');
-		}
-	}
-
-	/**
 	 * @return void
 	 */
 	private function redirectToLogin()
@@ -436,9 +428,9 @@ class Application extends \Awf\Application\Application
 		// Show the login page if there is no logged in user and we're not in the setup or login page already
 		// and we're not using the remote (front-end backup), json (remote JSON API) views of the (S)FTP
 		// browser views (required by the session task of the setup view).
-		if (!in_array($view, array(
-				'check', 'login', 'setup', 'json', 'remote', 'ftpbrowser', 'sftpbrowser',
-			)) && !$manager->getUser()->getId())
+		if (!in_array($view, [
+				'check', 'login', 'setup', 'json', 'api', 'Api', 'remote', 'ftpbrowser', 'sftpbrowser',
+			]) && !$manager->getUser()->getId())
 		{
 			// Try to perform transparent authentication
 			$transparentAuth = new TransparentAuthentication($this->container);
@@ -460,9 +452,9 @@ class Application extends \Awf\Application\Application
 
 			$this->container->segment->setFlash('return_url', $return_url);
 
-			$this->getContainer()->input->setData(array(
+			$this->getContainer()->input->setData([
 				'view' => 'login',
-			));
+			]);
 		}
 	}
 
@@ -481,4 +473,6 @@ class Application extends \Awf\Application\Application
 			$this->getContainer()->mediaQueryKey = md5(AKEEBABACKUP_VERSION . AKEEBABACKUP_DATE);
 		}
 	}
+
+
 }

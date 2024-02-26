@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -10,16 +10,19 @@ namespace Solo\Helper;
 
 use Akeeba\Engine\Factory;
 use Akeeba\Engine\Platform;
-use Awf\Application\Application;
-use Awf\Date\Date;
+use Awf\Container\Container;
+use Awf\Container\ContainerAwareInterface;
+use Awf\Container\ContainerAwareTrait;
 use Awf\Text\Text;
 
 /**
  * Status helper. Used by the Control Panel and the backup page to report detected warnings which may impact your backup
  * experience.
  */
-class Status
+class Status implements ContainerAwareInterface
 {
+	use ContainerAwareTrait;
+
 	/**
 	 * Are we ready to take a new backup?
 	 *
@@ -39,36 +42,38 @@ class Status
 	 *
 	 * @var  array
 	 */
-	protected $warnings = array();
+	protected $warnings = [];
+
+	/**
+	 * Public constructor. Automatically initializes the object with the status and warnings.
+	 *
+	 * @return  void
+	 */
+	public function __construct(Container $container)
+	{
+		$this->setContainer($container);
+
+		$this->status         = Factory::getConfigurationChecks()->getShortStatus();
+		$this->warnings       = Factory::getConfigurationChecks()->getDetailedStatus();
+		$status               = Factory::getConfigurationChecks()->getFolderStatus();
+		$this->outputWritable = $status['output'];
+	}
 
 	/**
 	 * Get a Singleton instance
 	 *
 	 * @return  self
 	 */
-	public static function &getInstance()
+	public static function &getInstance(Container $container)
 	{
 		static $instance = null;
 
 		if (empty($instance))
 		{
-			$instance = new self();
+			$instance = new self($container);
 		}
 
 		return $instance;
-	}
-
-	/**
-	 * Public constructor. Automatically initializes the object with the status and warnings.
-	 *
-	 * @return  self
-	 */
-	public function __construct()
-	{
-		$this->status         = Factory::getConfigurationChecks()->getShortStatus();
-		$this->warnings       = Factory::getConfigurationChecks()->getDetailedStatus();
-		$status               = Factory::getConfigurationChecks()->getFolderStatus();
-		$this->outputWritable = $status['output'];
 	}
 
 	/**
@@ -83,15 +88,18 @@ class Status
 
 		if ($status && empty($quirks))
 		{
-			$html = '<div class="akeeba-block--success"><p>' . Text::_('COM_AKEEBA_CPANEL_LBL_STATUS_OK') . '</p></div>';
+			$html = '<div class="akeeba-block--success"><p>' . Text::_('COM_AKEEBA_CPANEL_LBL_STATUS_OK')
+			        . '</p></div>';
 		}
 		elseif ($status && !empty($quirks))
 		{
-			$html = '<div class="akeeba-block--warning"><p>' . Text::_('COM_AKEEBA_CPANEL_LBL_STATUS_WARNING') . '</p></div>';
+			$html = '<div class="akeeba-block--warning"><p>' . Text::_('COM_AKEEBA_CPANEL_LBL_STATUS_WARNING')
+			        . '</p></div>';
 		}
 		else
 		{
-			$html = '<div class="akeeba-block--failure"><p>' . Text::_('COM_AKEEBA_CPANEL_LBL_STATUS_ERROR') . '</p></div>';
+			$html = '<div class="akeeba-block--failure"><p>' . Text::_('COM_AKEEBA_CPANEL_LBL_STATUS_ERROR')
+			        . '</p></div>';
 		}
 
 		return $html;
@@ -137,28 +145,6 @@ class Status
 	}
 
 	/**
-	 * Gets the HTML for a single line of the warnings area.
-	 *
-	 * @param   array  $quirk       A quirk definition array
-	 * @param   bool   $onlyErrors  Should I only return errors? If false (default) errors AND warnings are returned.
-	 *
-	 * @return  string  HTML
-	 */
-	private function renderWarnings($quirk, $onlyErrors = false)
-	{
-		if ($onlyErrors && ($quirk['severity'] != 'critical'))
-		{
-			return '';
-		}
-
-		$quirk['severity'] = $quirk['severity'] == 'critical' ? 'high' : $quirk['severity'];
-
-		return  '<li><a class="severity-' . $quirk['severity'] .
-			'" href="' . $quirk['help_url'] . '" target="_blank">' . $quirk['description'] . '</a>' . "</li>\n";
-
-	}
-
-	/**
 	 * Returns the details of the latest backup as HTML
 	 *
 	 * @return  string  HTML
@@ -166,8 +152,10 @@ class Status
 	 */
 	public function getLatestBackupDetails()
 	{
-		$db    = Application::getInstance()->getContainer()->db;
-		$query = $db->getQuery(true)
+		/** @var Container $container */
+		$container = Platform::getInstance()->getContainer();
+		$db        = $container->db;
+		$query     = $db->getQuery(true)
 			->select('MAX(' . $db->qn('id') . ')')
 			->from($db->qn('#__ak_stats'));
 		$db->setQuery($query);
@@ -230,19 +218,45 @@ class Status
 			$type = Platform::getInstance()->translate($backup_types['scripts'][$record['type']]['text']);
 		}
 
-		$startTime = new Date($record['backupstart'], 'UTC');
-		$tz = new \DateTimeZone(Application::getInstance()->getContainer()->appConfig->get('timezone', 'UTC'));
+		$startTime = $this->getContainer()->dateFactory($record['backupstart'], 'UTC');
+		$tz        = new \DateTimeZone($container->appConfig->get('timezone', 'UTC'));
 		$startTime->setTimezone($tz);
 
 		$html = '<table class="akeeba-table--striped">';
-		$html .= '<tr><td>' . Text::_('COM_AKEEBA_BUADMIN_LABEL_START') . '</td><td>' . $startTime->format(Text::_('DATE_FORMAT_LC2'), true) . '</td></tr>';
-		$html .= '<tr><td>' . Text::_('COM_AKEEBA_BUADMIN_LABEL_DESCRIPTION') . '</td><td>' . $record['description'] . '</td></tr>';
-		$html .= '<tr><td>' . Text::_('COM_AKEEBA_BUADMIN_LABEL_STATUS') . '</td><td><span class="label ' . $statusClass . '">' . $status . '</span></td></tr>';
+		$html .= '<tr><td>' . Text::_('COM_AKEEBA_BUADMIN_LABEL_START') . '</td><td>' . $startTime->format(
+				Text::_('DATE_FORMAT_LC2'), true
+			) . '</td></tr>';
+		$html .= '<tr><td>' . Text::_('COM_AKEEBA_BUADMIN_LABEL_DESCRIPTION') . '</td><td>' . $record['description']
+		         . '</td></tr>';
+		$html .= '<tr><td>' . Text::_('COM_AKEEBA_BUADMIN_LABEL_STATUS') . '</td><td><span class="label ' . $statusClass
+		         . '">' . $status . '</span></td></tr>';
 		$html .= '<tr><td>' . Text::_('COM_AKEEBA_BUADMIN_LABEL_ORIGIN') . '</td><td>' . $origin . '</td></tr>';
 		$html .= '<tr><td>' . Text::_('COM_AKEEBA_BUADMIN_LABEL_TYPE') . '</td><td>' . $type . '</td></tr>';
 		$html .= '</table>';
 
 		return $html;
+	}
+
+	/**
+	 * Gets the HTML for a single line of the warnings area.
+	 *
+	 * @param   array  $quirk       A quirk definition array
+	 * @param   bool   $onlyErrors  Should I only return errors? If false (default) errors AND warnings are returned.
+	 *
+	 * @return  string  HTML
+	 */
+	private function renderWarnings($quirk, $onlyErrors = false)
+	{
+		if ($onlyErrors && ($quirk['severity'] != 'critical'))
+		{
+			return '';
+		}
+
+		$quirk['severity'] = $quirk['severity'] == 'critical' ? 'high' : $quirk['severity'];
+
+		return '<li><a class="severity-' . $quirk['severity'] .
+		       '" href="' . $quirk['help_url'] . '" target="_blank">' . $quirk['description'] . '</a>' . "</li>\n";
+
 	}
 
 }

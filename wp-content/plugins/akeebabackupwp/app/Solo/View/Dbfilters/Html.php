@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -74,7 +74,7 @@ class Html extends View
 			foreach ($root_info as $def)
 			{
 				$roots[]   = $def->value;
-				$options[] = Select::option($def->value, $def->text);
+				$options[] = $this->getContainer()->html->select->option( $def->value, $def->text);
 			}
 		}
 
@@ -83,7 +83,7 @@ class Html extends View
 			'list.select' => $siteRoot,
 			'id'          => 'active_root',
 		];
-		$this->root_select = Select::genericList($options, 'root', $selectOptions);
+		$this->root_select = $this->getContainer()->html->select->genericList($options, 'root', $selectOptions);
 		$this->roots       = $roots;
 		$document          = $this->container->application->getDocument();
 
@@ -104,25 +104,28 @@ class Html extends View
 				$this->setLayout('tabular');
 
 				// Get a JSON representation of the tabular filter data
-				$document->addScriptOptions('akeeba.DatabaseFilters.guiData', $model->get_filters($siteRoot));
+				$document->addScriptOptions('akeeba.DatabaseFilters.guiData', [
+					'list' => $model->get_filters($siteRoot)
+				]);
 				$document->addScriptOptions('akeeba.DatabaseFilters.viewType', 'tabular');
 
 				break;
 		}
 
 		// Load the Javascript language strings
-		Text::script('COM_AKEEBA_FILEFILTERS_LABEL_UIROOT');
-		Text::script('COM_AKEEBA_FILEFILTERS_LABEL_UIERRORFILTER');
-		Text::script('COM_AKEEBA_FILEFILTERS_LABEL_UIERRORFILTER');
-		Text::script('COM_AKEEBA_DBFILTER_TYPE_TABLES');
-		Text::script('COM_AKEEBA_DBFILTER_TYPE_TABLEDATA');
-		Text::script('COM_AKEEBA_DBFILTER_TABLE_MISC');
-		Text::script('COM_AKEEBA_DBFILTER_TABLE_TABLE');
-		Text::script('COM_AKEEBA_DBFILTER_TABLE_VIEW');
-		Text::script('COM_AKEEBA_DBFILTER_TABLE_PROCEDURE');
-		Text::script('COM_AKEEBA_DBFILTER_TABLE_FUNCTION');
-		Text::script('COM_AKEEBA_DBFILTER_TABLE_TRIGGER');
-		Text::script('COM_AKEEBA_DBFILTER_TABLE_META_ROWCOUNT');
+		$doc = $this->container->application->getDocument();
+		$doc->lang('COM_AKEEBA_FILEFILTERS_LABEL_UIROOT');
+		$doc->lang('COM_AKEEBA_FILEFILTERS_LABEL_UIERRORFILTER');
+		$doc->lang('COM_AKEEBA_FILEFILTERS_LABEL_UIERRORFILTER');
+		$doc->lang('COM_AKEEBA_DBFILTER_TYPE_TABLES');
+		$doc->lang('COM_AKEEBA_DBFILTER_TYPE_TABLEDATA');
+		$doc->lang('COM_AKEEBA_DBFILTER_TABLE_MISC');
+		$doc->lang('COM_AKEEBA_DBFILTER_TABLE_TABLE');
+		$doc->lang('COM_AKEEBA_DBFILTER_TABLE_VIEW');
+		$doc->lang('COM_AKEEBA_DBFILTER_TABLE_PROCEDURE');
+		$doc->lang('COM_AKEEBA_DBFILTER_TABLE_FUNCTION');
+		$doc->lang('COM_AKEEBA_DBFILTER_TABLE_TRIGGER');
+		$doc->lang('COM_AKEEBA_DBFILTER_TABLE_META_ROWCOUNT');
 
 		$this->getProfileIdAndName();
 

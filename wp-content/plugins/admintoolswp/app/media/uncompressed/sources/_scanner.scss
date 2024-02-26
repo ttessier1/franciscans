@@ -1,0 +1,121 @@
+/*!*
+ * @package   admintoolswp
+ * @copyright Copyright (c)2017-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @license   GNU GPL version 3 or later
+ */
+
+.admintools-files-alert {
+  font-weight: bold;
+  color: $red;
+}
+
+.admintools-files-noalert {
+  color: $grey;
+  font-style: italic;
+}
+
+div#admintools-scan-dim {
+  display: block;
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 100;
+  background-color: rgba(0, 0, 0, 0.6);
+}
+
+div#admintools-scan-container {
+  margin: auto;
+  padding: 1em;
+}
+
+div#admintools-scan-container p {
+  font-size: 14pt;
+  text-align: center;
+}
+
+div#admintools-scan-container span.lastupdate {
+  font-size: 8pt;
+  color: $grey;
+  text-overflow: ellipsis;
+}
+
+form .admintools-scanfile-new {
+  font-weight: bold;
+  color: $teal;
+}
+
+form .admintools-scanfile-modified {
+  font-weight: bold;
+  color: $orange;
+}
+
+form .admintools-scanfile-suspicious {
+  font-weight: bold;
+  color: darken($red, 20%);
+}
+
+form .admintools-scanfile-nothreat {
+  font-weight: normal;
+  color: inherit;
+}
+
+form .admintools-scanfile-pic {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 2px;
+  background: transparent url(../images/circles.png) left top no-repeat;
+}
+
+form .admintools-scanfile-threat-none {
+  color: $green;
+}
+
+form .admintools-scanfile-threat-low {
+  font-style: italic;
+  color: $teal;
+}
+
+form .admintools-scanfile-threat-low .admintools-scanfile-pic {
+  background-position: -16px top;
+}
+
+form .admintools-scanfile-threat-medium {
+  font-weight: bold;
+  color: $orange;
+}
+
+form .admintools-scanfile-threat-medium .admintools-scanfile-pic {
+  background-position: -32px top;
+}
+
+form .admintools-scanfile-threat-high {
+  font-weight: bold;
+  font-style: italic;
+  color: $red;
+}
+
+form .admintools-scanfile-threat-high .admintools-scanfile-pic {
+  background-position: -48px top;
+}
+
+form span.admintools-scanfile-markedsafe {
+  font-weight: bold;
+  color: $green;
+}
+
+div.editform-row span.admintools-scanfile-path {
+  font-family: Consolas, Courier New, Courier, monospaced;
+  font-weight: bold;
+  font-size: 8pt;
+}
+
+.view-ScanAlerts {
+  section#source, section#diff {
+    pre {
+
+    }
+  }
+}

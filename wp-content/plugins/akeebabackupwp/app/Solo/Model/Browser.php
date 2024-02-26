@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -88,12 +88,12 @@ class Browser extends Model
 				/** @var \DirectoryIterator $item */
 				foreach ($di as $item)
 				{
-					if (!$item->isDir())
+					if ($item->isDot())
 					{
 						continue;
 					}
 
-					if ($item->isDot())
+					if (!$item->isDir())
 					{
 						continue;
 					}

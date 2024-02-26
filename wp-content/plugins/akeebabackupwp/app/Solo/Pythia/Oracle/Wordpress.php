@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -32,7 +32,7 @@ class Wordpress extends AbstractOracle
 	 *
 	 * @return  boolean
 	 */
-	public function isRecognised()
+	public function isRecognised(): bool
 	{
 		if (!@file_exists($this->path . '/wp-config.php') && !@file_exists($this->path . '/../wp-config.php'))
 		{
@@ -57,7 +57,7 @@ class Wordpress extends AbstractOracle
 		return true;
 	}
 
-	public function setLoadWPConfig($value)
+	public function setLoadWPConfig(bool $value): void
 	{
 		$this->loadWPConfig = ($value == true);
 	}
@@ -67,16 +67,20 @@ class Wordpress extends AbstractOracle
 	 *
 	 * @return  array
 	 */
-	public function getDbInformation()
+	public function getDbInformation(): array
 	{
 		$ret = [
-			'driver'   => 'mysqli',
-			'host'     => '',
-			'port'     => '',
-			'username' => '',
-			'password' => '',
-			'name'     => '',
-			'prefix'   => '',
+			'driver'     => 'mysqli',
+			'host'       => '',
+			'port'       => '',
+			'username'   => '',
+			'password'   => '',
+			'name'       => '',
+			'prefix'     => '',
+			'proxy_host' => '',
+			'proxy_port' => '',
+			'proxy_user' => '',
+			'proxy_pass' => '',
 		];
 
 		$filePath = $this->path . '/wp-config.php';
@@ -113,9 +117,9 @@ class Wordpress extends AbstractOracle
 	 *
 	 * @return  array
 	 */
-	protected function parseWithTokenizer($fileContents)
+	protected function parseWithTokenizer(?string $fileContents): array
 	{
-		$tokens = token_get_all($fileContents);
+		$tokens = token_get_all($fileContents ?? '');
 
 		$commentTokens = [T_COMMENT];
 
@@ -165,9 +169,9 @@ class Wordpress extends AbstractOracle
 	 *
 	 * @return  array
 	 */
-	protected function parseWithoutTokenizer($fileContents)
+	protected function parseWithoutTokenizer(?string $fileContents): array
 	{
-		$fileContents = explode("\n", $fileContents);
+		$fileContents = explode("\n", $fileContents ?? '');
 		$fileContents = array_map('trim', $fileContents);
 		$ret          = [];
 
@@ -205,6 +209,21 @@ class Wordpress extends AbstractOracle
 						$ret['collate'] = $value;
 						break;
 
+					case 'WP_PROXY_HOST':
+						$ret['proxy_host'] = $value;
+						break;
+
+					case 'WP_PROXY_PORT':
+						$ret['proxy_port'] = $value;
+						break;
+
+					case 'WP_PROXY_USERNAME':
+						$ret['proxy_user'] = $value;
+						break;
+
+					case 'WP_PROXY_PASSWORD':
+						$ret['proxy_pass'] = $value;
+						break;
 				}
 			}
 			elseif (strpos($line, '$table_prefix') === 0)
@@ -230,7 +249,7 @@ class Wordpress extends AbstractOracle
 	 *
 	 * @return array
 	 */
-	protected function parseByInclusion($fileContents)
+	protected function parseByInclusion(?string $fileContents): array
 	{
 		if (!Buffer::canRegisterWrapper())
 		{
@@ -247,12 +266,14 @@ class Wordpress extends AbstractOracle
 		}
 
 		// Convert the file into individual lines
-		$lines = explode("\n", $fileContents);
+		$lines = explode("\n", $fileContents ?? '');
 
 		// Replace __DIR__ and __FILE__ with their equivalents
+		$absPath = defined('ABSPATH') ? constant('ABSPATH') : $this->path;
+
 		$replacements = [
-			'__DIR__'  => "'" . ABSPATH . "'",
-			'__FILE__' => "'" . ABSPATH . "/wp-config.php'",
+			'__DIR__'  => "'" . $absPath . "'",
+			'__FILE__' => "'" . $absPath . "/wp-config.php'",
 		];
 		$lines        = array_map(function ($line) use ($replacements) {
 			return str_replace(array_keys($replacements), array_values($replacements), $line);
@@ -268,17 +289,19 @@ class Wordpress extends AbstractOracle
 		include_once 'awf://abwp/wp-config.php';
 
 		return [
-			'driver'   => 'mysqli',
-			'host'     => defined(DB_HOST) ? DB_HOST : '',
-			'port'     => '',
-			'username' => defined(DB_USER) ? DB_USER : '',
-			'password' => defined(DB_PASSWORD) ? DB_PASSWORD : '',
-			'name'     => defined(DB_NAME) ? DB_NAME : '',
-			'charset'  => defined(DB_CHARSET) ? DB_CHARSET : 'utf8',
-			'collate'  => defined(DB_COLLATE) ? DB_COLLATE : '',
-			'prefix'   => isset($table_prefix) ? $table_prefix : 'wp_',
+			'driver'     => 'mysqli',
+			'host'       => defined('DB_HOST') ? DB_HOST : '',
+			'port'       => '',
+			'username'   => defined('DB_USER') ? DB_USER : '',
+			'password'   => defined('DB_PASSWORD') ? DB_PASSWORD : '',
+			'name'       => defined('DB_NAME') ? DB_NAME : '',
+			'charset'    => defined('DB_CHARSET') ? DB_CHARSET : 'utf8',
+			'collate'    => defined('DB_COLLATE') ? DB_COLLATE : '',
+			'prefix'     => isset($table_prefix) ? $table_prefix : 'wp_',
+			'proxy_host' => defined('WP_PROXY_HOST') ? WP_PROXY_HOST : '',
+			'proxy_port' => defined('WP_PROXY_PORT') ? WP_PROXY_PORT : '',
+			'proxy_user' => defined('WP_PROXY_USERNAME') ? WP_PROXY_USERNAME : '',
+			'proxy_pass' => defined('WP_PROXY_PASSWORD') ? WP_PROXY_PASSWORD : '',
 		];
-
-		// TODO
 	}
 }

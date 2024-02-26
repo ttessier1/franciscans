@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -15,11 +15,9 @@ include __DIR__ . '/php/menu.php';
 
 $this->outputHTTPHeaders();
 $darkMode = $this->getContainer()->appConfig->get('darkmode', -1);
-$lang      = Text::detectLanguage();
-$lang      = empty($lang) ? 'en-GB' : $lang;
-$langParts = explode('-', $lang, 2);
+$langParts    = explode('-', $this->getContainer()->language->getLangCode(), 2);
 
-if (defined('AKEEBA_SOLOWP_OBFLAG'))
+if (defined('AKEEBA_SOLOWP_OBFLAG') || defined('AKEEBABACKUPWP_OBFLAG'))
 { ?>
 <html lang="<?= $langParts[0] ?>">
 <head>
@@ -51,12 +49,12 @@ else
 
 ?>
 <div class="akeeba-renderer-fef <?php echo ($darkMode == 1) ? 'akeeba-renderer-fef--dark' : 'akeeba-wp' ?>">
-	<?php if ($this->container->input->getCmd('tmpl', '') != 'component'): ?>
+	<?php if ($this->getContainer()->input->getCmd('tmpl', '') != 'component'): ?>
 	<header class="akeeba-navbar">
 		<div class="akeeba-maxwidth akeeba-flex">
 			<!-- Branding -->
 			<div class="akeeba-nav-logo">
-				<a href="<?php echo $this->container->router->route('index.php') ?>">
+				<a href="<?php echo $this->getContainer()->router->route('index.php') ?>">
 					<span class="aklogo-backup-wp"></span>
 					<span class="akeeba-product-name">
                         <?php echo Text::_('SOLO_APP_TITLE') ?>
@@ -92,7 +90,7 @@ else
 		<?php include __DIR__ . '/php/messages.php' ?>
 		<?php echo $this->getBuffer() ?>
 
-		<?php if ($this->container->input->getCmd('tmpl', '') != 'component'): ?>
+		<?php if ($this->getContainer()->input->getCmd('tmpl', '') != 'component'): ?>
 	</div>
 	<footer id="akeeba-footer">
 		<div class="akeeba-maxwidth">
@@ -116,7 +114,7 @@ else
 	</footer>
 <?php endif; ?>
 </div>
-<?php if (defined('AKEEBA_SOLOWP_OBFLAG')): ?>
+<?php if (defined('AKEEBA_SOLOWP_OBFLAG') || defined('AKEEBABACKUPWP_OBFLAG')): ?>
 </body>
 </html>
 <?php endif; ?>

@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -20,7 +20,7 @@ class Html extends View
 	public function onBeforeMain()
 	{
 		/** @var Main $mainModel */
-		$mainModel         = Model::getTmpInstance($this->container->application_name, 'Main', $this->container);
+		$mainModel         = $this->container->mvcFactory->makeTempModel('Main');
 		$this->profileList = $mainModel->getProfileList();
 
 		$document = $this->container->application->getDocument();
@@ -77,11 +77,12 @@ JS;
 		$this->getContainer()->application->getDocument()->addScriptDeclaration($js);
 
 		// JavaScript language strings
-		Text::script('SOLO_COMMON_LBL_ROOT');
-		Text::script('COM_AKEEBA_CONFIG_DIRECTFTP_TEST_OK');
-		Text::script('COM_AKEEBA_CONFIG_DIRECTFTP_TEST_FAIL');
-		Text::script('COM_AKEEBA_CONFIG_DIRECTSFTP_TEST_OK');
-		Text::script('COM_AKEEBA_CONFIG_DIRECTSFTP_TEST_FAIL');
+		$doc = $this->container->application->getDocument();
+		$doc->lang('SOLO_COMMON_LBL_ROOT');
+		$doc->lang('COM_AKEEBA_CONFIG_DIRECTFTP_TEST_OK');
+		$doc->lang('COM_AKEEBA_CONFIG_DIRECTFTP_TEST_FAIL');
+		$doc->lang('COM_AKEEBA_CONFIG_DIRECTSFTP_TEST_OK');
+		$doc->lang('COM_AKEEBA_CONFIG_DIRECTSFTP_TEST_FAIL');
 
 		return true;
 	}

@@ -10,8 +10,7 @@ get_header();
 	$archive_title    = '';
 	$archive_subtitle = '';
 
-	if ( is_search() )
-	{
+	if ( is_search() ) {
 		global $wp_query;
 
 		$archive_title = sprintf(
@@ -27,7 +26,7 @@ get_header();
 					'We found %s result for your search.',
 					'We found %s results for your search.',
 					$wp_query->found_posts,
-					'franciscans'
+					'twentytwenty'
 				),
 				number_format_i18n( $wp_query->found_posts )
 			);
@@ -35,7 +34,7 @@ get_header();
 			$archive_subtitle = __( 'We could not find any results for your search. You can give it another try through the search form below.', 'twentytwenty' );
 		}
 	} elseif ( is_archive() && ! have_posts() ) {
-		$archive_title = __( 'Nothing Found', 'franciscans' );
+		$archive_title = __( 'Nothing Found', 'twentytwenty' );
 	} elseif ( ! is_home() ) {
 		$archive_title    = get_the_archive_title();
 		$archive_subtitle = get_the_archive_description();
@@ -63,11 +62,10 @@ get_header();
 		<?php
 	}
 
-	if ( have_posts() )
-	{
+	if ( have_posts() ) {
 
 		$i = 0;
-?>
+
 		<div class="content<?php 
 			if ( $has_content ){
 				if ( $has_content_left && $has_content_right)
@@ -85,7 +83,6 @@ get_header();
 		?>">
 		<?php
 			// Content Left
-			?>
 			<!-- Content-Left -->
 			<?php
 				
@@ -116,6 +113,7 @@ get_header();
 				{
 					dynamic_sidebar( 'content' );
 				}
+			?>
 		
 
 		while ( have_posts() ) {
@@ -132,6 +130,14 @@ get_header();
 			// Content Right
 		}
 		?>
+
+
+				
+					
+				</div>
+		<?php
+			}
+		?>
 		<!-- End of Header-Content -->
 		<!-- Content-Right -->
 		<?php
@@ -145,11 +151,11 @@ get_header();
 			}
 		?>
 		<!-- End of Content-Right -->
-	<?php
+
 
 
 	} elseif ( is_search() ) {
-	?>
+		?>
 
 		<div class="no-search-results-form section-inner thin">
 

@@ -1,47 +1,163 @@
-# Translation of Plugins - Akismet Anti-Spam - Stable (latest release) in Korean
-# This file is distributed under the same license as the Plugins - Akismet Anti-Spam - Stable (latest release) package.
+# Translation of Plugins - Akismet Anti-spam: Spam Protection - Stable (latest release) in Korean
+# This file is distributed under the same license as the Plugins - Akismet Anti-spam: Spam Protection - Stable (latest release) package.
 msgid ""
 msgstr ""
-"PO-Revision-Date: 2020-06-05 00:58:47+0000\n"
+"PO-Revision-Date: 2024-02-08 11:55:23+0000\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
-"X-Generator: GlotPress/3.0.0-alpha\n"
+"X-Generator: GlotPress/4.0.0-beta.2\n"
 "Language: ko_KR\n"
-"Project-Id-Version: Plugins - Akismet Anti-Spam - Stable (latest release)\n"
+"Project-Id-Version: Plugins - Akismet Anti-spam: Spam Protection - Stable (latest release)\n"
+
+#: views/notice.php:181
+msgid "Akismet is now protecting your site from spam."
+msgstr "아키스밋이 현재 스팸으로부터 사이트를 보호하는 중입니다."
+
+#: views/config.php:306
+msgid "Account overview"
+msgstr "계정 개요"
+
+#. translators: %1$s: spam folder link, %2$d: delete interval in days
+#: views/config.php:194
+msgid "Spam in the %1$s older than %2$d day is deleted automatically."
+msgid_plural "Spam in the %1$s older than %2$d days is deleted automatically."
+msgstr[0] "%1$s에 있는 스팸은 %2$d일 후 자동으로 삭제됩니다."
+
+#: views/config.php:189
+msgid "spam folder"
+msgstr "스팸 폴더"
+
+#: views/config.php:270
+msgid "Subscription type"
+msgstr "구독 형태"
+
+#: views/config.php:234
+msgid "To help your site with transparency under privacy laws like the GDPR, Akismet can display a notice to your users under your comment forms."
+msgstr "GDPR와 같은 개인정보 보호법에 따라 사이트에서 투명성을 유지하는 데 도움이 되도록 아키스밋에서 회원님의 댓글 양식에 따라 회원님의 사용자에게 공지를 표시할 수 있습니다."
+
+#: views/config.php:156
+msgid "Spam filtering"
+msgstr "스팸 필터링"
+
+#: views/config.php:96 views/enter.php:9
+msgid "API key"
+msgstr "API 키"
+
+#: views/config.php:44
+msgid "Akismet stats"
+msgstr "Akismet 통계"
+
+#. Author of the plugin
+msgid "Automattic - Anti-spam Team"
+msgstr "Automattic - 스팸 방지 팀"
+
+#: views/config.php:75
+msgid "Akismet is active and ready to stop spam. Your site&#8217;s spam statistics will be displayed here."
+msgstr "아키스밋이 활성으로 전환되었으며 스팸을 중단할 준비가 되었습니다. 사이트의 스팸 통계가 여기에 표시됩니다."
+
+#: views/notice.php:51
+msgid "WP-Cron has been disabled using the DISABLE_WP_CRON constant. Comment rechecks may not work properly."
+msgstr "WP-Cron에서 DISABLE_WP_CRON 상수 사용이 비활성화되었습니다. 댓글 재확인이 제대로 작동하지 않을 수 있습니다."
+
+#. translators: %1$s is a human-readable time difference, like "3 hours ago",
+#. and %2$s is an already-translated phrase describing how a comment's status
+#. changed, like "This comment was reported as spam."
+#: class.akismet-admin.php:700
+msgid "%1$s - %2$s"
+msgstr "%1$s - %2$s"
+
+#: views/get.php:17
+msgid "(opens in a new tab)"
+msgstr "(새 탭에 열림)"
+
+#. translators: The placeholder is the name of a subscription level, like
+#. "Plus" or "Enterprise" .
+#: views/notice.php:321
+msgid "Upgrade to %s"
+msgstr "%s(으)로 업그레이드"
+
+#: views/notice.php:316
+msgid "Upgrade your subscription level"
+msgstr "구독 레벨 업그레이드"
+
+#: views/notice.php:276 views/notice.php:284 views/notice.php:292
+#: views/notice.php:301
+msgid "Learn more about usage limits."
+msgstr "사용 한계 더 알아보기"
+
+#. translators: The first placeholder is a date, the second is a (formatted)
+#. number, the third is another formatted number.
+#: views/notice.php:268
+msgid "Since %1$s, your account made %2$s API calls, compared to your plan&#8217;s limit of %3$s."
+msgstr "%1$s 이후 귀하의 계정에서 %2$s회 API 통화를 실시했고, 현재 요금제 한도는 %3$s회입니다."
+
+#: views/notice.php:298
+msgid "Your Akismet usage has been over your plan&#8217;s limit for three consecutive months. We have restricted your account for the rest of the month. Upgrade your plan so Akismet can continue blocking spam."
+msgstr "아키스밋 사용량이 3개월 연속 요금제 한도를 초과했습니다. 이번 달 남은 기간 동안 계정을 제한하게 됩니다. 아키스밋에서 계속 스팸을 차단할 수 있도록 요금제를 업그레이드하세요."
+
+#: views/notice.php:289
+msgid "Your Akismet usage is nearing your plan&#8217;s limit for the third consecutive month. We will restrict your account after you reach the limit. Upgrade your plan so Akismet can continue blocking spam."
+msgstr "아키스밋 사용량이 3개월 연속 요금제 한도에 이르고 있습니다. 한도에 도달한 후에는 계정을 제한하게 됩니다. 아키스밋에서 계속 스팸을 차단할 수 있도록 요금제를 업그레이드하세요."
+
+#: views/notice.php:281
+msgid "Your Akismet usage has been over your plan&#8217;s limit for two consecutive months. Next month, we will restrict your account after you reach the limit. Please consider upgrading your plan."
+msgstr "아키스밋 사용량이 2개월 연속 요금제 한도를 초과했습니다. 다음 달에는 한도에 도달한 후 계정을 제한하게 됩니다. 요금제 업그레이드를 고려해 보세요."
+
+#: views/notice.php:255
+msgid "Your account has been restricted"
+msgstr "계정이 제한되었음"
+
+#: views/notice.php:251
+msgid "Your Akismet account usage is approaching your plan&#8217;s limit"
+msgstr "아키스밋 계정 사용량이 요금제 한도에 이르고 있음"
+
+#: views/notice.php:248
+msgid "Your Akismet account usage is over your plan&#8217;s limit"
+msgstr "아키스밋 계정 사용량이 요금제 한도를 초과함"
+
+#. translators: The placeholder is a URL to the Akismet contact form.
+#: views/notice.php:211
+msgid "Please enter a new key or <a href=\"%s\" target=\"_blank\">contact Akismet support</a>."
+msgstr "새 키를 입력하거나 <a href=\"%s\" target=\"_blank\">아키스밋 지원으로 문의</a>하세요."
+
+#: views/notice.php:205
+msgid "Your API key is no longer valid."
+msgstr "API 키가 더 이상 유효하지 않습니다."
 
 #. translators: The placeholder is for showing how much of the process has
 #. completed, as a percent. e.g., "Checking for Spam (40%)"
-#: class.akismet-admin.php:416
+#: class.akismet-admin.php:429
 msgid "Checking for Spam (%1$s%)"
 msgstr "스팸을 확인 중 (%1$s%)"
 
-#: class.akismet-admin.php:684
+#: class.akismet-admin.php:716
 msgid "No comment history."
 msgstr "댓글 이력이 없습니다."
 
-#: class.akismet-admin.php:652
+#: class.akismet-admin.php:667
 msgid "Akismet was unable to recheck this comment."
 msgstr "아키스밋이 이 댓글을 재확인할 수 없습니다."
 
-#: class.akismet-admin.php:644
+#: class.akismet-admin.php:659
 msgid "Akismet was unable to check this comment but will automatically retry later."
 msgstr "아키스밋은 이 댓글을 확인할 수 없으나 나중에 자동으로 다시 시도할 것입니다."
 
-#: class.akismet-admin.php:615
+#. translators: The placeholder is a WordPress PHP function name.
+#: class.akismet-admin.php:628
 msgid "Comment was caught by %s."
 msgstr "댓글이 %s에 의해 확인되었습니다."
 
-#: class.akismet.php:552
+#: class.akismet.php:724
 msgid "Akismet is not configured. Please enter an API key."
 msgstr "아키스밋이 구성되지 않았습니다. API 키를 입력하시기 바랍니다."
 
-#: views/enter.php:8
+#: views/enter.php:7
 msgid "Enter your API key"
 msgstr "API 키를 입력하십시오"
 
-#: views/connect-jp.php:66
+#: views/connect-jp.php:92
 msgid "Set up a different account"
 msgstr "다른 계정 설정"
 
@@ -49,19 +165,19 @@ msgstr "다른 계정 설정"
 msgid "Set up your Akismet account to enable spam filtering on this site."
 msgstr "아키스밋 계정을 설정하여 이 사이트에 스팸을 거르기를 활성화하십시오."
 
-#: class.akismet-admin.php:1087
+#: class.akismet-admin.php:1174
 msgid "Akismet could not recheck your comments for spam."
 msgstr "아키스밋이 댓글에서 스팸을 재확인할 수 없습니다."
 
-#: class.akismet-admin.php:437
-msgid "You don't have permission to do that."
-msgstr "그렇게 할 수 있는 권한이 없습니다."
+#: class.akismet-admin.php:450
+msgid "You don&#8217;t have permission to do that."
+msgstr "이 작업을 수행할 권한이 없습니다."
 
-#: class.akismet-cli.php:165
+#: class.akismet-cli.php:166
 msgid "Stats response could not be decoded."
 msgstr "통계 응답을 복호화할 수 없습니다."
 
-#: class.akismet-cli.php:159
+#: class.akismet-cli.php:160
 msgid "Currently unable to fetch stats. Please try again."
 msgstr "현재 통계를 가져오는 것이 불가능합니다. 다시 시도해 보시기 바래요."
 
@@ -69,35 +185,31 @@ msgstr "현재 통계를 가져오는 것이 불가능합니다. 다시 시도�
 msgid "API key must be set to fetch stats."
 msgstr "통계를 가져오려면 API 카는 설정되어 있어야만 합니다."
 
-#: views/config.php:162
-msgid "To help your site with transparency under privacy laws like the GDPR, Akismet can display a notice to your users under your comment forms. This feature is disabled by default, however, you can turn it on above."
-msgstr "GDPR과 같은 개인 정보 보호법에 따라 사이트를 청명하도록 도우려고, 아키스밋은 댓글 양식 아래에 사용자에게 보일 안내를 보여줄 수 있습니다. 이 기능은 기본적으로 비활성화되어 있으나, 위에서 켤 수 있습니다."
-
-#: views/config.php:160
+#: views/config.php:227
 msgid "Do not display privacy notice."
 msgstr "개인 정보 보호 안내를 보이지 않습니다."
 
-#: views/config.php:159
+#: views/config.php:219
 msgid "Display a privacy notice under your comment forms."
 msgstr "댓글 양식 아래에 개인 정보 보호 안내를 보입니다."
 
-#: views/config.php:158
+#: views/config.php:213
 msgid "Akismet privacy notice"
 msgstr "아키스밋 개인 정보 보호 안내"
 
-#: views/config.php:155
+#: views/config.php:208
 msgid "Privacy"
 msgstr "개인 정보 보호 정책"
 
-#: class.akismet.php:1491
+#: class.akismet.php:1847
 msgid "This site uses Akismet to reduce spam. <a href=\"%s\" target=\"_blank\" rel=\"nofollow noopener\">Learn how your comment data is processed</a>."
 msgstr "이 사이트는 스팸을 줄이는 아키스밋을 사용합니다. <a href=\"%s\" target=\"_blank\" rel=\"nofollow noopener\">댓글이 어떻게 처리되는지 알아보십시오</a>."
 
-#: class.akismet-admin.php:87
-msgid "We collect information about visitors who comment on Sites that use our Akismet anti-spam service. The information we collect depends on how the User sets up Akismet for the Site, but typically includes the commenter's IP address, user agent, referrer, and Site URL (along with other information directly provided by the commenter such as their name, username, email address, and the comment itself)."
-msgstr "아키스밋 스팸 방지 서비스를 이용하는 사이트의 방문자에 대한 정보를 수집하고 있습니다. 수집한 정보는 사용자가 사이트에 대한 아키스밋 설정에 의존하지만, 일반적으로 댓글 작성자의 IP 주소, 사용자 에이전트, 참조자, 그리고 사이트 URL (댓글 작성자가 직접 제공한 이름, 이욤자명, 이메일 주소, 그리고 댓글 자체와 같은 것에 따라)을 포함합니다."
+#: class.akismet-admin.php:88
+msgid "We collect information about visitors who comment on Sites that use our Akismet Anti-spam service. The information we collect depends on how the User sets up Akismet for the Site, but typically includes the commenter's IP address, user agent, referrer, and Site URL (along with other information directly provided by the commenter such as their name, username, email address, and the comment itself)."
+msgstr "당사는 Akismet 스팸 방지 서비스를 사용하는 사이트에 댓글을 다는 방문자에 대한 정보를 수집합니다. 당사가 수집하는 정보는 사용자가 사이트에 Akismet을 설정하는 방법에 따라 다르지만 일반적으로 댓글 작성자의 IP 주소, 사용자 에이전트, 리퍼러, 사이트 URL(댓글 작성자가 직접 제공한 이름, 사용자 이름, 이메일 주소, 댓글 자체 등 기타 정보와 함께)이 포함됩니다."
 
-#: class.akismet.php:236
+#: class.akismet.php:357
 msgid "Comment discarded."
 msgstr "댓글이 버려졌습니다."
 
@@ -130,7 +242,7 @@ msgstr "참인 경우, 아키스밋이 스팸 폴더에 넣지 않고 자동으�
 msgid "A 12-character Akismet API key. Available at akismet.com/get/"
 msgstr "12자리 아키스밋 API 키입니다. Akismet.com/get/에서 사용가능합니다"
 
-#: views/notice.php:55
+#: views/notice.php:88
 msgid "Your site can&#8217;t connect to the Akismet servers."
 msgstr "사이트가 아키스밋 서버에 접속할 수 없습니다."
 
@@ -143,38 +255,33 @@ msgstr "이 사이트에 대한 아키스밋 API 키가 %s 파일에 정의되�
 msgid "Manual Configuration"
 msgstr "직접 구성"
 
-#: class.akismet-admin.php:234
+#: class.akismet-admin.php:247
 msgid "On this page, you are able to update your Akismet settings and view spam stats."
 msgstr "이 페이지에서, 아키스밋 설정을 업데이트하고 스팸 상태를 볼 수 있습니다."
 
 #. Description of the plugin
-msgid "Used by millions, Akismet is quite possibly the best way in the world to <strong>protect your blog from spam</strong>. It keeps your site protected even while you sleep. To get started: activate the Akismet plugin and then go to your Akismet Settings page to set up your API key."
-msgstr "수 백만이 사용합니다, 아키스밋은 아마도 <strong>스팸으로부터 블로그를 보호하는</strong> 세상에서 가장 좋은 방법일 것입니다. 당신이 잠든 사이에도 보호된 사이트가 유지되고 있습니다. 시작하려면: 아키스밋 플러그인을 활성화하고 아키스밋 설정 페이지에 가서 API 를 설정하십시오."
+msgid "Used by millions, Akismet is quite possibly the best way in the world to <strong>protect your blog from spam</strong>. Akismet Anti-spam keeps your site protected even while you sleep. To get started: activate the Akismet plugin and then go to your Akismet Settings page to set up your API key."
+msgstr "수백만 명이 사용하는 Akismet은 <strong>스팸으로부터 블로그를 보호</strong>하는 세계 최고의 방법일 것입니다. Akismet 안티스팸은 잠자는 동안에도 사이트를 보호합니다. 시작하기: Akismet 플러그인을 활성화한 다음 Akismet 설정 페이지로 이동하여 API 키를 설정합니다."
 
-#. Plugin Name of the plugin
-#: class.akismet-admin.php:112 class.akismet-admin.php:115
-msgid "Akismet Anti-Spam"
-msgstr "아키스밋 스팸 방지"
+#: class.akismet-admin.php:114 class.akismet-admin.php:117
+msgid "Akismet Anti-spam"
+msgstr "Akismet 스팸 방지"
 
-#: views/stats.php:4
-msgid "Akismet Settings"
-msgstr "아키스밋 설정"
-
-#: views/enter.php:9
+#: views/enter.php:10
 msgid "Connect with API key"
 msgstr "API키로 연결하기"
 
 #. translators: %s is the WordPress.com username
-#: views/connect-jp.php:23 views/connect-jp.php:58
+#: views/connect-jp.php:25 views/connect-jp.php:79
 msgid "You are connected as %s."
 msgstr "%s(으)로 연결되었습니다."
 
-#: views/connect-jp.php:10 views/connect-jp.php:18 views/connect-jp.php:31
-#: views/connect-jp.php:53 views/connect-jp.php:65
+#: views/connect-jp.php:10 views/connect-jp.php:18 views/connect-jp.php:38
+#: views/connect-jp.php:72 views/connect-jp.php:91
 msgid "Connect with Jetpack"
 msgstr "젯팩에 연결하기"
 
-#: views/connect-jp.php:12 views/connect-jp.php:25 views/connect-jp.php:48
+#: views/connect-jp.php:12 views/connect-jp.php:32 views/connect-jp.php:67
 msgid "Use your Jetpack connection to set up Akismet."
 msgstr "젯팩 연결을 아키스밋을 설정하는데 사용하십시오."
 
@@ -182,53 +289,50 @@ msgstr "젯팩 연결을 아키스밋을 설정하는데 사용하십시오."
 msgid "Eliminate spam from your site"
 msgstr "사이트에서 스팸을 제거합니다"
 
-#: views/notice.php:107
+#. translators: The placeholder is a URL for checking pending comments.
+#: views/notice.php:188
 msgid "Would you like to <a href=\"%s\">check pending comments</a>?"
 msgstr "<a href=\"%s\">보류 중인 댓글을 확인</a>하시겠습니까?"
 
-#: views/notice.php:105
-msgid "Akismet is now protecting your site from spam. Happy blogging!"
-msgstr "아키스밋이 스팸으로부터 사이트를 보호하는 중입니다. 행복한 블로깅!"
-
-#: views/setup.php:3 views/notice.php:14
+#: views/notice.php:24 views/setup.php:3
 msgid "Set up your Akismet account"
 msgstr "아키스밋 계정을 설정하십시오"
 
-#: views/config.php:26
-msgid "Detailed Stats"
+#: views/config.php:36
+msgid "Detailed stats"
 msgstr "자세한 상태"
 
-#: views/config.php:22
+#: views/config.php:30
 msgid "Statistics"
 msgstr "상태"
 
-#: class.akismet-admin.php:1191
+#: class.akismet-admin.php:1278
 msgid "Used by millions, Akismet is quite possibly the best way in the world to <strong>protect your blog from spam</strong>. It keeps your site protected even while you sleep. To get started, just go to <a href=\"admin.php?page=akismet-key-config\">your Akismet Settings page</a> to set up your API key."
 msgstr "수 백만이 사용합니다, 아키스밋은 아마도 <strong>스팸으로부터 블로그를 보호하는</strong> 세상에서 가장 좋은 방법일 것입니다. 당신이 잠든 사이에도 보호된 사이트가 유지되고 있습니다. 시작하려면, <a href=\"admin.php?page=akismet-key-config\">아키스밋 설정 페이지</a>에 가서 API 키를 설정하십시오."
 
-#: class.akismet-admin.php:1188
+#: class.akismet-admin.php:1275
 msgid "Used by millions, Akismet is quite possibly the best way in the world to <strong>protect your blog from spam</strong>. Your site is fully configured and being protected, even while you sleep."
 msgstr "수 백만이 사용합니다, 아키스밋은 아마도 <strong>스팸으로부터 블로그를 보호하는</strong> 세상에서 가장 좋은 방법일 것입니다. 당신이 잠 든 사이에도, 사이트가 완전히 구성되어 보호되고 있습니다."
 
-#: class.akismet-admin.php:1080
+#: class.akismet-admin.php:1167
 msgid "%s comment was caught as spam."
 msgid_plural "%s comments were caught as spam."
 msgstr[0] "%s개의 댓글이 스팸으로 확인되었습니다."
 
-#: class.akismet-admin.php:1077
+#: class.akismet-admin.php:1164
 msgid "No comments were caught as spam."
 msgstr "스팸으로 확인된 댓글이 없습니다."
 
-#: class.akismet-admin.php:1073
+#: class.akismet-admin.php:1160
 msgid "Akismet checked %s comment."
 msgid_plural "Akismet checked %s comments."
 msgstr[0] "아키스밋이 %s개의 댓글을 확인했습니다."
 
-#: class.akismet-admin.php:1070
+#: class.akismet-admin.php:1157
 msgid "There were no comments to check. Akismet will only check comments awaiting moderation."
 msgstr "확인할 댓글이 없습니다. 아키스밋이 검토를 기대리는 댓글만 확인할 것입니다."
 
-#: class.akismet.php:558
+#: class.akismet.php:730
 msgid "Comment not found."
 msgstr "댓글이 없습니다."
 
@@ -263,600 +367,597 @@ msgstr "댓글 #%d개가 스팸이 아닙니다."
 msgid "Comment #%d is spam."
 msgstr "댓글 #%d개가 스팸입니다."
 
-#: views/config.php:49
+#. translators: %s: number of false positive spam flagged by Akismet
+#: views/config.php:65
 msgid "%s false positive"
 msgid_plural "%s false positives"
 msgstr[0] "%s개를 오탐지하였습니다"
 
-#: views/config.php:47
+#. translators: %s: number of spam missed by Akismet
+#: views/config.php:63
 msgid "%s missed spam"
 msgid_plural "%s missed spam"
 msgstr[0] "%s개의 스팸을 놓쳤습니다"
 
-#: views/notice.php:85
+#: views/notice.php:154
 msgid "You don&#8217;t have an Akismet plan."
 msgstr "아키스밋 요금제가 없습니다."
 
-#: views/notice.php:70
+#: views/notice.php:121
 msgid "Your Akismet subscription is suspended."
 msgstr "아키스밋 구독이 일시 정지되었습니다."
 
-#: views/notice.php:65
+#: views/notice.php:110
 msgid "Your Akismet plan has been cancelled."
 msgstr "아키스밋 요금제가 취소되었습니다."
 
-#: views/notice.php:61
+#. translators: The placeholder is a URL.
+#: views/notice.php:103
 msgid "We cannot process your payment. Please <a href=\"%s\" target=\"_blank\">update your payment details</a>."
 msgstr "결제를 처리할 수 없습니다. <a href=\"%s\" target=\"_blank\">결제정보를 업데이트</a>하시기 바랍니다."
 
-#: views/notice.php:60
+#: views/notice.php:99
 msgid "Please update your payment information."
 msgstr "결제 정보를 업데이트하시기 바랍니다."
 
-#: views/notice.php:17
+#: views/notice.php:30
 msgid "<strong>Almost done</strong> - configure Akismet and say goodbye to spam"
 msgstr "<strong>거의 다 됐습니다</strong> - 아키스밋을 구성하고 스팸과 작별하십시오"
 
-#: class.akismet-admin.php:1004
+#: class.akismet-admin.php:1084
 msgid "Akismet has saved you %d minute!"
 msgid_plural "Akismet has saved you %d minutes!"
 msgstr[0] "아키스밋이 %d분을 절약해 드렸습니다!"
 
-#: class.akismet-admin.php:1002
+#: class.akismet-admin.php:1082
 msgid "Akismet has saved you %d hour!"
 msgid_plural "Akismet has saved you %d hours!"
 msgstr[0] "아키스밋이 %d시간을 절약해 드렸습니다!"
 
-#: class.akismet-admin.php:1000
+#: class.akismet-admin.php:1080
 msgid "Akismet has saved you %s day!"
 msgid_plural "Akismet has saved you %s days!"
 msgstr[0] "아키스밋이 %s일을 절약해 드렸습니다!"
 
-#: class.akismet-admin.php:182 class.akismet-admin.php:220
-#: class.akismet-admin.php:233
+#: class.akismet-admin.php:195 class.akismet-admin.php:233
+#: class.akismet-admin.php:246
 msgid "Akismet filters out spam, so you can focus on more important things."
 msgstr "아키스밋이 스팸을 걸러 내버려서, 중요한 일에 집중 하실 수 있습니다."
 
-#: views/notice.php:135
-msgid "To continue your service, <a href=\"%s\" target=\"_blank\">upgrade to an Enterprise subscription</a>, which covers an unlimited number of sites."
-msgstr "서비스를 계속 이용하려면, 무제한 사이트를 이용할 수 있는 <a href=\"%s\" target=\"_blank\">기업 구독으로 업그레이드</a>하십시오."
-
-#: views/notice.php:128
-msgid "Your Pro subscription allows the use of Akismet on only one site. Please <a href=\"%s\" target=\"_blank\">purchase additional Pro subscriptions</a> or upgrade to an Enterprise subscription that allows the use of Akismet on unlimited sites."
-msgstr "플러스 구독은 오직 한 사이트만을 이용할 수 있습니다. <a href=\"%s\" target=\"_blank\">추가 플러스 구독을 구입</a>하거나 무제한 사이트에 아키스밋을 이용할 수 있는 기업 구독으로 업그레이드 하십시오."
-
-#: views/notice.php:121
+#. translators: The placeholder is a URL.
+#: views/notice.php:228
 msgid "The connection to akismet.com could not be established. Please refer to <a href=\"%s\" target=\"_blank\">our guide about firewalls</a> and check your server configuration."
 msgstr "akismet.com 사이트와 연결할 수 없습니다. <a href=\"%s\" target=\"_blank\">방화벽</a>과 관련한 문서를 참고해서 서버 설정을 확인해주세요."
 
-#: views/notice.php:120
+#: views/notice.php:222
 msgid "The API key you entered could not be verified."
 msgstr "입력한 API 키는 검증되지 않았습니다."
 
-#: views/notice.php:116
-msgid "Your API key is no longer valid. Please enter a new key or contact support@akismet.com."
-msgstr "API 키가 더 이상 유효하지 않습니다. 새로운 키를 입력하거나 support@akismet.com에 연락하시기 바랍니다."
-
-#: views/notice.php:89 views/notice.php:130 views/notice.php:137
+#. translators: The placeholder is a URL to the Akismet contact form.
+#: views/notice.php:163
 msgid "Please <a href=\"%s\" target=\"_blank\">contact our support team</a> with any questions."
 msgstr "어떤 질문이라도 있으면 <a href=\"%s\" target=\"_blank\">지원팀에 연락</a>하시기 바랍니다."
 
-#: views/notice.php:87
+#. translators: the placeholder is a clickable URL to the Akismet account
+#. upgrade page.
+#: views/notice.php:158
 msgid "In 2012, Akismet began using subscription plans for all accounts (even free ones). A plan has not been assigned to your account, and we&#8217;d appreciate it if you&#8217;d <a href=\"%s\" target=\"_blank\">sign into your account</a> and choose one."
 msgstr "2012년, 아키스밋은 모든 계정에 구독 요금제를 이용하기 시작했습니다 (물론 무료). 요금제는 계정에 지정되지 않았고, <a href=\"%s\" target=\"_blank\">계정에 로그인</a>하고 하나를 고르시면 감사하겠습니다."
 
-#: views/config.php:95
+#: views/config.php:123
 msgid "All systems functional."
 msgstr "모든 시스템이 작동 중입니다."
 
-#: views/config.php:95
+#: views/config.php:122
 msgid "Enabled."
 msgstr "활성화 되었습니다."
 
-#: views/config.php:92
+#: views/config.php:120
 msgid "Akismet encountered a problem with a previous SSL request and disabled it temporarily. It will begin using SSL for requests again shortly."
 msgstr "아키스밋이 이전의 SSL 요청에 대해 문제가 발생해 일시적으로 비활성화 됐습니다. 잠시 후 SSL을 사용해 다시 요청을 시작할 것입니다."
 
-#: views/config.php:92
+#: views/config.php:119
 msgid "Temporarily disabled."
 msgstr "일시적으로 비활성화 되었습니다."
 
-#: views/config.php:86
+#: views/config.php:114
 msgid "Your Web server cannot make SSL requests; contact your Web host and ask them to add support for SSL requests."
 msgstr "웹서버가 SSL 요청을 만들 수 없습니다; 웹 호스트에 연락해서 SSL 요청에 대한 지원을 추가를 문의하십시오."
 
-#: views/config.php:86
+#: views/config.php:113
 msgid "Disabled."
 msgstr "비활성화 되었습니다."
 
-#: views/config.php:79
-msgid "SSL Status"
+#: views/config.php:110
+msgid "SSL status"
 msgstr "SSL 상태"
 
-#: class.akismet-admin.php:630
+#: class.akismet-admin.php:645
 msgid "This comment was reported as not spam."
 msgstr "이 댓글은 스팸이 아니라고 보고하였습니다."
 
-#: class.akismet-admin.php:622
+#: class.akismet-admin.php:637
 msgid "This comment was reported as spam."
 msgstr "이 댓글은 스팸으로 보고하였습니다."
-
-#: class.akismet-admin.php:147
-msgid "(undo)"
-msgstr "(되돌리기)"
-
-#: class.akismet-admin.php:146
-msgid "URL removed"
-msgstr "URL이 제거되었습니다"
-
-#: class.akismet-admin.php:145
-msgid "Removing..."
-msgstr "제거 중..."
-
-#: class.akismet-admin.php:86 class.akismet-admin.php:1206
-msgid "Akismet"
-msgstr "아키스밋"
-
-#: class.akismet-admin.php:105 class.akismet-admin.php:241
-#: class.akismet-admin.php:691 views/config.php:60
-msgid "Settings"
-msgstr "설정"
-
-#: class.akismet-admin.php:148
-msgid "Re-adding..."
-msgstr "다시 추가..."
-
-#: class.akismet-admin.php:179 class.akismet-admin.php:217
-#: class.akismet-admin.php:230
-msgid "Overview"
-msgstr "전체 보기"
-
-#: class.akismet-admin.php:181 class.akismet-admin.php:192
-#: class.akismet-admin.php:203
-msgid "Akismet Setup"
-msgstr "아키스밋 설정"
-
-#: class.akismet-admin.php:183
-msgid "On this page, you are able to set up the Akismet plugin."
-msgstr "이 페이지에서 아키스밋 플러그인을 설정할 수 있습니다."
-
-#: class.akismet-admin.php:190
-msgid "New to Akismet"
-msgstr "아키스밋 시작"
-
-#: class.akismet-admin.php:193
-msgid "You need to enter an API key to activate the Akismet service on your site."
-msgstr "아키스밋 서비스를 사이트에서 활성화 하려면 API 키를 입력해야 합니다."
-
-#: class.akismet-admin.php:201
-msgid "Enter an API Key"
-msgstr "API 키 입력"
-
-#: class.akismet-admin.php:194
-msgid "Sign up for an account on %s to get an API Key."
-msgstr "API 키를 받으려면 %s에서 계정을 만드십시오."
-
-#: class.akismet-admin.php:204
-msgid "If you already have an API key"
-msgstr "API 키가 이미 있는 경우"
-
-#: class.akismet-admin.php:206
-msgid "Copy and paste the API key into the text field."
-msgstr "API 키를 입력란에 복사해 붙여넣으십시오."
-
-#: class.akismet-admin.php:207
-msgid "Click the Use this Key button."
-msgstr "이 키 사용하기 버튼을 클릭하십시오."
-
-#: class.akismet-admin.php:219
-msgid "Akismet Stats"
-msgstr "아키스밋 통계"
-
-#: class.akismet-admin.php:221
-msgid "On this page, you are able to view stats on spam filtered on your site."
-msgstr "이 페이지에서 사이트에서 필터된 스팸 통계를 볼 수 있습니다."
-
-#: class.akismet-admin.php:232 class.akismet-admin.php:243
-#: class.akismet-admin.php:256
-msgid "Akismet Configuration"
-msgstr "아키스밋 설정"
-
-#: class.akismet-admin.php:244 views/config.php:70
-msgid "API Key"
-msgstr "API 키"
-
-#: class.akismet-admin.php:244
-msgid "Enter/remove an API key."
-msgstr "API 키 입력/제거."
-
-#: class.akismet-admin.php:245 views/config.php:105
-msgid "Comments"
-msgstr "댓글"
-
-#: class.akismet-admin.php:245
-msgid "Show the number of approved comments beside each comment author in the comments list page."
-msgstr "댓글 목록 페이지에서 각 댓글 작성자 옆에 승인된 댓글 수를 보입니다."
-
-#: class.akismet-admin.php:246
-msgid "Choose to either discard the worst spam automatically or to always put all spam in spam folder."
-msgstr "최악의 스팸을 자동으로 버릴지 아니면 스팸 폴더에 모든 스팸을 저장할지 선택하십시오."
-
-#: class.akismet-admin.php:246 views/config.php:128
-msgid "Strictness"
-msgstr "엄격성"
-
-#: class.akismet-admin.php:254 views/config.php:188
-msgid "Account"
-msgstr "계정"
-
-#: class.akismet-admin.php:257 views/config.php:196
-msgid "Subscription Type"
-msgstr "구독 형태"
-
-#: class.akismet-admin.php:258
-msgid "The subscription status - active, cancelled or suspended"
-msgstr "구독 상태 - 활성, 취소, 중지"
-
-#: class.akismet-admin.php:258 views/config.php:203
-msgid "Status"
-msgstr "상태"
-
-#: class.akismet-admin.php:257
-msgid "The Akismet subscription plan"
-msgstr "아키스밋 구독 계획"
-
-#: class.akismet-admin.php:268
-msgid "Akismet FAQ"
-msgstr "아키스밋 자주묻는질문"
-
-#: class.akismet-admin.php:267
-msgid "For more information:"
-msgstr "더 많은 정보:"
-
-#: class.akismet-admin.php:269
-msgid "Akismet Support"
-msgstr "아키스밋 지원"
-
-#: class.akismet-admin.php:275
-msgid "Cheatin&#8217; uh?"
-msgstr "누구를 속이시려고?"
-
-#: class.akismet-admin.php:345
-msgctxt "comments"
-msgid "Spam"
-msgstr "스팸"
-
-#: class.akismet-admin.php:347
-msgid "<a href=\"%1$s\">Akismet</a> has protected your site from <a href=\"%2$s\">%3$s spam comment</a>."
-msgid_plural "<a href=\"%1$s\">Akismet</a> has protected your site from <a href=\"%2$s\">%3$s spam comments</a>."
-msgstr[0] "<a href=\"%1$s\">아키스밋</a>이 <a href=\"%2$s\">%3$s개의 스팸 댓글</a>로부터 사이트를 보호했습니다."
-
-#: class.akismet-admin.php:357
-msgid "<a href=\"%1$s\">Akismet</a> has protected your site from %2$s spam comment already. "
-msgid_plural "<a href=\"%1$s\">Akismet</a> has protected your site from %2$s spam comments already. "
-msgstr[0] "<a href=\"%1$s\">아키스밋</a>이 이미 %2$s개의 스팸으로부터 사이트를 보호하였습니다. "
-
-#: class.akismet-admin.php:363
-msgid "<a href=\"%s\">Akismet</a> blocks spam from getting to your blog. "
-msgstr "<a href=\"%s\">아키스밋</a>은 스팸이 블로그에 침투하는 것을 차단합니다. "
-
-#: class.akismet-admin.php:369
-msgid "There&#8217;s <a href=\"%2$s\">%1$s comment</a> in your spam queue right now."
-msgid_plural "There are <a href=\"%2$s\">%1$s comments</a> in your spam queue right now."
-msgstr[0] "현재 스팸 큐에 <a href=\"%2$s\">%1$s개의 댓글</a>이 있습니다."
-
-#: class.akismet-admin.php:375
-msgid "There&#8217;s nothing in your <a href='%s'>spam queue</a> at the moment."
-msgstr "현재 <a href='%s'>스팸 큐</a>에 아무것도 없습니다."
-
-#: class.akismet-admin.php:609
-msgid "Akismet re-checked and cleared this comment."
-msgstr "아키스밋이 재확인하고 이 댓글을 정리하였습니다."
-
-#: class.akismet-admin.php:603
-msgid "Akismet re-checked and caught this comment as spam."
-msgstr "아키스밋이 재확인하고 이 댓글을 스팸으로 확인했습니다."
-
-#: class.akismet-admin.php:422
-msgid "Check for Spam"
-msgstr "스팸을 확인합니다"
-
-#: class.akismet-admin.php:649
-msgid "Akismet was unable to recheck this comment (response: %s)."
-msgstr "아키스밋은 이 댓글을 다시 확인할 수 없습니다 (응답: %s)."
-
-#: class.akismet-admin.php:533
-msgid "Flagged as spam by Akismet"
-msgstr "아키스밋에 의해 스팸으로 표시되었습니다"
-
-#: class.akismet-admin.php:529
-msgid "Awaiting spam check"
-msgstr "스팸 확인을 기다리는 중입니다"
-
-#: class.akismet-admin.php:539
-msgid "Flagged as spam by %s"
-msgstr "%s에 의해 스팸으로 표시되었습니다"
-
-#: class.akismet-admin.php:535
-msgid "Cleared by Akismet"
-msgstr "아키스밋에 의해 제거되었습니다"
-
-#: class.akismet-admin.php:541
-msgid "Un-spammed by %s"
-msgstr "%s에 의해 스팸이 아니라고 표시되었습니다"
-
-#: class.akismet-admin.php:576
-msgid "%s approved"
-msgid_plural "%s approved"
-msgstr[0] "%s 승인되었습니다"
-
-#: class.akismet-admin.php:553
-msgid "History"
-msgstr "이력"
-
-#: class.akismet-admin.php:553 class.akismet-admin.php:561
-msgid "View comment history"
-msgstr "댓글 이력 보기"
-
-#: class.akismet-admin.php:890
-msgid "Please check your <a href=\"%s\">Akismet configuration</a> and contact your web host if problems persist."
-msgstr "문제가 지속되면 <a href=\"%s\">아키스밋 구성</a>을 점검하고 웹호스팅에 연락하십시오."
-
-#: class.akismet-admin.php:675
-msgid "%s ago"
-msgstr "%s 전"
-
-#: class.akismet-admin.php:997
-msgid "Cleaning up spam takes time."
-msgstr "스팸 정리는 시간이 걸립니다."
-
-#: class.akismet-widget.php:12
-msgid "Akismet Widget"
-msgstr "아키스밋 위젯"
-
-#: class.akismet-widget.php:13
-msgid "Display the number of spam comments Akismet has caught"
-msgstr "아키스밋이 잡아낸 스팸 댓글의 갯수를 표시합니다"
-
-#: class.akismet-widget.php:74
-msgid "Title:"
-msgstr "제목:"
-
-#: class.akismet-widget.php:69 class.akismet-widget.php:90
-msgid "Spam Blocked"
-msgstr "스팸이 차단되었습니다"
-
-#: class.akismet-widget.php:102
-msgid "<strong class=\"count\">%1$s spam</strong> blocked by <strong>Akismet</strong>"
-msgid_plural "<strong class=\"count\">%1$s spam</strong> blocked by <strong>Akismet</strong>"
-msgstr[0] "<strong class=\"count\">%1$s개의 스팸</strong>을 <strong>아키스밋</strong>이 차단했습니다"
-
-#: class.akismet-admin.php:606
-msgid "Akismet caught this comment as spam."
-msgstr "아키스밋이 이 댓글을 스팸으로 확인했습니다."
-
-#: class.akismet-admin.php:660
-msgid "Comment status was changed to %s"
-msgstr "%s(으)로 댓글 상태가 변경되었습니다"
-
-#: class.akismet-admin.php:612
-msgid "Akismet cleared this comment."
-msgstr "아키스밋이 이 댓글을 정리했습니다."
-
-#: class.akismet-admin.php:641
-msgid "Akismet was unable to check this comment (response: %s) but will automatically retry later."
-msgstr "아키스밋이 이 댓글을 확인할 수 없습니다 (응답: %s) 하지만 나중에 자동으로 다시 시도할 것입니다."
-
-#: class.akismet-admin.php:666
-msgid "%1$s changed the comment status to %2$s."
-msgstr "%1$s개의 댓글이 %2$s 상태로 변경되었습니다."
-
-#: class.akismet-admin.php:619
-msgid "%s reported this comment as spam."
-msgstr "%s(이)가 이 댓글이 스팸이라고 보고했습니다."
-
-#: class.akismet-admin.php:627
-msgid "%s reported this comment as not spam."
-msgstr "%s(이)가 이 댓글이 스팸이 아니라고 보고했습니다."
-
-#: class.akismet-admin.php:634
-msgid "Akismet caught this comment as spam during an automatic retry."
-msgstr "아키스밋이 자동으로 재확인하면서 이 댓글을 스팸으로 확인했습니다."
-
-#: class.akismet-admin.php:637
-msgid "Akismet cleared this comment during an automatic retry."
-msgstr "아키스밋은 자동 재시도 중에 이 댓글을 제거했습니다."
-
-#: class.akismet.php:1348
-msgid "Please <a href=\"%1$s\">upgrade WordPress</a> to a current version, or <a href=\"%2$s\">downgrade to version 2.4 of the Akismet plugin</a>."
-msgstr "<a href=\"%1$s\">워드프레스를 현재 버전으로 업그레이드</a>하거나, <a href=\"%2$s\">아키스밋 플러그인을 2.4 버전으로 다운그레이드</a>하십시오."
-
-#: class.akismet.php:1348
-msgid "Akismet %s requires WordPress %s or higher."
-msgstr "아키스밋 %s(은)는 워드프레스 %s 또는 그 이상이 필요합니다."
-
-#: views/config.php:37 views/config.php:42
-msgid "Spam blocked"
-msgid_plural "Spam blocked"
-msgstr[0] "스팸이 차단되었습니다"
-
-#: views/config.php:35
-msgid "Past six months"
-msgstr "최근 6개월"
-
-#: views/config.php:40
-msgid "All time"
-msgstr "모든 기간"
-
-#: views/config.php:45
-msgid "Accuracy"
-msgstr "정확도"
-
-#: views/config.php:109
-msgid "Show approved comments"
-msgstr "승인된 댓글 보기"
-
-#: views/config.php:122
-msgid "Show the number of approved comments beside each comment author"
-msgstr "각 댓글 작성자 옆에 승인된 댓글 수를 보입니다"
-
-#: views/config.php:131
-msgid "Akismet anti-spam strictness"
-msgstr "아키스밋 스팸 방지 엄격성"
-
-#: views/config.php:132
-msgid "Silently discard the worst and most pervasive spam so I never see it."
-msgstr "최악의 가장 공격성이 높은 스팸을 조용히 버리고 다시는 보지 않습니다."
-
-#: views/config.php:133
-msgid "Always put spam in the Spam folder for review."
-msgstr "검토를 위해 항상 스팸 폴더에 스팸을 저장합니다."
-
-#: views/config.php:141
-msgid "Spam in the <a href=\"%1$s\">spam folder</a> older than 1 day is deleted automatically."
-msgid_plural "Spam in the <a href=\"%1$s\">spam folder</a> older than %2$d days is deleted automatically."
-msgstr[0] "%2$d일 이상 <a href=\"%1$s\">스팸폴더</a>에 있는 스팸은 자동으로 지워집니다."
-
-#: views/config.php:135
-msgid "Note:"
-msgstr "주의:"
-
-#: views/config.php:208
-msgid "Cancelled"
-msgstr "취소되었습니다"
-
-#: views/config.php:176
-msgid "Save Changes"
-msgstr "변경 사항 저장"
-
-#: views/config.php:170
-msgid "Disconnect this account"
-msgstr "이 계정 연결 끊기"
-
-#: views/config.php:210
-msgid "Suspended"
-msgstr "일시 중단"
-
-#: views/config.php:214
-msgid "No Subscription Found"
-msgstr "구독이 없습니다"
-
-#: views/config.php:212
-msgid "Missing"
-msgstr "없습니다"
-
-#: views/config.php:222
-msgid "Next Billing Date"
-msgstr "다음 청구 일"
-
-#: views/config.php:216
-msgid "Active"
-msgstr "활성"
-
-#: views/config.php:233
-msgid "Upgrade"
-msgstr "업그레이드"
-
-#: views/config.php:233
-msgid "Change"
-msgstr "변경"
-
-#: views/notice.php:23
-msgid "Akismet has detected a problem."
-msgstr "아키스밋이 문제를 찾아냈습니다."
-
-#: views/notice.php:24
-msgid "Some comments have not yet been checked for spam by Akismet. They have been temporarily held for moderation and will automatically be rechecked later."
-msgstr "일부 댓글이 아직 아키스밋으로 스팸인지 확인하지 않았습니다. 이들은 잠시 검토를 위해 보류 중이며 나중에 자동으로 재확인 할 것입니다."
-
-#: views/notice.php:31
-msgid "Akismet Error Code: %s"
-msgstr "아키스밋 오류 코드: %s"
-
-#. translators: the placeholder is a clickable URL that leads to more
-#. information regarding an error code.
-#: views/notice.php:36
-msgid "For more information: %s"
-msgstr "더 많은 정보: %s"
-
-#: views/notice.php:51
-msgid "Your web host or server administrator has disabled PHP&#8217;s <code>gethostbynamel</code> function.  <strong>Akismet cannot work correctly until this is fixed.</strong>  Please contact your web host or firewall administrator and give them <a href=\"%s\" target=\"_blank\">this information about Akismet&#8217;s system requirements</a>."
-msgstr "웹호스팅이나 서버 관리자가 PHP의 <code>gethostbynamel</code> 함수를 비활성화 했습니다. <strong>아키스밋은 이것이 고쳐지지 않으면 제대로 작동할 수 없습니다.</strong> 웹호스팅이나 방화벽 관리자에게 연락해서 <a href=\"%s\" target=\"_blank\">아키스밋 시스템의 필수 사항에 관한 정보</a>를 제공하십시오."
-
-#: views/notice.php:50
-msgid "Network functions are disabled."
-msgstr "네트워크 함수가 비활성화되었습니다."
-
-#: views/notice.php:56
-msgid "Your firewall may be blocking Akismet from connecting to its API. Please contact your host and refer to <a href=\"%s\" target=\"_blank\">our guide about firewalls</a>."
-msgstr "방화벽이 아키스밋이 API에 연결하려는 것을 막고 있을 수 있습니다. 웹호스트에 연락하고 <a href=\"%s\" target=\"_blank\">우리의 방화벽에 관한 안내</a>를 참고하도록 하십시오."
-
-#: views/notice.php:66
-msgid "Please visit your <a href=\"%s\" target=\"_blank\">Akismet account page</a> to reactivate your subscription."
-msgstr "구독을 재활성화 하려면 <a href=\"%s\" target=\"_blank\">아키스밋 계정 페이지</a>를 방문하십시오."
-
-#: views/notice.php:71 views/notice.php:81
-msgid "Please contact <a href=\"%s\" target=\"_blank\">Akismet support</a> for assistance."
-msgstr "도움이 필요하면 <a href=\"%s\" target=\"_blank\">아키스밋 지원</a>에 연락하십시오."
-
-#: views/notice.php:76
-msgid "You can help us fight spam and upgrade your account by <a href=\"%s\" target=\"_blank\">contributing a token amount</a>."
-msgstr "<a href=\"%s\" target=\"_blank\">토큰 금액을 기부</a>하여 스팸과 싸우는 우리를 돕고 계정을 업그레이드하십시오."
-
-#: views/notice.php:80
-msgid "There is a problem with your API key."
-msgstr "키에 문제가 있습니다."
-
-#: views/notice.php:112
-msgid "The key you entered is invalid. Please double-check it."
-msgstr "입력된 키가 유효하지 않습니다. 한 번 더 확인하기 바랍니다."
-
-#: views/notice.php:126
-msgid "You&#8217;re using your Akismet key on more sites than your Pro subscription allows."
-msgstr "플러스 구독이 허용하는 것보다 더 많은 사이트에서 아키스밋 키를 사용하고 있습니다."
-
-#: views/notice.php:133
-msgid "You&#8217;re using Akismet on far too many sites for your Pro subscription."
-msgstr "플러스 구독을 하면서 너무 많은 사이트에 아키스밋을 사용하고 있습니다."
-
-#. translators: %s is the WordPress.com email address
-#: views/connect-jp.php:36
-msgid "Your subscription for %s is cancelled."
-msgstr "%s의 구독을 취소하였습니다."
-
-#. translators: %s is the WordPress.com email address
-#: views/connect-jp.php:44
-msgid "Your subscription for %s is suspended."
-msgstr "%s의 구독이 일시중지됐습니다."
-
-#: views/connect-jp.php:45
-msgid "No worries! Get in touch and we&#8217;ll sort this out."
-msgstr "걱정하지 마십시오! 연락주시면 도움을 드리겠습니다."
-
-#: views/connect-jp.php:39
-msgid "Contact Akismet support"
-msgstr "아키스밋 지원에 연락"
-
-#: views/enter.php:2
-msgid "Manually enter an API key"
-msgstr "API 키를 수동으로 입력하기"
-
-#. Plugin URI of the plugin
-msgid "https://akismet.com/"
-msgstr "https://akismet.com/"
 
 #. Author URI of the plugin
 msgid "https://automattic.com/wordpress-plugins/"
 msgstr "https://automattic.com/wordpress-plugins/"
 
-#. Author of the plugin
-msgid "Automattic"
-msgstr "오토매틱"
+#. Plugin URI of the plugin
+msgid "https://akismet.com/"
+msgstr "https://akismet.com/"
 
-#: class.akismet-admin.php:144
+#: views/enter.php:2
+msgid "Manually enter an API key"
+msgstr "API 키를 수동으로 입력하기"
+
+#: views/connect-jp.php:53
+msgid "Contact Akismet support"
+msgstr "아키스밋 지원에 연락"
+
+#: views/connect-jp.php:64
+msgid "No worries! Get in touch and we&#8217;ll sort this out."
+msgstr "걱정하지 마십시오! 연락주시면 도움을 드리겠습니다."
+
+#. translators: %s is the WordPress.com email address
+#: views/connect-jp.php:60
+msgid "Your subscription for %s is suspended."
+msgstr "%s의 구독이 일시중지됐습니다."
+
+#. translators: %s is the WordPress.com email address
+#: views/connect-jp.php:45
+msgid "Your subscription for %s is cancelled."
+msgstr "%s의 구독을 취소하였습니다."
+
+#: views/notice.php:200
+msgid "The key you entered is invalid. Please double-check it."
+msgstr "입력된 키가 유효하지 않습니다. 한 번 더 확인하기 바랍니다."
+
+#: views/notice.php:143
+msgid "There is a problem with your API key."
+msgstr "키에 문제가 있습니다."
+
+#. translators: the placeholder is a clickable URL to the Akismet account
+#. upgrade page.
+#: views/notice.php:136
+msgid "You can help us fight spam and upgrade your account by <a href=\"%s\" target=\"_blank\">contributing a token amount</a>."
+msgstr "<a href=\"%s\" target=\"_blank\">토큰 금액을 기부</a>하여 스팸과 싸우는 우리를 돕고 계정을 업그레이드하십시오."
+
+#. translators: The placeholder is a URL.
+#. translators: The placeholder is a URL to the Akismet contact form.
+#: views/notice.php:125 views/notice.php:147
+msgid "Please contact <a href=\"%s\" target=\"_blank\">Akismet support</a> for assistance."
+msgstr "도움이 필요하면 <a href=\"%s\" target=\"_blank\">아키스밋 지원</a>에 연락하십시오."
+
+#. translators: The placeholder is a URL.
+#: views/notice.php:114
+msgid "Please visit your <a href=\"%s\" target=\"_blank\">Akismet account page</a> to reactivate your subscription."
+msgstr "구독을 재활성화 하려면 <a href=\"%s\" target=\"_blank\">아키스밋 계정 페이지</a>를 방문하십시오."
+
+#. translators: The placeholder is a URL.
+#: views/notice.php:92
+msgid "Your firewall may be blocking Akismet from connecting to its API. Please contact your host and refer to <a href=\"%s\" target=\"_blank\">our guide about firewalls</a>."
+msgstr "방화벽이 아키스밋이 API에 연결하려는 것을 막고 있을 수 있습니다. 웹호스트에 연락하고 <a href=\"%s\" target=\"_blank\">우리의 방화벽에 관한 안내</a>를 참고하도록 하십시오."
+
+#. translators: The placeholder is a URL.
+#: views/notice.php:81
+msgid "Your web host or server administrator has disabled PHP&#8217;s <code>gethostbynamel</code> function.  <strong>Akismet cannot work correctly until this is fixed.</strong>  Please contact your web host or firewall administrator and give them <a href=\"%s\" target=\"_blank\">this information about Akismet&#8217;s system requirements</a>."
+msgstr "웹호스팅이나 서버 관리자가 PHP의 <code>gethostbynamel</code> 함수를 비활성화 했습니다. <strong>아키스밋은 이것이 고쳐지지 않으면 제대로 작동할 수 없습니다.</strong> 웹호스팅이나 방화벽 관리자에게 연락해서 <a href=\"%s\" target=\"_blank\">아키스밋 시스템의 필수 사항에 관한 정보</a>를 제공하십시오."
+
+#: views/notice.php:77
+msgid "Network functions are disabled."
+msgstr "네트워크 함수가 비활성화되었습니다."
+
+#. translators: the placeholder is a clickable URL that leads to more
+#. information regarding an error code.
+#: views/notice.php:62
+msgid "For more information: %s"
+msgstr "더 많은 정보: %s"
+
+#. translators: The placeholder is an error code returned by Akismet.
+#: views/notice.php:57
+msgid "Akismet error code: %s"
+msgstr "아키스밋 오류 코드: %s"
+
+#: views/notice.php:42
+msgid "Some comments have not yet been checked for spam by Akismet. They have been temporarily held for moderation and will automatically be rechecked later."
+msgstr "일부 댓글이 아직 아키스밋으로 스팸인지 확인하지 않았습니다. 이들은 잠시 검토를 위해 보류 중이며 나중에 자동으로 재확인 할 것입니다."
+
+#: views/notice.php:41 views/notice.php:50
+msgid "Akismet has detected a problem."
+msgstr "아키스밋이 문제를 찾아냈습니다."
+
+#: views/config.php:314
+msgid "Change"
+msgstr "변경"
+
+#: views/config.php:314
+msgid "Upgrade"
+msgstr "업그레이드"
+
+#: views/config.php:295
+msgid "Next billing date"
+msgstr "다음 청구 일"
+
+#: views/config.php:288
+msgid "Active"
+msgstr "활성"
+
+#: views/config.php:286
+msgid "No subscription found"
+msgstr "구독이 없습니다"
+
+#: views/config.php:284
+msgid "Missing"
+msgstr "없습니다"
+
+#: views/config.php:282
+msgid "Suspended"
+msgstr "일시 중단"
+
+#: views/config.php:280
+msgid "Cancelled"
+msgstr "취소되었습니다"
+
+#: views/config.php:251
+msgid "Save changes"
+msgstr "변경 사항 저장"
+
+#: views/config.php:243
+msgid "Disconnect this account"
+msgstr "이 계정 연결 끊기"
+
+#: views/config.php:182
+msgid "Note:"
+msgstr "주의:"
+
+#: views/config.php:175
+msgid "Always put spam in the Spam folder for review."
+msgstr "검토를 위해 항상 스팸 폴더에 스팸을 저장합니다."
+
+#: views/config.php:167
+msgid "Silently discard the worst and most pervasive spam so I never see it."
+msgstr "최악의 가장 공격성이 높은 스팸을 조용히 버리고 다시는 보지 않습니다."
+
+#: views/config.php:161
+msgid "Akismet Anti-spam strictness"
+msgstr "Akismet 스팸 방지 엄격성"
+
+#: views/config.php:148
+msgid "Show the number of approved comments beside each comment author."
+msgstr "각 댓글 작성자 옆에 승인된 댓글 수를 보입니다"
+
+#: views/config.php:58
+msgid "Accuracy"
+msgstr "정확도"
+
+#: views/config.php:53
+msgid "All time"
+msgstr "모든 기간"
+
+#: views/config.php:50 views/config.php:55
+msgid "Spam blocked"
+msgid_plural "Spam blocked"
+msgstr[0] "스팸이 차단되었습니다"
+
+#: views/config.php:48
+msgid "Past six months"
+msgstr "최근 6개월"
+
+#: class.akismet.php:1605
+msgid "Please <a href=\"%1$s\">upgrade WordPress</a> to a current version, or <a href=\"%2$s\">downgrade to version 2.4 of the Akismet plugin</a>."
+msgstr "<a href=\"%1$s\">워드프레스를 현재 버전으로 업그레이드</a>하거나, <a href=\"%2$s\">아키스밋 플러그인을 2.4 버전으로 다운그레이드</a>하십시오."
+
+#: class.akismet.php:1605
+msgid "Akismet %s requires WordPress %s or higher."
+msgstr "아키스밋 %s(은)는 워드프레스 %s 또는 그 이상이 필요합니다."
+
+#: class.akismet-admin.php:652
+msgid "Akismet cleared this comment during an automatic retry."
+msgstr "아키스밋은 자동 재시도 중에 이 댓글을 제거했습니다."
+
+#: class.akismet-admin.php:649
+msgid "Akismet caught this comment as spam during an automatic retry."
+msgstr "아키스밋이 자동으로 재확인하면서 이 댓글을 스팸으로 확인했습니다."
+
+#. translators: The placeholder is a username.
+#: class.akismet-admin.php:643
+msgid "%s reported this comment as not spam."
+msgstr "%s(이)가 이 댓글이 스팸이 아니라고 보고했습니다."
+
+#. translators: The placeholder is a username.
+#: class.akismet-admin.php:635
+msgid "%s reported this comment as spam."
+msgstr "%s(이)가 이 댓글이 스팸이라고 보고했습니다."
+
+#. translators: %1$s is a username; %2$s is a short string (like 'spam' or
+#. 'approved') denoting the new comment status.
+#: class.akismet-admin.php:682
+msgid "%1$s changed the comment status to %2$s."
+msgstr "%1$s개의 댓글이 %2$s 상태로 변경되었습니다."
+
+#. translators: The placeholder is an error response returned by the API
+#. server.
+#: class.akismet-admin.php:657
+msgid "Akismet was unable to check this comment (response: %s) but will automatically retry later."
+msgstr "아키스밋이 이 댓글을 확인할 수 없습니다 (응답: %s) 하지만 나중에 자동으로 다시 시도할 것입니다."
+
+#: class.akismet-admin.php:622
+msgid "Akismet cleared this comment."
+msgstr "아키스밋이 이 댓글을 정리했습니다."
+
+#. translators: The placeholder is a short string (like 'spam' or 'approved')
+#. denoting the new comment status.
+#: class.akismet-admin.php:676
+msgid "Comment status was changed to %s"
+msgstr "%s(으)로 댓글 상태가 변경되었습니다"
+
+#: class.akismet-admin.php:616
+msgid "Akismet caught this comment as spam."
+msgstr "아키스밋이 이 댓글을 스팸으로 확인했습니다."
+
+#. translators: The placeholder is the number of pieces of spam blocked by
+#. Akismet.
+#: class.akismet-widget.php:109
+msgid "<strong class=\"count\">%1$s spam</strong> blocked by <strong>Akismet</strong>"
+msgid_plural "<strong class=\"count\">%1$s spam</strong> blocked by <strong>Akismet</strong>"
+msgstr[0] "<strong class=\"count\">%1$s개의 스팸</strong>을 <strong>아키스밋</strong>이 차단했습니다"
+
+#: class.akismet-widget.php:74
+msgid "Title:"
+msgstr "제목:"
+
+#: class.akismet-widget.php:69 class.akismet-widget.php:91
+msgid "Spam Blocked"
+msgstr "스팸이 차단되었습니다"
+
+#: class.akismet-widget.php:13
+msgid "Display the number of spam comments Akismet has caught"
+msgstr "아키스밋이 잡아낸 스팸 댓글의 갯수를 표시합니다"
+
+#: class.akismet-widget.php:12
+msgid "Akismet Widget"
+msgstr "아키스밋 위젯"
+
+#: class.akismet-admin.php:1077
+msgid "Cleaning up spam takes time."
+msgstr "스팸 정리는 시간이 걸립니다."
+
+#. translators: The Akismet configuration page URL.
+#: class.akismet-admin.php:969
+msgid "Please check your <a href=\"%s\">Akismet configuration</a> and contact your web host if problems persist."
+msgstr "문제가 지속되면 <a href=\"%s\">아키스밋 구성</a>을 점검하고 웹호스팅에 연락하십시오."
+
+#. translators: The placeholder is an amount of time, like "7 seconds" or "3
+#. days" returned by the function human_time_diff().
+#: class.akismet-admin.php:696
+msgid "%s ago"
+msgstr "%s 전"
+
+#: class.akismet-admin.php:589
+msgid "%s approved"
+msgid_plural "%s approved"
+msgstr[0] "%s 승인되었습니다"
+
+#: class.akismet-admin.php:566
+msgid "History"
+msgstr "이력"
+
+#: class.akismet-admin.php:566 class.akismet-admin.php:574
+msgid "View comment history"
+msgstr "댓글 이력 보기"
+
+#: class.akismet-admin.php:554
+msgid "Un-spammed by %s"
+msgstr "%s에 의해 스팸이 아니라고 표시되었습니다"
+
+#: class.akismet-admin.php:552
+msgid "Flagged as spam by %s"
+msgstr "%s에 의해 스팸으로 표시되었습니다"
+
+#: class.akismet-admin.php:548
+msgid "Cleared by Akismet"
+msgstr "아키스밋에 의해 제거되었습니다"
+
+#: class.akismet-admin.php:546
+msgid "Flagged as spam by Akismet"
+msgstr "아키스밋에 의해 스팸으로 표시되었습니다"
+
+#: class.akismet-admin.php:542
+msgid "Awaiting spam check"
+msgstr "스팸 확인을 기다리는 중입니다"
+
+#. translators: The placeholder is an error response returned by the API
+#. server.
+#: class.akismet-admin.php:665
+msgid "Akismet was unable to recheck this comment (response: %s)."
+msgstr "아키스밋은 이 댓글을 다시 확인할 수 없습니다 (응답: %s)."
+
+#: class.akismet-admin.php:619
+msgid "Akismet re-checked and cleared this comment."
+msgstr "아키스밋이 재확인하고 이 댓글을 정리하였습니다."
+
+#: class.akismet-admin.php:613
+msgid "Akismet re-checked and caught this comment as spam."
+msgstr "아키스밋이 재확인하고 이 댓글을 스팸으로 확인했습니다."
+
+#: class.akismet-admin.php:435
+msgid "Check for Spam"
+msgstr "스팸을 확인합니다"
+
+#: class.akismet-admin.php:388
+msgid "There&#8217;s nothing in your <a href='%s'>spam queue</a> at the moment."
+msgstr "현재 <a href='%s'>스팸 큐</a>에 아무것도 없습니다."
+
+#: class.akismet-admin.php:382
+msgid "There&#8217;s <a href=\"%2$s\">%1$s comment</a> in your spam queue right now."
+msgid_plural "There are <a href=\"%2$s\">%1$s comments</a> in your spam queue right now."
+msgstr[0] "현재 스팸 큐에 <a href=\"%2$s\">%1$s개의 댓글</a>이 있습니다."
+
+#: class.akismet-admin.php:376
+msgid "<a href=\"%s\">Akismet</a> blocks spam from getting to your blog. "
+msgstr "<a href=\"%s\">아키스밋</a>은 스팸이 블로그에 침투하는 것을 차단합니다. "
+
+#: class.akismet-admin.php:370
+msgid "<a href=\"%1$s\">Akismet</a> has protected your site from %2$s spam comment already. "
+msgid_plural "<a href=\"%1$s\">Akismet</a> has protected your site from %2$s spam comments already. "
+msgstr[0] "<a href=\"%1$s\">아키스밋</a>이 이미 %2$s개의 스팸으로부터 사이트를 보호하였습니다. "
+
+#: class.akismet-admin.php:360
+msgid "<a href=\"%1$s\">Akismet</a> has protected your site from <a href=\"%2$s\">%3$s spam comment</a>."
+msgid_plural "<a href=\"%1$s\">Akismet</a> has protected your site from <a href=\"%2$s\">%3$s spam comments</a>."
+msgstr[0] "<a href=\"%1$s\">아키스밋</a>이 <a href=\"%2$s\">%3$s개의 스팸 댓글</a>로부터 사이트를 보호했습니다."
+
+#: class.akismet-admin.php:358
+msgctxt "comments"
+msgid "Spam"
+msgstr "스팸"
+
+#: class.akismet-admin.php:288
+msgid "Cheatin&#8217; uh?"
+msgstr "누구를 속이시려고?"
+
+#: class.akismet-admin.php:282
+msgid "Akismet Support"
+msgstr "아키스밋 지원"
+
+#: class.akismet-admin.php:281
+msgid "Akismet FAQ"
+msgstr "아키스밋 자주묻는질문"
+
+#: class.akismet-admin.php:280
+msgid "For more information:"
+msgstr "더 많은 정보:"
+
+#: class.akismet-admin.php:271
+msgid "The subscription status - active, cancelled or suspended"
+msgstr "구독 상태 - 활성, 취소, 중지"
+
+#: class.akismet-admin.php:271 views/config.php:276
+msgid "Status"
+msgstr "상태"
+
+#: class.akismet-admin.php:270
+msgid "The Akismet subscription plan"
+msgstr "아키스밋 구독 계획"
+
+#: class.akismet-admin.php:270
+msgid "Subscription Type"
+msgstr "구독 형태"
+
+#: class.akismet-admin.php:267 views/config.php:262
+msgid "Account"
+msgstr "계정"
+
+#: class.akismet-admin.php:259
+msgid "Choose to either discard the worst spam automatically or to always put all spam in spam folder."
+msgstr "최악의 스팸을 자동으로 버릴지 아니면 스팸 폴더에 모든 스팸을 저장할지 선택하십시오."
+
+#: class.akismet-admin.php:259
+msgid "Strictness"
+msgstr "엄격성"
+
+#: class.akismet-admin.php:258
+msgid "Show the number of approved comments beside each comment author in the comments list page."
+msgstr "댓글 목록 페이지에서 각 댓글 작성자 옆에 승인된 댓글 수를 보입니다."
+
+#: class.akismet-admin.php:258 views/config.php:133
+msgid "Comments"
+msgstr "댓글"
+
+#: class.akismet-admin.php:257
+msgid "Enter/remove an API key."
+msgstr "API 키 입력/제거."
+
+#: class.akismet-admin.php:257
+msgid "API Key"
+msgstr "API 키"
+
+#: class.akismet-admin.php:245 class.akismet-admin.php:256
+#: class.akismet-admin.php:269
+msgid "Akismet Configuration"
+msgstr "아키스밋 설정"
+
+#: class.akismet-admin.php:234
+msgid "On this page, you are able to view stats on spam filtered on your site."
+msgstr "이 페이지에서 사이트에서 필터된 스팸 통계를 볼 수 있습니다."
+
+#: class.akismet-admin.php:232
+msgid "Akismet Stats"
+msgstr "아키스밋 통계"
+
+#: class.akismet-admin.php:220
+msgid "Click the Use this Key button."
+msgstr "이 키 사용하기 버튼을 클릭하십시오."
+
+#: class.akismet-admin.php:219
+msgid "Copy and paste the API key into the text field."
+msgstr "API 키를 입력란에 복사해 붙여넣으십시오."
+
+#: class.akismet-admin.php:217
+msgid "If you already have an API key"
+msgstr "API 키가 이미 있는 경우"
+
+#: class.akismet-admin.php:214
+msgid "Enter an API Key"
+msgstr "API 키 입력"
+
+#: class.akismet-admin.php:207
+msgid "Sign up for an account on %s to get an API Key."
+msgstr "API 키를 받으려면 %s에서 계정을 만드십시오."
+
+#: class.akismet-admin.php:206
+msgid "You need to enter an API key to activate the Akismet service on your site."
+msgstr "아키스밋 서비스를 사이트에서 활성화 하려면 API 키를 입력해야 합니다."
+
+#: class.akismet-admin.php:203
+msgid "New to Akismet"
+msgstr "아키스밋 시작"
+
+#: class.akismet-admin.php:196
+msgid "On this page, you are able to set up the Akismet plugin."
+msgstr "이 페이지에서 아키스밋 플러그인을 설정할 수 있습니다."
+
+#: class.akismet-admin.php:194 class.akismet-admin.php:205
+#: class.akismet-admin.php:216
+msgid "Akismet Setup"
+msgstr "아키스밋 설정"
+
+#: class.akismet-admin.php:192 class.akismet-admin.php:230
+#: class.akismet-admin.php:243
+msgid "Overview"
+msgstr "전체 보기"
+
+#: class.akismet-admin.php:161
+msgid "Re-adding..."
+msgstr "다시 추가..."
+
+#: class.akismet-admin.php:160
+msgid "(undo)"
+msgstr "(되돌리기)"
+
+#: class.akismet-admin.php:159
+msgid "URL removed"
+msgstr "URL이 제거되었습니다"
+
+#: class.akismet-admin.php:158
+msgid "Removing..."
+msgstr "제거 중..."
+
+#: class.akismet-admin.php:157
 msgid "Remove this URL"
 msgstr "이 URL 제거"
 
-#: class.akismet-admin.php:82
+#: class.akismet-admin.php:87 class.akismet-admin.php:1293
+msgid "Akismet"
+msgstr "아키스밋"
+
+#: class.akismet-admin.php:107 class.akismet-admin.php:254
+#: class.akismet-admin.php:723 views/config.php:85
+msgid "Settings"
+msgstr "설정"
+
+#: class.akismet-admin.php:83
 msgid "Comment History"
 msgstr "댓글 이력"

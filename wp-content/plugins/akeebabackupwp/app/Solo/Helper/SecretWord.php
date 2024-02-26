@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -9,6 +9,7 @@ namespace Solo\Helper;
 
 use Akeeba\Engine\Factory;
 use Awf\Application\Application;
+use Awf\Container\Container;
 
 abstract class SecretWord
 {
@@ -23,9 +24,9 @@ abstract class SecretWord
 	 *
 	 * @since   5.5.2
 	 */
-	public static function enforceEncryption($settingsKey)
+	public static function enforceEncryption($settingsKey, Container $container)
 	{
-		$params = Application::getInstance()->getContainer()->appConfig;
+		$params = $container->appConfig;
 
 		// If encryption is not enabled in the Engine we can't encrypt the Secret Word
 		if ($params->get('useencryption', -1) == 0)
@@ -73,10 +74,10 @@ abstract class SecretWord
 	 *
 	 * @since   5.5.2
 	 */
-	public static function enforceDecrypted($settingsKey, $encryptionKey = null)
+	public static function enforceDecrypted($settingsKey, $encryptionKey = null, ?Container $container = null)
 	{
 		// Get the raw version of frontend_secret_word and check if it has a valid encryption signature
-		$params          = Application::getInstance()->getContainer()->appConfig;
+		$params          = $container->appConfig;
 		$raw             = $params->get('options.' . $settingsKey, '');
 		$signature       = substr($raw, 0, 12);
 		$validSignatures = array('###AES128###', '###CTR128###');

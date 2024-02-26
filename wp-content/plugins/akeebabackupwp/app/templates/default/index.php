@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -15,9 +15,7 @@ include __DIR__ . '/php/menu.php';
 $this->outputHTTPHeaders();
 
 $darkMode     = $this->getContainer()->appConfig->get('darkmode', -1);
-$lang         = Text::detectLanguage();
-$lang         = empty($lang) ? 'en-GB' : $lang;
-$langParts    = explode('-', $lang, 2);
+$langParts    = explode('-', $this->getContainer()->language->getLangCode(), 2);
 $user         = $this->container->userManager->getUser();
 $baseFontSize = $user->getParameters()->get('accessibility.base_font_size', 11);
 

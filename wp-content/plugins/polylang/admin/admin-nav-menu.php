@@ -15,7 +15,7 @@ class PLL_Admin_Nav_Menu extends PLL_Nav_Menu {
 	 *
 	 * @since 1.2
 	 *
-	 * @param object $polylang
+	 * @param object $polylang The Polylang object.
 	 */
 	public function __construct( &$polylang ) {
 		parent::__construct( $polylang );
@@ -33,6 +33,8 @@ class PLL_Admin_Nav_Menu extends PLL_Nav_Menu {
 	 * adds the language switcher metabox and create new nav menu locations
 	 *
 	 * @since 1.1
+	 *
+	 * @return void
 	 */
 	public function admin_init() {
 		add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
@@ -55,6 +57,8 @@ class PLL_Admin_Nav_Menu extends PLL_Nav_Menu {
 	 * Thanks to John Morris for his very interesting post http://www.johnmorrisonline.com/how-to-add-a-fully-functional-custom-meta-box-to-wordpress-navigation-menus/
 	 *
 	 * @since 1.1
+	 *
+	 * @return void
 	 */
 	public function lang_switch() {
 		global $_nav_menu_placeholder, $nav_menu_selected_id;
@@ -68,7 +72,7 @@ class PLL_Admin_Nav_Menu extends PLL_Nav_Menu {
 							<input type="checkbox" class="menu-item-checkbox" name="menu-item[<?php echo (int) $_nav_menu_placeholder; ?>][menu-item-object-id]" value="-1"> <?php esc_html_e( 'Languages', 'polylang' ); ?>
 						</label>
 						<input type="hidden" class="menu-item-type" name="menu-item[<?php echo (int) $_nav_menu_placeholder; ?>][menu-item-type]" value="custom">
-						<input type="hidden" class="menu-item-title" name="menu-item[<?php echo (int) $_nav_menu_placeholder; ?>][menu-item-title]" value="<?php esc_html_e( 'Languages', 'polylang' ); ?>">
+						<input type="hidden" class="menu-item-title" name="menu-item[<?php echo (int) $_nav_menu_placeholder; ?>][menu-item-title]" value="<?php esc_attr_e( 'Languages', 'polylang' ); ?>">
 						<input type="hidden" class="menu-item-url" name="menu-item[<?php echo (int) $_nav_menu_placeholder; ?>][menu-item-url]" value="#pll_switcher">
 					</li>
 				</ul>
@@ -87,15 +91,17 @@ class PLL_Admin_Nav_Menu extends PLL_Nav_Menu {
 	 * Prepares javascript to modify the language switcher menu item
 	 *
 	 * @since 1.1
+	 *
+	 * @return void
 	 */
 	public function admin_enqueue_scripts() {
 		$screen = get_current_screen();
-		if ( 'nav-menus' != $screen->base ) {
+		if ( empty( $screen ) || 'nav-menus' !== $screen->base ) {
 			return;
 		}
 
 		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
-		wp_enqueue_script( 'pll_nav_menu', plugins_url( '/js/nav-menu' . $suffix . '.js', POLYLANG_FILE ), array( 'jquery' ), POLYLANG_VERSION );
+		wp_enqueue_script( 'pll_nav_menu', plugins_url( '/js/build/nav-menu' . $suffix . '.js', POLYLANG_ROOT_FILE ), array( 'jquery' ), POLYLANG_VERSION );
 
 		$data = array(
 			'strings' => PLL_Switcher::get_switcher_options( 'menu', 'string' ), // The strings for the options
@@ -124,12 +130,13 @@ class PLL_Admin_Nav_Menu extends PLL_Nav_Menu {
 	}
 
 	/**
-	 * Save our menu item options
+	 * Save our menu item options.
 	 *
 	 * @since 1.1
 	 *
-	 * @param int $menu_id not used
-	 * @param int $menu_item_db_id
+	 * @param int $menu_id         ID of the updated menu.
+	 * @param int $menu_item_db_id ID of the updated menu item.
+	 * @return void
 	 */
 	public function wp_update_nav_menu_item( $menu_id = 0, $menu_item_db_id = 0 ) {
 		if ( empty( $_POST['menu-item-url'][ $menu_item_db_id ] ) || '#pll_switcher' !== $_POST['menu-item-url'][ $menu_item_db_id ] ) { // phpcs:ignore WordPress.Security.NonceVerification
@@ -179,12 +186,12 @@ class PLL_Admin_Nav_Menu extends PLL_Nav_Menu {
 	}
 
 	/**
-	 * Assign menu languages and translations based on ( temporary ) locations
+	 * Assign menu languages and translations based on ( temporary ) locations.
 	 *
 	 * @since 1.1
 	 *
-	 * @param array $mods theme mods
-	 * @return unmodified $mods
+	 * @param mixed $mods Theme mods.
+	 * @return mixed
 	 */
 	public function pre_update_option_theme_mods( $mods ) {
 		if ( current_user_can( 'edit_theme_options' ) && isset( $mods['nav_menu_locations'] ) ) {
@@ -223,8 +230,8 @@ class PLL_Admin_Nav_Menu extends PLL_Nav_Menu {
 	 *
 	 * @since 1.2
 	 *
-	 * @param bool|array $menus
-	 * @return bool|array modified list of menu locations
+	 * @param bool|array $menus Associative array of registered navigation menu IDs keyed by their location name.
+	 * @return bool|array
 	 */
 	public function theme_mod_nav_menu_locations( $menus ) {
 		// Prefill locations with 0 value in case a location does not exist in $menus
@@ -253,6 +260,7 @@ class PLL_Admin_Nav_Menu extends PLL_Nav_Menu {
 	 * @since 1.7.3
 	 *
 	 * @param int $term_id nav menu id
+	 * @return void
 	 */
 	public function delete_nav_menu( $term_id ) {
 		if ( isset( $this->options['nav_menus'] ) ) {

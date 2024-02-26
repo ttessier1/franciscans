@@ -1,4 +1,4 @@
-/* globals WPFormsBuilder, wpforms_challenge_admin, WPFormsFormEmbedWizard */
+/* global WPForms, WPFormsBuilder, wpforms_challenge_admin, WPFormsFormEmbedWizard */
 /**
  * WPForms Challenge function.
  *
@@ -28,7 +28,15 @@ WPFormsChallenge.builder = window.WPFormsChallenge.builder || ( function( docume
 		init: function() {
 
 			$( app.ready );
-			$( window ).on( 'load', app.load );
+			$( window ).on( 'load', function() {
+
+				// in case of jQuery 3.+ we need to wait for an `ready` event first.
+				if ( typeof $.ready.then === 'function' ) {
+					$.ready.then( app.load );
+				} else {
+					app.load();
+				}
+			} );
 		},
 
 		/**
@@ -51,7 +59,6 @@ WPFormsChallenge.builder = window.WPFormsChallenge.builder || ( function( docume
 
 			if ( [ 'started', 'paused' ].indexOf( wpforms_challenge_admin.option.status ) > -1 ) {
 				WPFormsChallenge.core.updateTooltipUI();
-				app.gotoStep();
 			}
 
 			$( '.wpforms-challenge' ).show();
@@ -69,9 +76,11 @@ WPFormsChallenge.builder = window.WPFormsChallenge.builder || ( function( docume
 				app.showWelcomePopup();
 			}
 
+			$( '#wpforms-embed' ).addClass( 'wpforms-disabled' );
+
 			var tooltipAnchors = [
 				'#wpforms-setup-name',
-				'.wpforms-setup-title.core',
+				'.wpforms-setup-title .wpforms-setup-title-after',
 				'#add-fields a i',
 				'#wpforms-builder-settings-notifications-title',
 			];
@@ -80,6 +89,8 @@ WPFormsChallenge.builder = window.WPFormsChallenge.builder || ( function( docume
 
 				WPFormsChallenge.core.initTooltips( i + 1, anchor, null );
 			} );
+
+			$( document ).on( 'wpformsWizardPopupClose', app.enableEmbed );
 		},
 
 		/**
@@ -99,10 +110,9 @@ WPFormsChallenge.builder = window.WPFormsChallenge.builder || ( function( docume
 
 			$( '#wpforms-builder' )
 
-				// Step 2 - Select the Form template.
-				.off( 'click', '.wpforms-template-select' ) // Intercept Form Builder's form template selection and apply own logic.
-				.on( 'click', '.wpforms-template-select', function( e ) {
-					app.builderTemplateSelect( this, e );
+				// Register select template event when the setup panel is ready.
+				.on( 'wpformsBuilderSetupReady', function() {
+					app.eventSelectTemplate();
 				} )
 
 				// Restore tooltips when switching builder panels/sections.
@@ -111,16 +121,38 @@ WPFormsChallenge.builder = window.WPFormsChallenge.builder || ( function( docume
 				} );
 
 			// Step 3 - Add fields.
-			$( '.wpforms-challenge-step3-done' ).on( 'click', function() {
-				WPFormsChallenge.core.stepCompleted( 3 );
-				app.gotoStep( 4 );
-			} );
+			$( '.wpforms-challenge-step3-done' ).on( 'click', app.gotoNotificationStep );
 
 			// Step 4 - Notifications.
 			$( document ).on( 'click', '.wpforms-challenge-step4-done', app.showEmbedPopup );
 
-			// Tooltepister ready.
+			// Tooltipster ready.
 			$.tooltipster.on( 'ready', app.tooltipsterReady );
+
+			// Move to step 3 if challenge is forced and exisiting form is opened.
+			$( document ).on( 'wpformsBuilderReady', function() {
+				if ( $( '.wpforms-panel-fields-button' ).hasClass( 'active' ) && WPFormsChallenge.core.loadStep() <= 2 ) {
+					WPFormsChallenge.core.stepCompleted( 1 );
+					WPFormsChallenge.core.stepCompleted( 2 );
+				}
+			} );
+
+		},
+
+		/**
+		 * Register select template event.
+		 *
+		 * @since 1.6.8
+		 */
+		eventSelectTemplate: function() {
+
+			$( '#wpforms-panel-setup' )
+
+				// Step 2 - Select the Form template.
+				.off( 'click', '.wpforms-template-select' ) // Intercept Form Builder's form template selection and apply own logic.
+				.on( 'click', '.wpforms-template-select', function( e ) {
+					app.builderTemplateSelect( this, e );
+				} );
 		},
 
 		/**
@@ -143,32 +175,12 @@ WPFormsChallenge.builder = window.WPFormsChallenge.builder || ( function( docume
 		 * Go to Step.
 		 *
 		 * @since 1.6.2
+		 * @since 1.7.5 Deprecated.
 		 *
 		 * @param {number|string} step Last saved step.
 		 */
-		gotoStep: function( step ) { // eslint-disable-line
-
-			step = step || ( WPFormsChallenge.core.loadStep() + 1 );
-
-			switch ( step ) {
-				case 1:
-				case 2:
-					WPFormsBuilder.panelSwitch( 'setup' );
-					break;
-
-				case 3:
-					WPFormsBuilder.panelSwitch( 'fields' );
-					break;
-
-				case 4:
-					WPFormsBuilder.panelSwitch( 'settings' );
-					WPFormsBuilder.panelSectionSwitch( $( '.wpforms-panel .wpforms-panel-sidebar-section-notifications' ) );
-					break;
-
-				case 5:
-					app.showEmbedPopup();
-					break;
-			}
+		gotoStep: function( step ) {
+			console.warn( 'WARNING! Function "WPFormsChallenge.builder.gotoStep()" has been deprecated.' );
 		},
 
 		/**
@@ -181,19 +193,11 @@ WPFormsChallenge.builder = window.WPFormsChallenge.builder || ( function( docume
 		 */
 		builderTemplateSelect: function( el, e ) {
 
-			if ( wpforms_challenge_admin.option.status === 'paused' ) {
-				WPFormsChallenge.core.resumeChallenge();
-			}
+			WPFormsChallenge.core.resumeChallengeAndExec( e, function() {
 
-			var step = WPFormsChallenge.core.loadStep();
-
-			if ( step <= 1 ) {
 				WPFormsChallenge.core.stepCompleted( 2 )
-					.done( WPFormsBuilder.templateSelect.bind( null, el, e ) );
-				return;
-			}
-
-			WPFormsBuilder.templateSelect( el, e );
+					.done( WPForms.Admin.Builder.Setup.selectTemplate.bind( el, e ) );
+			} );
 		},
 
 		/**
@@ -229,14 +233,41 @@ WPFormsChallenge.builder = window.WPFormsChallenge.builder || ( function( docume
 		},
 
 		/**
+		 * Go to Notification step.
+		 *
+		 * @since 1.7.5
+		 *
+		 * @param {object} e Event object.
+		 */
+		gotoNotificationStep: function( e ) {
+
+			WPFormsChallenge.core.stepCompleted( 3 ).done( function() {
+
+				WPFormsBuilder.panelSwitch( 'settings' );
+				WPFormsBuilder.panelSectionSwitch( $( '.wpforms-panel .wpforms-panel-sidebar-section-notifications' ) );
+			} );
+		},
+
+		/**
 		 * Display 'Embed in a Page' popup.
 		 *
 		 * @since 1.6.2
 		 */
 		showEmbedPopup: function() {
 
-			WPFormsChallenge.core.stepCompleted( 4 );
-			WPFormsFormEmbedWizard.openPopup();
+			WPFormsChallenge.core.stepCompleted( 4 ).done(
+				WPFormsFormEmbedWizard.openPopup
+			);
+		},
+
+		/**
+		 * Enable Embed button when Embed popup is closed.
+		 *
+		 * @since 1.7.4
+		 */
+		enableEmbed: function() {
+
+			$( '#wpforms-embed' ).removeClass( 'wpforms-disabled' );
 		},
 	};
 

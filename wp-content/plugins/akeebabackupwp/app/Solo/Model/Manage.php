@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -9,6 +9,7 @@ namespace Solo\Model;
 
 use Akeeba\Engine\Factory;
 use Akeeba\Engine\Platform;
+use Awf\Container\Container;
 use Awf\Mvc\Model;
 use Awf\Pagination\Pagination;
 use Awf\Text\Text;
@@ -19,7 +20,7 @@ class Manage extends Model
 	/** @var   Pagination  The pagination model for this data */
 	protected $pagination = null;
 
-	public function __construct(\Awf\Container\Container $container = null)
+	public function __construct(?Container $container = null)
 	{
 		parent::__construct($container);
 
@@ -28,6 +29,53 @@ class Manage extends Model
 
 		$this->setState('limit', $limit);
 		$this->setState('limitStart', $limitStart);
+	}
+
+	/**
+	 * Is this string a valid remote filename?
+	 *
+	 * We've had reports that some servers return a bogus, non-empty string for some remote_filename columns, causing
+	 * the "Manage remote stored files" column to appear even for locally stored files. By applying more rigorous tests
+	 * for the remote_filename column we can avoid this problem.
+	 *
+	 * @param   string|null  $filename
+	 *
+	 * @return  bool
+	 *
+	 * @since   7.6.4
+	 */
+	public function isRemoteFilename(string $filename = null): bool
+	{
+		// A remote filename has to be a string which is does not consist solely of whitespace
+		if (!is_string($filename) || trim($filename) === '')
+		{
+			return false;
+		}
+
+		// Let's remote whitespace just in case
+		$filename = trim($filename);
+
+		// A remote filename must be in the format engine://path
+		if (strpos($filename, '://') === false)
+		{
+			return false;
+		}
+
+		// Get the engine and path
+		[$engine, $path] = explode('://', $filename, 2);
+		$engine = trim($engine);
+		$path   = trim($path);
+
+		// Both engine and path must be non-empty
+		if (empty($engine) || empty($path))
+		{
+			return false;
+		}
+
+		// The engine must be known to the backup engine
+		$classname = 'Akeeba\\Engine\\Postproc\\' . ucfirst($engine);
+
+		return class_exists($classname);
 	}
 
 	/**
@@ -42,14 +90,13 @@ class Manage extends Model
 	 */
 	public function &getStatisticsListWithMeta($overrideLimits = false, $filters = null, $order = null)
 	{
-		$limitstart = $this->getState('limitstart');
-		$limit      = $this->getState('limit');
+		$limitstart = $overrideLimits ? 0 : $this->getState('limitstart', 0);
+		$limit      = $overrideLimits ? 0 : $this->getState('limit', 10);
+		$filters    = $overrideLimits ? null : $filters;
 
-		if ($overrideLimits)
+		if (is_array($order) && isset($order['order']))
 		{
-			$limitstart = 0;
-			$limit      = 0;
-			$filters    = null;
+			$order['order'] = strtoupper($order['order']) === 'ASC' ? 'asc' : 'desc';
 		}
 
 		$allStats = Platform::getInstance()->get_statistics_list([
@@ -58,108 +105,73 @@ class Manage extends Model
 			'filters'    => $filters,
 			'order'      => $order,
 		]);
-		$valid    = Platform::getInstance()->get_valid_backup_records();
 
-		if (empty($valid))
-		{
-			$valid = [];
-		}
+		$validRecords          = Platform::getInstance()->get_valid_backup_records() ?: [];
+		$updateObsoleteRecords = [];
+		$ret                   = array_map(function (array $stat) use (&$updateObsoleteRecords, $validRecords) {
+			$hasRemoteFiles = false;
 
-		// This will hold the entries whose files are no longer present and are
-		// not already marked as such in the database
-		$updateNonExistent = [];
-
-		$new_stats = [];
-
-		if (!empty($allStats))
-		{
-			foreach ($allStats as $stat)
+			// Translate backup status and the existence of a remote filename to the backup record's "meta" status.
+			switch ($stat['status'])
 			{
-				$total_size = 0;
+				case 'run':
+					$stat['meta'] = 'pending';
+					break;
 
-				if (in_array($stat['id'], $valid))
-				{
-					$archives     = Factory::getStatistics()->get_all_filenames($stat);
-					$count        = is_array($archives) ? count($archives) : 0;
-					$stat['meta'] = ($count > 0) ? 'ok' : 'obsolete';
+				case 'fail':
+					$stat['meta'] = 'fail';
+					break;
 
-					if ($stat['meta'] == 'ok')
-					{
-						if ($stat['total_size'])
-						{
-							$total_size = $stat['total_size'];
-						}
-						else
-						{
-							$total_size = 0;
-
-							foreach ($archives as $filename)
-							{
-								$total_size += @filesize($filename);
-							}
-						}
-
-					}
-					else
-					{
-						if ($stat['total_size'])
-						{
-							$total_size = $stat['total_size'];
-						}
-
-						if ($stat['filesexist'])
-						{
-							$updateNonExistent[] = $stat['id'];
-						}
-
-						// If there is a "remote_filename", the record is "remote", not "obsolete"
-						if ($stat['remote_filename'])
-						{
-							$stat['meta'] = 'remote';
-						}
-					}
-
-					$stat['size'] = $total_size;
-				}
-				else
-				{
-					switch ($stat['status'])
-					{
-						case 'run':
-							$stat['meta'] = 'pending';
-							break;
-
-						case 'fail':
-							$stat['meta'] = 'fail';
-							break;
-
-						default:
-							if ($stat['remote_filename'])
-							{
-								// If there is a "remote_filename", the record is "remote", not "obsolete"
-								$stat['meta'] = 'remote';
-							}
-							else
-							{
-								// Else, it's "obsolete"
-								$stat['meta'] = 'obsolete';
-							}
-							break;
-					}
-				}
-				$new_stats[] = $stat;
+				default:
+					$hasRemoteFiles = $this->isRemoteFilename($stat['remote_filename']);
+					$stat['meta']   = $hasRemoteFiles ? 'remote' : 'obsolete';
+					break;
 			}
-		}
 
-		// Update records found as not having files any more
-		if (count($updateNonExistent))
-		{
-			Platform::getInstance()->invalidate_backup_records($updateNonExistent);
-		}
+			$stat['hasRemoteFiles'] = $hasRemoteFiles;
 
-		unset($valid);
+			// If the backup is reported to have files still stored on the server we need to investigate further
+			if (in_array($stat['id'], $validRecords))
+			{
+				$archives      = Factory::getStatistics()->get_all_filenames($stat);
+				$hasLocalFiles = (is_array($archives) ? count($archives) : 0) > 0;
+				$stat['meta']  = $hasLocalFiles ? 'ok' : ($hasRemoteFiles ? 'remote' : 'obsolete');
 
-		return $new_stats;
+				// The archives exist. Set $stat['size'] to the total size of the backup archives.
+				if ($hasLocalFiles)
+				{
+					$stat['size'] = $stat['total_size']
+						?: array_reduce(
+							$archives,
+							function ($carry, $filename) {
+								return $carry += @filesize($filename) ?: 0;
+							},
+							0
+						);
+
+					return $stat;
+				}
+
+				// The archives do not exist or we can't find them. If the record says otherwise we need to update it.
+				if ($stat['filesexist'])
+				{
+					$updateObsoleteRecords[] = $stat['id'];
+				}
+
+				// Does the backup record report a total size even though our files no longer exist?
+				if ($stat['total_size'])
+				{
+					$stat['size'] = $stat['total_size'];
+				}
+			}
+
+			return $stat;
+		}, $allStats);
+
+		// Update records which report that their files exist on the server but, in fact, they don't.
+		Platform::getInstance()->invalidate_backup_records($updateObsoleteRecords);
+
+		return $ret;
 	}
 
 	/**
@@ -257,7 +269,7 @@ class Manage extends Model
 			$limit      = $this->getState('limit');
 
 			// Create the pagination object
-			$this->pagination = new Pagination($total, $limitStart, $limit, 10, $this->container->application);
+			$this->pagination = new Pagination($total, $limitStart, $limit, 10, $this->container);
 		}
 
 		return $this->pagination;

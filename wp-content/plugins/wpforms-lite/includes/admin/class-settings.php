@@ -1,5 +1,14 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+
+use WPForms\Admin\Notice;
+use WPForms\Migrations\Migrations as LiteMigration;
+use WPForms\Pro\Migrations\Migrations;
+
 /**
  * Settings class.
  *
@@ -23,8 +32,18 @@ class WPForms_Settings {
 	 */
 	public function __construct() {
 
+		$this->hooks();
+	}
+
+	/**
+	 * Hooks.
+	 *
+	 * @since 1.8.5.4
+	 */
+	private function hooks() {
+
 		// Maybe load settings page.
-		add_action( 'admin_init', array( $this, 'init' ) );
+		add_action( 'admin_init', [ $this, 'init' ] );
 	}
 
 	/**
@@ -32,7 +51,7 @@ class WPForms_Settings {
 	 *
 	 * @since 1.0.0
 	 */
-	public function init() {
+	public function init() { // phpcs:ignore WPForms.PHP.HooksMethod.InvalidPlaceForAddingHooks
 
 		// Only load if we are actually on the settings page.
 		if ( ! wpforms_is_admin_page( 'settings' ) ) {
@@ -42,14 +61,20 @@ class WPForms_Settings {
 		// Include API callbacks and functions.
 		require_once WPFORMS_PLUGIN_DIR . 'includes/admin/settings-api.php';
 
+		// Show downgraded notice.
+		$this->maybe_display_downgraded_notice();
+
 		// Watch for triggered save.
 		$this->save_settings();
 
 		// Determine the current active settings tab.
-		$this->view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'general'; // phpcs:ignore WordPress.CSRF.NonceVerification
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$this->view = isset( $_GET['view'] ) ? sanitize_key( wp_unslash( $_GET['view'] ) ) : 'general';
 
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueues' ) );
-		add_action( 'wpforms_admin_page', array( $this, 'output' ) );
+		$this->modify_url();
+
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueues' ] );
+		add_action( 'wpforms_admin_page', [ $this, 'output' ] );
 
 		// Monitor custom tables.
 		$this->monitor_custom_tables();
@@ -59,11 +84,83 @@ class WPForms_Settings {
 	}
 
 	/**
+	 * Remove `wpforms-integration` query arg from URL.
+	 * The `wpforms-integration` query arg is used to highlight a specific provider on the Integrations page.
+	 *
+	 * @since 1.8.5.4
+	 */
+	private function modify_url() {
+
+		if ( $this->view !== 'integrations' ) {
+			return;
+		}
+
+		$_SERVER['REQUEST_URI'] = remove_query_arg( 'wpforms-integration' );
+	}
+
+	/**
+	 * Display admin notice about using a downgraded version of WPForms.
+	 *
+	 * @since 1.8.5.4
+	 */
+	private function maybe_display_downgraded_notice() {
+
+		if ( ! $this->is_downgraded_version() ) {
+			return;
+		}
+
+		$notice = sprintf(
+			wp_kses( /* translators: %1$s - WPForms.com doc page URL; %2$s - button text. */
+				__(
+					'It looks like you\'ve downgraded to an older version of WPForms. We recommend always using the latest version as some features may not function as expected in older versions. <a href="%1$s" target="_blank" rel="noopener">%2$s</a>',
+					'wpforms-lite'
+				),
+				[
+					'a' => [
+						'href'   => [],
+						'target' => [],
+						'rel'    => [],
+					],
+				]
+			),
+			esc_url( wpforms_utm_link( 'https://wpforms.com/docs/why-you-should-always-use-the-latest-version-of-wpforms/', 'Settings', 'Downgrade notice' ) ),
+			esc_html__( 'Learn More', 'wpforms-lite' )
+		);
+
+		Notice::warning(
+			$notice,
+			[
+				'dismiss' => Notice::DISMISS_GLOBAL,
+				'slug'    => 'wpforms_is_downgraded',
+			]
+		);
+	}
+
+	/**
+	 * Check if plugin was downgraded.
+	 *
+	 * @since 1.8.5.4
+	 *
+	 * @return bool
+	 */
+	private function is_downgraded_version(): bool {
+
+		// Get all installed versions.
+		$installed_versions = wpforms()->is_pro() ? (array) get_option( Migrations::MIGRATED_OPTION_NAME, [] ) : (array) get_option( LiteMigration::MIGRATED_OPTION_NAME, [] );
+
+		// Get the most recent installed version.
+		$db_latest = array_keys( $installed_versions )[ count( $installed_versions ) - 1 ];
+
+		// Check if downgrade happened.
+		return version_compare( $db_latest, WPFORMS_VERSION, '>' );
+	}
+
+	/**
 	 * Sanitize and save settings.
 	 *
 	 * @since 1.3.9
 	 */
-	public function save_settings() {
+	public function save_settings() { // phpcs:ignore Generic.Metrics.CyclomaticComplexity.MaxExceeded, Generic.Metrics.NestingLevel.MaxExceeded
 
 		// Check nonce and other various security checks.
 		if ( ! isset( $_POST['wpforms-settings-submit'] ) || empty( $_POST['nonce'] ) ) {
@@ -86,10 +183,10 @@ class WPForms_Settings {
 
 		// Get registered fields and current settings.
 		$fields   = $this->get_registered_settings( $current_view );
-		$settings = get_option( 'wpforms_settings', array() );
+		$settings = get_option( 'wpforms_settings', [] );
 
 		// Views excluded from saving list.
-		$exclude_views = apply_filters( 'wpforms_settings_exclude_view', array(), $fields, $settings );
+		$exclude_views = apply_filters( 'wpforms_settings_exclude_view', [], $fields, $settings );
 
 		if ( is_array( $exclude_views ) && in_array( $current_view, $exclude_views, true ) ) {
 			// Run a custom save processing for excluded views.
@@ -106,18 +203,23 @@ class WPForms_Settings {
 		foreach ( $fields as $id => $field ) {
 
 			// Certain field types are not valid for saving and are skipped.
-			$exclude = apply_filters( 'wpforms_settings_exclude_type', array( 'content', 'license', 'providers' ) );
+			$exclude = apply_filters( 'wpforms_settings_exclude_type', [ 'content', 'license', 'providers' ] );
 
 			if ( empty( $field['type'] ) || in_array( $field['type'], $exclude, true ) ) {
 				continue;
 			}
 
 			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
-			$value      = isset( $_POST[ $id ] ) ? trim( wp_unslash( $_POST[ $id ] ) ) : false;
+			$value      = isset( $_POST[ $id ] ) ? wp_unslash( $_POST[ $id ] ) : false;
 			$value_prev = isset( $settings[ $id ] ) ? $settings[ $id ] : false;
 
+			// Trim all string values.
+			if ( is_string( $value ) ) {
+				$value = trim( $value );
+			}
+
 			// Custom filter can be provided for sanitizing, otherwise use defaults.
-			if ( ! empty( $field['filter'] ) && function_exists( $field['filter'] ) ) {
+			if ( ! empty( $field['filter'] ) && is_callable( $field['filter'] ) ) {
 
 				$value = call_user_func( $field['filter'], $value, $id, $field, $value_prev );
 
@@ -125,20 +227,32 @@ class WPForms_Settings {
 
 				switch ( $field['type'] ) {
 					case 'checkbox':
+					case 'toggle':
 						$value = (bool) $value;
 						break;
+
 					case 'image':
 						$value = esc_url_raw( $value );
 						break;
+
 					case 'color':
 						$value = wpforms_sanitize_hex_color( $value );
 						break;
+
+					case 'color_scheme':
+						$value = array_map( 'wpforms_sanitize_hex_color', $value );
+						break;
+
 					case 'number':
 						$value = (float) $value;
 						break;
-					case 'text':
+
 					case 'radio':
 					case 'select':
+						$value = $this->validate_field_with_options( $field, $value, $value_prev );
+						break;
+
+					case 'text':
 					default:
 						$value = sanitize_text_field( $value );
 						break;
@@ -150,11 +264,9 @@ class WPForms_Settings {
 		}
 
 		// Save settings.
-		update_option( 'wpforms_settings', $settings );
+		wpforms_update_settings( $settings );
 
-		do_action( 'wpforms_settings_updated', $settings );
-
-		WPForms_Admin_Notice::success( esc_html__( 'Settings were successfully saved.', 'wpforms-lite' ) );
+		Notice::success( esc_html__( 'Settings were successfully saved.', 'wpforms-lite' ) );
 	}
 
 	/**
@@ -182,16 +294,6 @@ class WPForms_Settings {
 				'form'   => true,
 				'submit' => esc_html__( 'Save Settings', 'wpforms-lite' ),
 			],
-			'email'        => [
-				'name'   => esc_html__( 'Email', 'wpforms-lite' ),
-				'form'   => true,
-				'submit' => esc_html__( 'Save Settings', 'wpforms-lite' ),
-			],
-			'recaptcha'    => [
-				'name'   => esc_html__( 'reCAPTCHA', 'wpforms-lite' ),
-				'form'   => true,
-				'submit' => esc_html__( 'Save Settings', 'wpforms-lite' ),
-			],
 			'validation'   => [
 				'name'   => esc_html__( 'Validation', 'wpforms-lite' ),
 				'form'   => true,
@@ -199,6 +301,11 @@ class WPForms_Settings {
 			],
 			'integrations' => [
 				'name'   => esc_html__( 'Integrations', 'wpforms-lite' ),
+				'form'   => false,
+				'submit' => false,
+			],
+			'geolocation'  => [
+				'name'   => esc_html__( 'Geolocation', 'wpforms-lite' ),
 				'form'   => false,
 				'submit' => false,
 			],
@@ -270,16 +377,17 @@ class WPForms_Settings {
 					'name'      => esc_html__( 'Include Form Styling', 'wpforms-lite' ),
 					'desc'      => sprintf(
 						wp_kses( /* translators: %s - WPForms.com form styling setting URL. */
-							__( 'Determines which CSS files to load and use for the site (<a href="%s" target="_blank" rel="noopener noreferrer">please see our tutorial for full details</a>). "Base and Form Theme Styling" is recommended, unless you are experienced with CSS or instructed by support to change settings. ', 'wpforms-lite' ),
+							__( 'Determines which CSS files to load and use for the site. "Base and Form Theme Styling" is recommended, unless you are experienced with CSS or instructed by support to change settings. <a href="%s" target="_blank" rel="noopener noreferrer" class="wpforms-learn-more">Learn More</a>', 'wpforms-lite' ),
 							[
 								'a' => [
 									'href'   => [],
 									'target' => [],
 									'rel'    => [],
+									'class'  => [],
 								],
 							]
 						),
-						'https://wpforms.com/docs/how-to-choose-an-include-form-styling-setting/'
+						esc_url( wpforms_utm_link( 'https://wpforms.com/docs/how-to-choose-an-include-form-styling-setting/', 'settings-license', 'Form Styling Documentation' ) )
 					),
 					'type'      => 'select',
 					'choicesjs' => true,
@@ -291,10 +399,11 @@ class WPForms_Settings {
 					],
 				],
 				'global-assets'   => [
-					'id'   => 'global-assets',
-					'name' => esc_html__( 'Load Assets Globally', 'wpforms-lite' ),
-					'desc' => esc_html__( 'Check this if you would like to load WPForms assets site-wide. Only check if your site is having compatibility issues or instructed to by support.', 'wpforms-lite' ),
-					'type' => 'checkbox',
+					'id'     => 'global-assets',
+					'name'   => esc_html__( 'Load Assets Globally', 'wpforms-lite' ),
+					'desc'   => esc_html__( 'Load WPForms assets site-wide. Only check if your site is having compatibility issues or instructed to by support.', 'wpforms-lite' ),
+					'type'   => 'toggle',
+					'status' => true,
 				],
 				'gdpr-heading'    => [
 					'id'       => 'GDPR',
@@ -304,189 +413,135 @@ class WPForms_Settings {
 					'class'    => [ 'section-heading', 'no-desc' ],
 				],
 				'gdpr'            => [
-					'id'   => 'gdpr',
-					'name' => esc_html__( 'GDPR Enhancements', 'wpforms-lite' ),
-					'desc' => sprintf(
-						wp_kses(
-						/* translators: %s - WPForms.com GDPR documentation URL. */
-							__( 'Check this to enable GDPR related features and enhancements. <a href="%s" target="_blank" rel="noopener noreferrer">Read our GDPR documentation</a> to learn more.', 'wpforms-lite' ),
+					'id'     => 'gdpr',
+					'name'   => esc_html__( 'GDPR Enhancements', 'wpforms-lite' ),
+					'desc'   => sprintf(
+						wp_kses( /* translators: %s - WPForms.com GDPR documentation URL. */
+							__( 'Enable GDPR related features and enhancements. <a href="%s" target="_blank" rel="noopener noreferrer" class="wpforms-learn-more">Learn More</a>', 'wpforms-lite' ),
 							[
 								'a' => [
 									'href'   => [],
 									'target' => [],
 									'rel'    => [],
+									'class'  => [],
 								],
 							]
 						),
-						'https://wpforms.com/docs/how-to-create-gdpr-compliant-forms/'
+						esc_url( wpforms_utm_link( 'https://wpforms.com/docs/how-to-create-gdpr-compliant-forms/', 'settings-license', 'GDPR Documentation' ) )
 					),
-					'type' => 'checkbox',
-				],
-			],
-			// Email settings tab.
-			'email'        => [
-				'email-heading'          => [
-					'id'       => 'email-heading',
-					'content'  => '<h4>' . esc_html__( 'Email', 'wpforms-lite' ) . '</h4>',
-					'type'     => 'content',
-					'no_label' => true,
-					'class'    => [ 'section-heading', 'no-desc' ],
-				],
-				'email-async'            => [
-					'id'   => 'email-async',
-					'name' => esc_html__( 'Optimize Email Sending', 'wpforms-lite' ),
-					'desc' => esc_html__( 'Check this if you would like to enable sending emails asynchronously, which can make submission processing faster.', 'wpforms-lite' ),
-					'type' => 'checkbox',
-				],
-				'email-template'         => [
-					'id'      => 'email-template',
-					'name'    => esc_html__( 'Template', 'wpforms-lite' ),
-					'desc'    => esc_html__( 'Determines how email notifications will be formatted. HTML Templates are the default.', 'wpforms-lite' ),
-					'type'    => 'radio',
-					'default' => 'default',
-					'options' => [
-						'default' => esc_html__( 'HTML Template', 'wpforms-lite' ),
-						'none'    => esc_html__( 'Plain text', 'wpforms-lite' ),
-					],
-				],
-				'email-header-image'     => [
-					'id'   => 'email-header-image',
-					'name' => esc_html__( 'Header Image', 'wpforms-lite' ),
-					'desc' => wp_kses( __( 'Upload or choose a logo to be displayed at the top of email notifications.<br>Recommended size is 300x100 or smaller for best support on all devices.', 'wpforms-lite' ), [ 'br' => [] ] ),
-					'type' => 'image',
-				],
-				'email-background-color' => [
-					'id'      => 'email-background-color',
-					'name'    => esc_html__( 'Background Color', 'wpforms-lite' ),
-					'desc'    => esc_html__( 'Customize the background color of the HTML email template.', 'wpforms-lite' ),
-					'type'    => 'color',
-					'default' => '#e9eaec',
-				],
-				'email-carbon-copy'      => [
-					'id'   => 'email-carbon-copy',
-					'name' => esc_html__( 'Carbon Copy', 'wpforms-lite' ),
-					'desc' => esc_html__( 'Check this if you would like to enable the ability to CC: email addresses in the form notification settings.', 'wpforms-lite' ),
-					'type' => 'checkbox',
-				],
-			],
-			// Recaptcha settings tab.
-			'recaptcha'    => [
-				'recaptcha-heading'      => [
-					'id'       => 'recaptcha-heading',
-					'content'  => '<h4>' . esc_html__( 'reCAPTCHA', 'wpforms-lite' ) . '</h4>' . $this->get_recaptcha_field_desc(),
-					'type'     => 'content',
-					'no_label' => true,
-					'class'    => [ 'section-heading' ],
-				],
-				'recaptcha-type'         => [
-					'id'      => 'recaptcha-type',
-					'name'    => esc_html__( 'Type', 'wpforms-lite' ),
-					'type'    => 'radio',
-					'default' => 'v2',
-					'options' => [
-						'v2'        => esc_html__( 'Checkbox reCAPTCHA v2', 'wpforms-lite' ),
-						'invisible' => esc_html__( 'Invisible reCAPTCHA v2', 'wpforms-lite' ),
-						'v3'        => esc_html__( 'reCAPTCHA v3', 'wpforms-lite' ),
-					],
-				],
-				'recaptcha-site-key'     => [
-					'id'   => 'recaptcha-site-key',
-					'name' => esc_html__( 'Site Key', 'wpforms-lite' ),
-					'type' => 'text',
-				],
-				'recaptcha-secret-key'   => [
-					'id'   => 'recaptcha-secret-key',
-					'name' => esc_html__( 'Secret Key', 'wpforms-lite' ),
-					'type' => 'text',
-				],
-				'recaptcha-fail-msg'     => [
-					'id'      => 'recaptcha-fail-msg',
-					'name'    => esc_html__( 'Fail Message', 'wpforms-lite' ),
-					'desc'    => esc_html__( 'Displays to users who fail the reCAPTCHA verification process.', 'wpforms-lite' ),
-					'type'    => 'text',
-					'default' => esc_html__( 'Google reCAPTCHA verification failed, please try again later.', 'wpforms-lite' ),
-				],
-				'recaptcha-v3-threshold' => [
-					'id'      => 'recaptcha-v3-threshold',
-					'name'    => esc_html__( 'Score Threshold', 'wpforms-lite' ),
-					'desc'    => esc_html__( 'reCAPTCHA v3 returns a score (1.0 is very likely a good interaction, 0.0 is very likely a bot). If the score less than or equal to this threshold, the form submission will be blocked and the message above will be displayed.', 'wpforms-lite' ),
-					'type'    => 'number',
-					'attr'    => [
-						'step' => '0.1',
-						'min'  => '0.0',
-						'max'  => '1.0',
-					],
-					'default' => esc_html__( '0.4', 'wpforms-lite' ),
-				],
-				'recaptcha-noconflict'   => [
-					'id'   => 'recaptcha-noconflict',
-					'name' => esc_html__( 'No-Conflict Mode', 'wpforms-lite' ),
-					'desc' => esc_html__( 'Check this option if you need to forcefully remove other reCAPTCHA occurrences in order to prevent conflicts. Only enable this option if your site is having compatibility issues or instructed by support.', 'wpforms-lite' ),
-					'type' => 'checkbox',
+					'type'   => 'toggle',
+					'status' => true,
 				],
 			],
 			// Validation messages settings tab.
 			'validation'   => [
-				'validation-heading'               => [
+				'validation-heading'              => [
 					'id'       => 'validation-heading',
 					'content'  => sprintf( /* translators: %s - WPForms.com smart tags documentation URL. */
 						esc_html__( '%1$s These messages are displayed to the users as they fill out a form in real-time. Messages can include plain text and/or %2$sSmart Tags%3$s.', 'wpforms-lite' ),
 						'<h4>' . esc_html__( 'Validation Messages', 'wpforms-lite' )
 						. '</h4><p>',
-						'<a href="https://wpforms.com/docs/how-to-use-smart-tags-in-wpforms/#smart-tags" target="_blank" rel="noopener noreferrer">',
+						'<a href="' . esc_url( wpforms_utm_link( 'https://wpforms.com/docs/how-to-use-smart-tags-in-wpforms/#smart-tags', 'Settings - Validation', 'Smart Tag Documentation' ) ) . '" target="_blank" rel="noopener noreferrer">',
 						'</a>'
 					),
 					'type'     => 'content',
 					'no_label' => true,
 					'class'    => [ 'section-heading' ],
 				],
-				'validation-required'              => [
+				'validation-required'             => [
 					'id'      => 'validation-required',
 					'name'    => esc_html__( 'Required', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'This field is required.', 'wpforms-lite' ),
 				],
-				'validation-url'                   => [
-					'id'      => 'validation-url',
-					'name'    => esc_html__( 'Website URL', 'wpforms-lite' ),
-					'type'    => 'text',
-					'default' => esc_html__( 'Please enter a valid URL.', 'wpforms-lite' ),
-				],
-				'validation-email'                 => [
+				'validation-email'                => [
 					'id'      => 'validation-email',
 					'name'    => esc_html__( 'Email', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'Please enter a valid email address.', 'wpforms-lite' ),
 				],
-				'validation-email-suggestion'      => [
+				'validation-email-suggestion'     => [
 					'id'      => 'validation-email-suggestion',
 					'name'    => esc_html__( 'Email Suggestion', 'wpforms-lite' ),
 					'type'    => 'text',
-					'default' => esc_html__( 'Did you mean {suggestion}?', 'wpforms-lite' ),
+					'default' => sprintf( /* translators: %s - suggested email address. */
+						esc_html__( 'Did you mean %s?', 'wpforms-lite' ),
+						'{suggestion}'
+					),
 				],
-				'validation-number'                => [
+				'validation-email-restricted'     => [
+					'id'      => 'validation-email-restricted',
+					'name'    => esc_html__( 'Email Restricted', 'wpforms-lite' ),
+					'type'    => 'text',
+					'default' => esc_html__( 'This email address is not allowed.', 'wpforms-lite' ),
+				],
+				'validation-number'               => [
 					'id'      => 'validation-number',
 					'name'    => esc_html__( 'Number', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'Please enter a valid number.', 'wpforms-lite' ),
 				],
-				'validation-confirm'               => [
+				'validation-number-positive'      => [
+					'id'      => 'validation-number-positive',
+					'name'    => esc_html__( 'Number Positive', 'wpforms-lite' ),
+					'type'    => 'text',
+					'default' => esc_html__( 'Please enter a valid positive number.', 'wpforms-lite' ),
+				],
+				'validation-minimum-price'        => [
+					'id'      => 'validation-minimum-price',
+					'name'    => esc_html__( 'Minimum Price', 'wpforms-lite' ),
+					'type'    => 'text',
+					'default' => esc_html__( 'Amount entered is less than the required minimum.', 'wpforms-lite' ),
+				],
+				'validation-confirm'              => [
 					'id'      => 'validation-confirm',
 					'name'    => esc_html__( 'Confirm Value', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'Field values do not match.', 'wpforms-lite' ),
 				],
-				'validation-input-mask-incomplete' => [
-					'id'      => 'validation-input-mask-incomplete',
+				'validation-inputmask-incomplete' => [
+					'id'      => 'validation-inputmask-incomplete',
 					'name'    => esc_html__( 'Input Mask Incomplete', 'wpforms-lite' ),
 					'type'    => 'text',
-					'default' => esc_html__( 'Please fill out all blanks.', 'wpforms-lite' ),
+					'default' => esc_html__( 'Please fill out the field in required format.', 'wpforms-lite' ),
 				],
-				'validation-check-limit'           => [
+				'validation-check-limit'          => [
 					'id'      => 'validation-check-limit',
 					'name'    => esc_html__( 'Checkbox Selection Limit', 'wpforms-lite' ),
 					'type'    => 'text',
 					'default' => esc_html__( 'You have exceeded the number of allowed selections: {#}.', 'wpforms-lite' ),
+				],
+				'validation-character-limit'      => [
+					'id'      => 'validation-character-limit',
+					'name'    => esc_html__( 'Character Limit', 'wpforms-lite' ),
+					'type'    => 'text',
+					'default' => sprintf( /* translators: %1$s - characters limit, %2$s - number of characters left. */
+						esc_html__( 'Limit is %1$s characters. Characters remaining: %2$s.', 'wpforms-lite' ),
+						'{limit}',
+						'{remaining}'
+					),
+				],
+				'validation-word-limit'           => [
+					'id'      => 'validation-word-limit',
+					'name'    => esc_html__( 'Word Limit', 'wpforms-lite' ),
+					'type'    => 'text',
+					'default' => sprintf( /* translators: %1$s - words limit, %2$s - number of words left. */
+						esc_html__( 'Limit is %1$s words. Words remaining: %2$s.', 'wpforms-lite' ),
+						'{limit}',
+						'{remaining}'
+					),
+				],
+				'validation-requiredpayment'      => [
+					'id'      => 'validation-requiredpayment',
+					'name'    => esc_html__( 'Payment Required', 'wpforms-lite' ),
+					'type'    => 'text',
+					'default' => esc_html__( 'Payment is required.', 'wpforms-lite' ),
+				],
+				'validation-creditcard'           => [
+					'id'      => 'validation-creditcard',
+					'name'    => esc_html__( 'Credit Card', 'wpforms-lite' ),
+					'type'    => 'text',
+					'default' => esc_html__( 'Please enter a valid credit card number.', 'wpforms-lite' ),
 				],
 			],
 			// Provider integrations settings tab.
@@ -509,36 +564,34 @@ class WPForms_Settings {
 			'misc'         => [
 				'misc-heading'       => [
 					'id'       => 'misc-heading',
-					'content'  => '<h4>' . esc_html__( 'Misc', 'wpforms-lite' ) . '</h4>',
+					'content'  => '<h4>' . esc_html__( 'Miscellaneous', 'wpforms-lite' ) . '</h4>',
 					'type'     => 'content',
 					'no_label' => true,
 					'class'    => [ 'section-heading', 'no-desc' ],
 				],
 				'hide-announcements' => [
-					'id'   => 'hide-announcements',
-					'name' => esc_html__( 'Hide Announcements', 'wpforms-lite' ),
-					'desc' => esc_html__( 'Check this if you would like to hide plugin announcements and update details.', 'wpforms-lite' ),
-					'type' => 'checkbox',
+					'id'     => 'hide-announcements',
+					'name'   => esc_html__( 'Hide Announcements', 'wpforms-lite' ),
+					'desc'   => esc_html__( 'Hide plugin announcements and update details.', 'wpforms-lite' ),
+					'type'   => 'toggle',
+					'status' => true,
 				],
 				'hide-admin-bar'     => [
-					'id'   => 'hide-admin-bar',
-					'name' => esc_html__( 'Hide Admin Bar Menu', 'wpforms-lite' ),
-					'desc' => esc_html__( 'Check this if you would like to hide the WPForms admin bar menu.', 'wpforms-lite' ),
-					'type' => 'checkbox',
+					'id'     => 'hide-admin-bar',
+					'name'   => esc_html__( 'Hide Admin Bar Menu', 'wpforms-lite' ),
+					'desc'   => esc_html__( 'Hide the WPForms admin bar menu.', 'wpforms-lite' ),
+					'type'   => 'toggle',
+					'status' => true,
 				],
 				'uninstall-data'     => [
-					'id'   => 'uninstall-data',
-					'name' => esc_html__( 'Uninstall WPForms', 'wpforms-lite' ),
-					'desc' => esc_html__( 'Check this if you would like to remove ALL WPForms data upon plugin deletion. All forms and settings will be unrecoverable.', 'wpforms-lite' ),
-					'type' => 'checkbox',
+					'id'     => 'uninstall-data',
+					'name'   => esc_html__( 'Uninstall WPForms', 'wpforms-lite' ),
+					'desc'   => $this->get_uninstall_desc(),
+					'type'   => 'toggle',
+					'status' => true,
 				],
 			],
 		];
-
-		// TODO: move this to Pro.
-		if ( wpforms()->pro ) {
-			$defaults['misc']['uninstall-data']['desc'] = esc_html__( 'Check this if you would like to remove ALL WPForms data upon plugin deletion. All forms, entries, and uploaded files will be unrecoverable.', 'wpforms' );
-		}
 
 		$defaults = apply_filters( 'wpforms_settings_defaults', $defaults );
 
@@ -553,52 +606,23 @@ class WPForms_Settings {
 	}
 
 	/**
-	 * Some heading descriptions, like for reCAPTCHA, are long so we define them separately.
+	 * Get uninstall description.
 	 *
-	 * @since 1.6.0
+	 * @since 1.8.4
 	 *
 	 * @return string
 	 */
-	private function get_recaptcha_field_desc() {
+	private function get_uninstall_desc() {
 
-		return '<p>' . esc_html__( 'reCAPTCHA is a free anti-spam service from Google which helps to protect your website from spam and abuse while letting real people pass through with ease.', 'wpforms-lite' ) . '</p>' .
-			'<p>' . esc_html__( 'Google offers 3 versions of reCAPTCHA (all supported within WPForms):', 'wpforms-lite' ) . '</p>' .
-			'<ul style="list-style: disc;margin-left: 20px;">' .
-				'<li>' .
-					wp_kses(
-						__( '<strong>v2 Checkbox reCAPTCHA</strong>: Prompts users to check a box to prove they\'re human.', 'wpforms-lite' ),
-						[ 'strong' => [] ]
-					) .
-				'</li>' .
-				'<li>' .
-					wp_kses(
-						__( '<strong>v2 Invisible reCAPTCHA</strong>: Uses advanced technology to detect real users without requiring any input.', 'wpforms-lite' ),
-						[ 'strong' => [] ]
-					) .
-				'</li>' .
-				'<li>' .
-					wp_kses(
-						__( '<strong>v3 reCAPTCHA</strong>: Uses a behind-the-scenes scoring system to detect abusive traffic, and lets you decide the minimum passing score. Recommended for advanced use only (or if using Google AMP).', 'wpforms-lite' ),
-						[ 'strong' => [] ]
-					) .
-				'</li>' .
-			'</ul>' .
-			'<p>' . esc_html__( 'Sites already using one type of reCAPTCHA will need to create new site keys before switching to a different option.', 'wpforms-lite' ) . '</p>' .
-			'<p>' .
-				sprintf(
-					wp_kses( /* translators: %s - WPForms.com Setup Captcha URL. */
-						__( '<a href="%s" target="_blank" rel="noopener noreferrer">Read our walk through</a> to learn more and for step-by-step directions.', 'wpforms-lite' ),
-						[
-							'a' => [
-								'href'   => [],
-								'target' => [],
-								'rel'    => [],
-							],
-						]
-					),
-					'https://wpforms.com/docs/setup-captcha-wpforms/'
-				) .
-			'</p></ul>';
+		$desc    = esc_html__( 'Remove ALL WPForms data upon plugin deletion.', 'wpforms-lite' );
+		$warning = esc_html__( 'All forms and settings will be unrecoverable.', 'wpforms-lite' );
+
+		if ( wpforms()->is_pro() ) {
+			$desc    = esc_html__( 'Remove ALL WPForms data upon plugin deletion.', 'wpforms-lite' );
+			$warning = esc_html__( 'All forms, entries, and uploaded files will be unrecoverable.', 'wpforms-lite' );
+		}
+
+		return sprintf( '%s <span class="wpforms-settings-warning">%s</span>', $desc, $warning );
 	}
 
 	/**
@@ -612,7 +636,7 @@ class WPForms_Settings {
 	 */
 	public function get_settings_fields( $view = '' ) {
 
-		$fields   = array();
+		$fields   = [];
 		$settings = $this->get_registered_settings( $view );
 
 		foreach ( $settings as $id => $args ) {
@@ -641,8 +665,8 @@ class WPForms_Settings {
 			<h1 class="wpforms-h1-placeholder"></h1>
 
 			<?php
-			if ( wpforms()->pro && class_exists( 'WPForms_License', false ) ) {
-				wpforms()->license->notices( true );
+			if ( wpforms()->is_pro() && class_exists( 'WPForms_License', false ) ) {
+				wpforms()->get( 'license' )->notices( true );
 			}
 			?>
 
@@ -713,6 +737,28 @@ class WPForms_Settings {
 		}
 
 		$meta->create_table();
+	}
+
+	/**
+	 * Validate radio and select fields.
+	 *
+	 * @since 1.7.5.5
+	 *
+	 * @param array $field      Field.
+	 * @param mixed $value      Value.
+	 * @param mixed $value_prev Previous value.
+	 *
+	 * @return mixed
+	 */
+	private function validate_field_with_options( $field, $value, $value_prev ) {
+
+		$value = sanitize_text_field( $value );
+
+		if ( isset( $field['options'] ) && array_key_exists( $value, $field['options'] ) ) {
+			return $value;
+		}
+
+		return isset( $field['default'] ) ? $field['default'] : $value_prev;
 	}
 }
 

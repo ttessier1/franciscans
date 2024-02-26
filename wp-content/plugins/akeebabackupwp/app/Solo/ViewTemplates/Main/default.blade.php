@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -18,6 +18,11 @@ $inCMS    = $this->container->segment->get('insideCMS', false);
 $token    = $this->container->session->getCsrfToken()->getValue();
 
 ?>
+
+@if ($this->needsMigreight)
+	@include('Main/migreight')
+@endif
+
 
 {{-- Display various possible warnings about issues which directly affect the user's experience --}}
 @include('Main/warnings')

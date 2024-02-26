@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -49,9 +49,16 @@ class Update extends ControllerDefault
 			}
 		}
 
-		$ret = $model->stepDownload();
+		// Set a very long timeout and a very big memory limit
+		if (function_exists('ini_set'))
+		{
+			@ini_set('max_execution_time', 3600);
+			@ini_set('memory_limit', '1024M');
+		}
 
-		echo '###' . json_encode($ret) . '###';
+		$ret = $model->stepDownload(false);
+
+		echo '#"\#\"#' . json_encode($ret) . '#"\#\"#';
 	}
 
 	public function extract()

@@ -1,18 +1,23 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
 namespace Solo\Application;
 
+use Akeeba\Engine\Platform;
 use Awf\Application\Application;
+use Awf\Container\ContainerAwareInterface;
+use Awf\Container\ContainerAwareTrait;
 use Awf\Download\Download;
 use Awf\Uri\Uri;
 
-class UserAuthenticationYubikey extends UserAuthenticationOtep
+class UserAuthenticationYubikey extends UserAuthenticationOtep implements ContainerAwareInterface
 {
+	use ContainerAwareTrait;
+
 	/**
 	 * Is this user authenticated by this object? The $params array contains at least one key, 'password'.
 	 *
@@ -100,8 +105,23 @@ class UserAuthenticationYubikey extends UserAuthenticationOtep
 		$gotResponse = false;
 		$check = false;
 
-		$http = new Download();
-		$token = Application::getInstance()->getContainer()->session->getCsrfToken()->getValue();
+		$options = [];
+		$proxyParams = Platform::getInstance()->getProxySettings();
+
+		if ($proxyParams['enabled'])
+		{
+			$options['proxy'] = [
+				'host' => $proxyParams['host'],
+				'port' => $proxyParams['port'],
+				'user' => $proxyParams['user'],
+				'pass' => $proxyParams['pass'],
+			];
+		}
+
+		$http = new Download($this->getContainer());
+		$http->setAdapterOptions($options);
+
+		$token = $this->getContainer()->session->getCsrfToken()->getValue();
 		$nonce = md5($token . uniqid(rand()));
 		$response = '';
 

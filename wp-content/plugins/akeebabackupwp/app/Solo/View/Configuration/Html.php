@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -45,6 +45,10 @@ class Html extends View
 		$document = $this->container->application->getDocument();
 
 		// Load the necessary Javascript
+		$doc = $this->container->application->getDocument();
+		$doc->lang('SOLO_YES');
+		$doc->lang('SOLO_NO');
+		Template::addJs('media://js/solo/showon.js', $this->container->application);
 		Template::addJs('media://js/solo/configuration.js', $this->container->application);
 
 		$this->getProfileIdAndName();
@@ -111,15 +115,16 @@ class Html extends View
 		}
 
 		// JavaScript language strings
-		Text::script('COM_AKEEBA_CONFIG_UI_BROWSE');
-		Text::script('COM_AKEEBA_CONFIG_UI_CONFIG');
-		Text::script('COM_AKEEBA_CONFIG_UI_REFRESH');
-		Text::script('COM_AKEEBA_CONFIG_UI_FTPBROWSER_TITLE');
-		Text::script('COM_AKEEBA_FILEFILTERS_LABEL_UIROOT');
-		Text::script('COM_AKEEBA_CONFIG_DIRECTFTP_TEST_OK');
-		Text::script('COM_AKEEBA_CONFIG_DIRECTFTP_TEST_FAIL');
-		Text::script('COM_AKEEBA_CONFIG_DIRECTSFTP_TEST_OK');
-		Text::script('COM_AKEEBA_CONFIG_DIRECTSFTP_TEST_FAIL');
+		$doc = $this->container->application->getDocument();
+		$doc->lang('COM_AKEEBA_CONFIG_UI_BROWSE');
+		$doc->lang('COM_AKEEBA_CONFIG_UI_CONFIG');
+		$doc->lang('COM_AKEEBA_CONFIG_UI_REFRESH');
+		$doc->lang('COM_AKEEBA_CONFIG_UI_FTPBROWSER_TITLE');
+		$doc->lang('COM_AKEEBA_FILEFILTERS_LABEL_UIROOT');
+		$doc->lang('COM_AKEEBA_CONFIG_DIRECTFTP_TEST_OK');
+		$doc->lang('COM_AKEEBA_CONFIG_DIRECTFTP_TEST_FAIL');
+		$doc->lang('COM_AKEEBA_CONFIG_DIRECTSFTP_TEST_OK');
+		$doc->lang('COM_AKEEBA_CONFIG_DIRECTSFTP_TEST_FAIL');
 
 		// Script options
 		$router  = $this->getContainer()->router;
@@ -165,7 +170,17 @@ class Html extends View
 			return 0;
 		}
 
-		$filename = $this->container->basePath . Application::secretKeyRelativePath;
+		$filename = APATH_BASE . '/Solo/secretkey.php';
+
+		// Different secretkey.php when using WordPress
+		if (defined('ABSPATH'))
+		{
+			$filename = rtrim(
+				                 (defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : (rtrim(ABSPATH, '/') . '/wp-content')),
+				                 '/'
+			                 ) . '/akeebabackup_secretkey.php';
+		}
+
 
 		// Encryption enabled, supported and a key file is present: encryption enabled
 		if (is_file($filename))

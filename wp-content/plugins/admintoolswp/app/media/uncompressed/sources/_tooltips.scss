@@ -1,0 +1,48 @@
+/*!*
+ * @package   admintoolswp
+ * @copyright Copyright (c)2017-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @license   GNU GPL version 3 or later
+ */
+
+.akeeba-popover {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1060;
+  display: block;
+  max-width: 276px;
+  font-family: Arial, sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 1.5;
+  text-align: left;
+  text-decoration: none;
+  text-shadow: none;
+  text-transform: none;
+  letter-spacing: normal;
+  word-break: normal;
+  word-spacing: normal;
+  white-space: normal;
+  line-break: auto;
+  font-size: .8rem;
+  word-wrap: break-word;
+  background-color: $white;
+  background-clip: padding-box;
+  border: 1px solid darken($light-grey, 10%);
+  border-radius: .5rem;
+  padding: 0;
+}
+
+.akeeba-popover-title {
+  margin: 0 !important;
+  padding: 0.5em !important;
+  background: $light-grey;
+  font-size: 0.9rem;
+  color: $grey;
+  border-bottom: thin solid darken($light-grey, 10%);
+}
+
+.akeeba-popover-content {
+  padding: 1em 1em 2em;
+  color: $grey;
+}

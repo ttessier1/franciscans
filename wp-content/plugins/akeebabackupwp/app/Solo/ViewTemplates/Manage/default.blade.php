@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -61,11 +61,11 @@ $proKey = (defined('AKEEBABACKUP_PRO') && AKEEBABACKUP_PRO) ? 'PRO' : 'CORE';
                 @html('grid.sort', 'COM_AKEEBA_BUADMIN_LABEL_FROZEN', 'frozen', $this->lists->order_Dir, $this->lists->order,
                 'default')
             </th>
-            <th width="30%">
+            <th width="25%">
                 @html('grid.sort', 'COM_AKEEBA_BUADMIN_LABEL_DESCRIPTION', 'description', $this->lists->order_Dir,
                 $this->lists->order, 'default')
             </th>
-            <th class="akeeba-hidden-phone">
+            <th width="25%" class="akeeba-hidden-phone">
                 @html('grid.sort', 'COM_AKEEBA_BUADMIN_LABEL_PROFILEID', 'profile_id', $this->lists->order_Dir,
                 $this->lists->order, 'default')
             </th>
@@ -96,7 +96,7 @@ $proKey = (defined('AKEEBABACKUP_PRO') && AKEEBABACKUP_PRO) ? 'PRO' : 'CORE';
                        placeholder="@lang('SOLO_MANAGE_FIELD_DESCRIPTION')">
             </td>
             <td class="akeeba-hidden-phone">
-                @html('select.genericlist', $this->profilesList, 'filter_profile', ['list.attr' => ['class' => 'akeebaGridViewAutoSubmitOnChange'], 'list.select' => $this->lists->fltProfile])
+                @html('select.genericlist', $this->profilesList, 'filter_profile', ['list.attr' => ['class' => 'akeebaGridViewAutoSubmitOnChange', 'style' => 'max-width: 12vw'], 'list.select' => $this->lists->fltProfile])
             </td>
             <td></td>
             <td></td>

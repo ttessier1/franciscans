@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -100,7 +100,8 @@ class Html extends View
 		$this->subfolders            = $model->getState('subfolders');
 		$this->breadcrumbs           = $model->getState('breadcrumbs');
 
-		Text::script('COM_AKEEBA_CONFIG_UI_ROOTDIR');
+		$doc = $this->container->application->getDocument();
+		$doc->lang('COM_AKEEBA_CONFIG_UI_ROOTDIR');
 
 		return true;
 	}

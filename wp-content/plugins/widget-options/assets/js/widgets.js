@@ -57,11 +57,11 @@
 		} );
 
 		if( $('.wp-admin.widgets-php .wrap a.page-title-action').length > 0 ){
-			$('.wp-admin.widgets-php .wrap a.page-title-action').after('<a href="'+ widgetopts10n.opts_page +'" class="page-title-action hide-if-no-customize">'+ widgetopts10n.translation.manage_settings +'</a>');
+			$('.wp-admin.widgets-php .wrap a.page-title-action').after('<a href="'+ widgetopts10n.opts_page +'" class="page-title-action hide-if-no-customize widgetopts-super">'+ widgetopts10n.translation.manage_settings +'</a>');
 		}
 
 		//add live filter
-		if ( typeof $.fn.liveFilter !== 'undefined' && $.isFunction( $.fn.liveFilter ) && $( '#widgetopts-widgets-search' ).length > 0 ) {
+		if ( typeof $.fn.liveFilter !== 'undefined' && $( '#widgetopts-widgets-search' ).length > 0 ) {
 			// Add separator to distinguish between visible and hidden widgets
 			$('.widget:last-of-type').after('<div class="widgetopts-separator" />');
 

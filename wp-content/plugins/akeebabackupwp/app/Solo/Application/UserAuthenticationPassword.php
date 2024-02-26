@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -20,35 +20,33 @@ class UserAuthenticationPassword extends Authentication
 	 */
 	public function onAuthentication($params = array())
 	{
-		$password = isset($params['password']) ? $params['password'] : '';
+		$password       = isset($params['password']) ? $params['password'] : '';
 		$hashedPassword = $this->user->getPassword();
 
 		if (substr($hashedPassword, 0, 4) == '$2y$')
 		{
 			return password_verify($password, $hashedPassword);
 		}
-		else
+
+		$parts = explode(':', $hashedPassword, 3);
+
+		switch ($parts[0])
 		{
-			$parts = explode(':', $hashedPassword, 3);
+			case 'SHA512':
+				return $this->timingSafeEquals($parts[1], hash('sha512', $password . $parts[2], false));
+				break;
 
-			switch ($parts[0])
-			{
-				case 'SHA512':
-					return $this->timingSafeEquals($parts[1], hash('sha512', $password . $parts[2], false));
-					break;
+			case 'SHA256':
+				return $this->timingSafeEquals($parts[1], hash('sha256', $password . $parts[2], false));
+				break;
 
-				case 'SHA256':
-					return $this->timingSafeEquals($parts[1], hash('sha256', $password . $parts[2], false));
-					break;
+			case 'SHA1':
+				return $this->timingSafeEquals($parts[1], sha1($password . $parts[2]));
+				break;
 
-				case 'SHA1':
-					return $this->timingSafeEquals($parts[1], sha1($password . $parts[2]));
-					break;
-
-				case 'MD5':
-					return $this->timingSafeEquals($parts[1], md5($password . $parts[2]));
-					break;
-			}
+			case 'MD5':
+				return $this->timingSafeEquals($parts[1], md5($password . $parts[2]));
+				break;
 		}
 
 		// If all else fails, we assume we can't verify this password

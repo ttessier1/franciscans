@@ -1,17 +1,18 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
 namespace Solo\Model;
 
-use Akeeba\Engine\Archiver\Directftp;
-use Akeeba\Engine\Archiver\Directsftp;
 use Akeeba\Engine\Factory;
 use Akeeba\Engine\Platform;
+use Akeeba\Engine\Postproc\Base;
+use Akeeba\Engine\Util\Transfer\Ftp;
 use Akeeba\Engine\Util\Transfer\FtpCurl;
+use Akeeba\Engine\Util\Transfer\Sftp;
 use Akeeba\Engine\Util\Transfer\SftpCurl;
 use Awf\Mvc\Model;
 use Awf\Text\Text;
@@ -44,6 +45,10 @@ class Configuration extends Model
 				$this->container->application->enqueueMessage(Text::_('COM_AKEEBA_CONFIG_OUTDIR_ROOT'), 'warning');
 				$data['akeeba.basic.output_directory'] = '[DEFAULT_OUTPUT]';
 			}
+			else
+			{
+				$data['akeeba.basic.output_directory'] = Factory::getFilesystemTools()->rebaseFolderToStockDirs($data['akeeba.basic.output_directory']);
+			}
 		}
 
 		// Unprotect the configuration and merge it
@@ -66,13 +71,14 @@ class Configuration extends Model
 	public function testFTP()
 	{
 		$config = [
-			'host'    => $this->getState('host'),
-			'port'    => $this->getState('port'),
-			'user'    => $this->getState('user'),
-			'pass'    => $this->getState('pass'),
-			'initdir' => $this->getState('initdir'),
-			'usessl'  => $this->getState('usessl'),
-			'passive' => $this->getState('passive'),
+			'host'        => $this->getState('host'),
+			'port'        => $this->getState('port'),
+			'username'    => $this->getState('user'),
+			'password'    => $this->getState('pass'),
+			'directory'   => $this->getState('initdir'),
+			'usessl'      => $this->getState('usessl'),
+			'passive'     => $this->getState('passive'),
+			'passive_fix' => $this->getState('passive_mode_workaround'),
 		];
 
 		// Check for bad settings
@@ -84,15 +90,47 @@ class Configuration extends Model
 		// Special case for cURL transport
 		if ($this->getState('isCurl'))
 		{
-			$this->testFtpCurl();
-
-			return;
+			$test = new FtpCurl($config);
+		}
+		else
+		{
+			$test = new Ftp($config);
 		}
 
-		// Perform the FTP connection test
-		$test = new Directftp();
+		$test->connect();
 
-		$test->initialize('', $config);
+		// If we're here, it means that  we were able to connect to the remote server. Now let's try to upload a small file
+		$tmp_path  = APATH_BASE . '/tmp';;
+		$test_file = '.akeeba_test_' . substr(md5(microtime()), 0, 5). '.dat';
+		$tmp_file  = $tmp_path . '/' . $test_file;
+		file_put_contents($tmp_file, 'Akeeba Backup test file');
+
+		// Construct the remote file path
+		$realdir  = substr($config['directory'], -1) == '/' ? substr($config['directory'], 0, strlen($config['directory']) - 1) : $config['directory'];
+		$realdir  .= '/' . dirname($test_file);
+		$realdir  = substr($realdir, 0, 1) == '/' ? $realdir : '/' . $realdir;
+		$realname = $realdir . '/' . basename($test_file);
+
+		try
+		{
+			$ret = $test->upload($tmp_file, $realname);
+		}
+		catch (RuntimeException $e)
+		{
+			throw new RuntimeException(Text::_('COM_AKEEBA_CONFIG_FTPTEST_NOUPLOAD'), 500);
+		}
+		finally
+		{
+			$this->container->fileSystem->delete($tmp_file);
+		}
+
+		if (!$ret)
+		{
+			throw new RuntimeException(Text::_('COM_AKEEBA_CONFIG_FTPTEST_NOUPLOAD'), 500);
+		}
+
+		// Delete the remote file. If it fails, that's ok for us
+		$test->delete($realname);
 	}
 
 	/**
@@ -104,13 +142,13 @@ class Configuration extends Model
 	public function testSFTP()
 	{
 		$config = [
-			'host'    => $this->getState('host'),
-			'port'    => $this->getState('port'),
-			'user'    => $this->getState('user'),
-			'pass'    => $this->getState('pass'),
-			'privkey' => $this->getState('privkey'),
-			'pubkey'  => $this->getState('pubkey'),
-			'initdir' => $this->getState('initdir'),
+			'host'       => $this->getState('host'),
+			'port'       => $this->getState('port'),
+			'username'   => $this->getState('user'),
+			'password'   => $this->getState('pass'),
+			'privateKey' => $this->getState('privkey'),
+			'publicKey'  => $this->getState('pubkey'),
+			'directory'  => $this->getState('initdir'),
 		];
 
 		// Check for bad settings
@@ -119,18 +157,45 @@ class Configuration extends Model
 			throw new RuntimeException(Text::_('COM_AKEEBA_CONFIG_SFTPTEST_BADPREFIX'), 500);
 		}
 
-		// Special case for cURL transport
+		// Initialize the correct object
 		if ($this->getState('isCurl'))
 		{
-			$this->testSftpCurl();
-
-			return;
+			$test = new SftpCurl($config);
+		}
+		else
+		{
+			$test = new Sftp($config);
 		}
 
-		// Perform the FTP connection test
-		$test = new Directsftp();
+		$test->connect();
 
-		$test->initialize('', $config);
+		// If we're here, it means that  we were able to connect to the remote server. Now let's try to upload a small file
+		$tmp_path  = APATH_BASE . '/tmp';
+		$test_file = '.akeeba_test_' . substr(md5(microtime()), 0, 5). '.dat';
+		$tmp_file  = $tmp_path . '/' . $test_file;
+		file_put_contents($tmp_file, 'Akeeba Backup test file');
+
+		// Construct the remote file path
+		$realdir  = substr($config['directory'], -1) == '/' ? substr($config['directory'], 0, strlen($config['directory']) - 1) : $config['directory'];
+		$realdir  .= '/' . dirname($test_file);
+		$realdir  = substr($realdir, 0, 1) == '/' ? $realdir : '/' . $realdir;
+		$realname = $realdir . '/' . basename($test_file);
+
+		try
+		{
+			$test->upload($tmp_file, $realname);
+		}
+		catch (RuntimeException $e)
+		{
+			throw new RuntimeException(Text::_('COM_AKEEBA_CONFIG_SFTPTEST_NOUPLOAD'), 500);
+		}
+		finally
+		{
+			$this->container->fileSystem->delete($tmp_file);
+		}
+
+		// Delete the remote file. If it fails, that's ok for us
+		$test->delete($realname);
 	}
 
 	/**
@@ -153,7 +218,7 @@ class Configuration extends Model
 		// Get the engine
 		$engineObject = Factory::getPostprocEngine($engine);
 
-		if ($engineObject === false)
+		if (!$engineObject instanceof Base)
 		{
 			return;
 		}
@@ -177,7 +242,7 @@ class Configuration extends Model
 
 		$engineObject = Factory::getPostprocEngine($engine);
 
-		if ($engineObject === false)
+		if (!$engineObject instanceof Base)
 		{
 			return false;
 		}

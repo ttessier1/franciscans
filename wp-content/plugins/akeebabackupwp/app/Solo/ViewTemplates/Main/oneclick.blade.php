@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -26,10 +26,16 @@ $token    = $this->container->session->getCsrfToken()->getValue();
     </header>
     <div class="akeeba-grid">
 		@foreach($this->quickIconProfiles as $qiProfile)
-            <a class="akeeba-action--green" href="{{ $router->route('index.php?view=backup&autostart=1&profile=' . (int) $qiProfile->id) . '&' . $token . '=1' }}">
-                <span class="akion-play"></span>
-                <span>{{ $qiProfile->description }} </span>
-            </a>
+            <form action="{{ $router->route('index.php?view=backup') }}" method="post">
+                <a class="oneclick akeeba-action--green" href="#">
+                    <span class="akion-play"></span>
+                    <span>{{ $qiProfile->description }} </span>
+                </a>
+
+                <input type="hidden" name="autostart" value="1" />
+                <input type="hidden" name="profile" value="{{ (int) $qiProfile->id }}" />
+                <input type="hidden" name="{{ $token  }}" value="1" />
+            </form>
 		@endforeach
     </div>
 </section>

@@ -4,34 +4,17 @@
  */
 
 /**
- * Handles the core sitemaps.
+ * Handles the core sitemaps for sites using a single domain.
  *
  * @since 2.8
  */
-class PLL_Sitemaps {
+class PLL_Sitemaps extends PLL_Abstract_Sitemaps {
 	/**
-	 * A reference to the current language.
-	 *
-	 * @since 2.8
-	 *
-	 * @var PLL_Language
-	 */
-	protected $curlang;
-
-	/**
-	 * A reference to the PLL_Links_Model instance.
-	 *
-	 * @since 2.8
-	 *
 	 * @var PLL_Links_Model
 	 */
 	protected $links_model;
 
 	/**
-	 * A reference to the PLL_Model instance.
-	 *
-	 * @since 2.8
-	 *
 	 * @var PLL_Model
 	 */
 	protected $model;
@@ -51,7 +34,6 @@ class PLL_Sitemaps {
 	 * @param object $polylang Main Polylang object.
 	 */
 	public function __construct( &$polylang ) {
-		$this->curlang = &$polylang->curlang;
 		$this->links_model = &$polylang->links_model;
 		$this->model = &$polylang->model;
 		$this->options = &$polylang->options;
@@ -61,19 +43,15 @@ class PLL_Sitemaps {
 	 * Setups actions and filters.
 	 *
 	 * @since 2.8
+	 *
+	 * @return void
 	 */
 	public function init() {
-		add_filter( 'pll_home_url_white_list', array( $this, 'home_url_white_list' ) );
+		parent::init();
 
-		if ( $this->options['force_lang'] < 2 ) {
-			add_filter( 'pll_set_language_from_query', array( $this, 'set_language_from_query' ), 10, 2 );
-			add_filter( 'rewrite_rules_array', array( $this, 'rewrite_rules' ) );
-			add_filter( 'wp_sitemaps_add_provider', array( $this, 'replace_provider' ) );
-		} else {
-			add_filter( 'wp_sitemaps_index_entry', array( $this, 'index_entry' ) );
-			add_filter( 'wp_sitemaps_stylesheet_url', array( $this->links_model, 'site_url' ) );
-			add_filter( 'wp_sitemaps_stylesheet_index_url', array( $this->links_model, 'site_url' ) );
-		}
+		add_filter( 'pll_set_language_from_query', array( $this, 'set_language_from_query' ), 10, 2 );
+		add_filter( 'rewrite_rules_array', array( $this, 'rewrite_rules' ) );
+		add_filter( 'wp_sitemaps_add_provider', array( $this, 'replace_provider' ) );
 	}
 
 	/**
@@ -83,7 +61,7 @@ class PLL_Sitemaps {
 	 * @since 2.8
 	 *
 	 * @param string|bool $lang  Current language code, false if not set yet.
-	 * @param object      $query Main WP query object.
+	 * @param WP_Query    $query Main WP query object.
 	 * @return string|bool
 	 */
 	public function set_language_from_query( $lang, $query ) {
@@ -94,39 +72,30 @@ class PLL_Sitemaps {
 	}
 
 	/**
-	 * Whitelists the home url filter for the sitemaps
-	 *
-	 * @since 2.8
-	 *
-	 * @param array $whitelist White list.
-	 * @return array;
-	 */
-	public function home_url_white_list( $whitelist ) {
-		$whitelist[] = array( 'file' => 'class-wp-sitemaps-posts' );
-		return $whitelist;
-	}
-
-	/**
 	 * Filters the sitemaps rewrite rules to take the languages into account.
 	 *
 	 * @since 2.8
 	 *
-	 * @param array $rules Rewrite rules.
-	 * @return array
+	 * @param string[] $rules Rewrite rules.
+	 * @return string[] Modified rewrite rules.
 	 */
 	public function rewrite_rules( $rules ) {
 		global $wp_rewrite;
 
+		$languages = $this->model->get_languages_list(
+			array(
+				'fields'       => 'slug',
+				'hide_default' => $this->options['hide_default'],
+			)
+		);
+
+		if ( empty( $languages ) ) {
+			return $rules;
+		}
+
+		$slug = $wp_rewrite->root . ( $this->options['rewrite'] ? '^' : '^language/' ) . '(' . implode( '|', $languages ) . ')/';
+
 		$newrules = array();
-
-		$languages = $this->model->get_languages_list( array( 'fields' => 'slug' ) );
-		if ( $this->options['hide_default'] ) {
-			$languages = array_diff( $languages, array( $this->options['default_lang'] ) );
-		}
-
-		if ( ! empty( $languages ) ) {
-			$slug = $wp_rewrite->root . ( $this->options['rewrite'] ? '^' : '^language/' ) . '(' . implode( '|', $languages ) . ')/';
-		}
 
 		foreach ( $rules as $key => $rule ) {
 			if ( false !== strpos( $rule, 'sitemap=$matches[1]' ) ) {
@@ -155,18 +124,5 @@ class PLL_Sitemaps {
 			$provider = new PLL_Multilingual_Sitemaps_Provider( $provider, $this->links_model );
 		}
 		return $provider;
-	}
-
-	/**
-	 * Filters the sitemap index entries for subdomains and multiple domains.
-	 *
-	 * @since 2.8
-	 *
-	 * @param array $sitemap_entry Sitemap entry for the post.
-	 * return array
-	 */
-	public function index_entry( $sitemap_entry ) {
-		$sitemap_entry['loc'] = $this->links_model->site_url( $sitemap_entry['loc'] );
-		return $sitemap_entry;
 	}
 }

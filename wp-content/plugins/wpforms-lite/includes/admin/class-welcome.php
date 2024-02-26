@@ -1,5 +1,9 @@
 <?php
 
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
 /**
  * Welcome page class.
  *
@@ -23,7 +27,7 @@ class WPForms_Welcome {
 	 */
 	public function __construct() {
 
-		add_action( 'plugins_loaded', array( $this, 'hooks' ) );
+		add_action( 'plugins_loaded', [ $this, 'hooks' ] );
 	}
 
 	/**
@@ -43,9 +47,9 @@ class WPForms_Welcome {
 			return;
 		}
 
-		add_action( 'admin_menu', array( $this, 'register' ) );
-		add_action( 'admin_head', array( $this, 'hide_menu' ) );
-		add_action( 'admin_init', array( $this, 'redirect' ), 9999 );
+		add_action( 'admin_menu', [ $this, 'register' ] );
+		add_action( 'admin_head', [ $this, 'hide_menu' ] );
+		add_action( 'admin_init', [ $this, 'redirect' ], 9999 );
 	}
 
 	/**
@@ -64,7 +68,7 @@ class WPForms_Welcome {
 			esc_html__( 'Welcome to WPForms', 'wpforms-lite' ),
 			apply_filters( 'wpforms_welcome_cap', wpforms_get_capability_manage_options() ),
 			self::SLUG,
-			array( $this, 'output' )
+			[ $this, 'output' ]
 		);
 	}
 
@@ -125,7 +129,7 @@ class WPForms_Welcome {
 	 */
 	public function output() {
 
-		$class = wpforms()->pro ? 'pro' : 'lite';
+		$class = wpforms()->is_pro() ? 'pro' : 'lite';
 		?>
 
 		<div id="wpforms-welcome" class="<?php echo sanitize_html_class( $class ); ?>">
@@ -158,7 +162,7 @@ class WPForms_Welcome {
 								</a>
 							</div>
 							<div class="right">
-								<a href="https://wpforms.com/docs/creating-first-form/?utm_source=WordPress&amp;utm_medium=link&amp;utm_campaign=liteplugin"
+								<a href="<?php echo esc_url( wpforms_utm_link( 'https://wpforms.com/docs/creating-first-form/', 'welcome-page', 'Read the Full Guide' ) ); ?>"
 									class="wpforms-btn wpforms-btn-block wpforms-btn-lg wpforms-btn-grey" target="_blank" rel="noopener noreferrer">
 									<?php esc_html_e( 'Read the Full Guide', 'wpforms-lite' ); ?>
 								</a>
@@ -237,13 +241,13 @@ class WPForms_Welcome {
 							<div class="feature-block last">
 								<img src="<?php echo WPFORMS_PLUGIN_URL; ?>assets/images/welcome-feature-icon-10.png">
 								<h5><?php esc_html_e( 'Spam Protection', 'wpforms-lite' ); ?></h5>
-								<p><?php esc_html_e( 'Our smart captcha and honeypot automatically prevent spam submissions.', 'wpforms-lite' ); ?></p>
+								<p><?php esc_html_e( 'Our smart captcha and spam protection automatically prevents spam submissions.', 'wpforms-lite' ); ?></p>
 							</div>
 
 						</div>
 
 						<div class="button-wrap">
-							<a href="https://wpforms.com/features/?utm_source=WordPress&amp;utm_medium=link&amp;utm_campaign=liteplugin&amp;utm_content=welcome"
+							<a href="<?php echo esc_url( wpforms_utm_link( 'https://wpforms.com/features/', 'welcome-page', 'See All Features' ) ); ?>"
 								class="wpforms-btn wpforms-btn-lg wpforms-btn-grey" rel="noopener noreferrer" target="_blank">
 								<?php esc_html_e( 'See All Features', 'wpforms-lite' ); ?>
 							</a>
@@ -276,12 +280,12 @@ class WPForms_Welcome {
 						</div>
 
 						<div class="right">
-							<h2><span><?php esc_html_e( 'PRO', 'wpforms-lite' ); ?></span></h2>
+							<h2><span>PRO</span></h2>
 							<div class="price">
 								<span class="amount">199</span><br>
 								<span class="term"><?php esc_html_e( 'per year', 'wpforms-lite' ); ?></span>
 							</div>
-							<a href="<?php echo esc_url( wpforms_admin_upgrade_link( 'welcome' ) ); ?>" rel="noopener noreferrer" target="_blank"
+							<a href="<?php echo esc_url( wpforms_admin_upgrade_link( 'welcome', 'Upgrade Now CTA Section' ) ); ?>" rel="noopener noreferrer" target="_blank"
 								class="wpforms-btn wpforms-btn-block wpforms-btn-lg wpforms-btn-orange wpforms-upgrade-modal">
 								<?php esc_html_e( 'Upgrade Now', 'wpforms-lite' ); ?>
 							</a>
@@ -327,7 +331,7 @@ class WPForms_Welcome {
 								</a>
 							</div>
 							<div class="right">
-								<a href="<?php echo esc_url( wpforms_admin_upgrade_link( 'welcome' ) ); ?>" target="_blank" rel="noopener noreferrer"
+								<a href="<?php echo esc_url( wpforms_admin_upgrade_link( 'welcome', 'Upgrade to WPForms Pro' ) ); ?>" target="_blank" rel="noopener noreferrer"
 									class="wpforms-btn wpforms-btn-block wpforms-btn-lg wpforms-btn-trans-green wpforms-upgrade-modal">
 									<span class="underline">
 										<?php esc_html_e( 'Upgrade to WPForms Pro', 'wpforms-lite' ); ?> <span class="dashicons dashicons-arrow-right"></span>

@@ -1,13 +1,12 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
 namespace Solo\Model;
 
-use Akeeba\Engine\Factory;
 use Akeeba\Engine\Platform;
 use Awf\Container\Container;
 use Awf\Mvc\DataModel;
@@ -21,7 +20,7 @@ class Profiles extends DataModel
 	 *
 	 * @param   Container  $container  Configuration parameters
 	 */
-	public function __construct(\Awf\Container\Container $container = null)
+	public function __construct(?Container $container = null)
 	{
 		$this->tableName = '#__ak_profiles';
 		$this->idFieldName = 'id';

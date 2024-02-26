@@ -4,7 +4,7 @@
  * An AJAX-powered archive extraction tool
  *
  * @package   kickstart
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -13,7 +13,7 @@
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -138,9 +138,9 @@ function debugMsg($msg)
 		return;
 	}
 
-	$fp = fopen('debug.txt', 'at');
+	$fp = fopen('debug.txt', 'a');
 
-	fwrite($fp, $msg . "\n");
+	fwrite($fp, $msg . PHP_EOL);
 	fclose($fp);
 
 	// Echo to stdout if KSDEBUGCLI is defined
@@ -151,11 +151,40 @@ function debugMsg($msg)
 }
 
 /**
+ * Invalidate a file in OPcache.
+ *
+ * Only applies if the file has a .php extension.
+ *
+ * @param   string  $file  The filepath to clear from OPcache
+ *
+ * @return  boolean
+ * @since   7.1.0
+ */
+function clearFileInOPCache($file)
+{
+	static $hasOpCache = null;
+
+	if (is_null($hasOpCache))
+	{
+		$hasOpCache = ini_get('opcache.enable')
+			&& function_exists('opcache_invalidate')
+			&& (!ini_get('opcache.restrict_api') || stripos(realpath($_SERVER['SCRIPT_FILENAME']), ini_get('opcache.restrict_api')) === 0);
+	}
+
+	if ($hasOpCache && (strtolower(substr($file, -4)) === '.php'))
+	{
+		return opcache_invalidate($file, true);
+	}
+
+	return false;
+}
+
+/**
  * Akeeba Restore
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -173,29 +202,6 @@ abstract class AKAbstractObject
 	private $_errors = array();
 	/** @var    array    An array of warnings */
 	private $_warnings = array();
-
-	/**
-	 * Public constructor, makes sure we are instantiated only by the factory class
-	 */
-	public function __construct()
-	{
-		/*
-		// Assisted Singleton pattern
-		if(function_exists('debug_backtrace'))
-		{
-			$caller=debug_backtrace();
-			if(
-				($caller[1]['class'] != 'AKFactory') &&
-				($caller[2]['class'] != 'AKFactory') &&
-				($caller[3]['class'] != 'AKFactory') &&
-				($caller[4]['class'] != 'AKFactory')
-			) {
-				var_dump(debug_backtrace());
-				trigger_error("You can't create direct descendants of ".__CLASS__, E_USER_ERROR);
-			}
-		}
-		*/
-	}
 
 	/**
 	 * Get the most recent error message
@@ -433,7 +439,7 @@ abstract class AKAbstractObject
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -472,7 +478,7 @@ abstract class AKAbstractPart extends AKAbstractObject
 	 *
 	 * @var boolean
 	 */
-	protected $hasRan = false;
+	protected $hasRun = false;
 
 	/**
 	 * The name of the engine part (a.k.a. Domain), used in return table
@@ -805,7 +811,7 @@ abstract class AKAbstractPart extends AKAbstractObject
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -857,21 +863,14 @@ abstract class AKAbstractUnarchiver extends AKAbstractPart
 	protected $ignoreDirectories = array();
 
 	/**
-	 * Public constructor
-	 */
-	public function __construct()
-	{
-		parent::__construct();
-	}
-
-	/**
 	 * Wakeup function, called whenever the class is unserialized
 	 */
 	public function __wakeup()
 	{
 		if ($this->currentPartNumber >= 0)
 		{
-			$this->fp = @fopen($this->archiveList[$this->currentPartNumber], 'rb');
+			$this->fp = @fopen($this->archiveList[$this->currentPartNumber], 'r');
+
 			if ((is_resource($this->fp)) && ($this->currentPartOffset > 0))
 			{
 				@fseek($this->fp, $this->currentPartOffset);
@@ -922,8 +921,6 @@ abstract class AKAbstractUnarchiver extends AKAbstractPart
 	 */
 	final protected function _prepare()
 	{
-		parent::__construct();
-
 		if (count($this->_parametersArray) > 0)
 		{
 			foreach ($this->_parametersArray as $key => $value)
@@ -1224,11 +1221,15 @@ abstract class AKAbstractUnarchiver extends AKAbstractPart
 		}
 
 		$error = $this->getError();
+
 		if (!$status && ($this->runState == AK_STATE_NOFILE) && empty($error))
 		{
 			debugMsg(__CLASS__ . '::_run() - Just finished');
 			// We just finished
 			$this->setState('postrun');
+
+			// Reset internal state, prevents __wakeup from trying to open a non-existent file
+			$this->currentPartNumber = -1;
 		}
 		elseif (!empty($error))
 		{
@@ -1280,7 +1281,7 @@ abstract class AKAbstractUnarchiver extends AKAbstractPart
 				@fclose($this->fp);
 			}
 			debugMsg('Opening file ' . $this->archiveList[$this->currentPartNumber]);
-			$this->fp = @fopen($this->archiveList[$this->currentPartNumber], 'rb');
+			$this->fp = @fopen($this->archiveList[$this->currentPartNumber], 'r');
 			if ($this->fp === false)
 			{
 				debugMsg('Could not open file - crash imminent');
@@ -1474,6 +1475,36 @@ abstract class AKAbstractUnarchiver extends AKAbstractPart
 		return $mustSkip;
 	}
 
+	protected function fuzzySignatureSearch($requiredSignatures, $sigLen)
+	{
+		if (!is_array($requiredSignatures))
+		{
+			$requiredSignatures = [$requiredSignatures];
+		}
+
+		fseek($this->fp, 0, SEEK_SET);
+
+		$stuff  = $this->fread($this->fp, 131072);
+		$maxPos = function_exists('mb_strlen') ? mb_strlen($stuff, 'binary') : strlen($stuff);
+
+		for ($i = 0; $i < $maxPos; $i++)
+		{
+			foreach ($requiredSignatures as $signature)
+			{
+				$sigBinary = function_exists('mb_substr') ? mb_substr($stuff, $i, $sigLen, 'binary') : substr($stuff, $i, $sigLen);
+
+				if ($sigBinary === $signature)
+				{
+					fseek($this->fp, $i, SEEK_SET);
+
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+
 	/**
 	 * Get the list of files / folders to extract. The list can contain filenames or glob patterns.
 	 *
@@ -1540,7 +1571,7 @@ abstract class AKAbstractUnarchiver extends AKAbstractPart
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -1609,7 +1640,7 @@ abstract class AKAbstractPostproc extends AKAbstractObject
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -1630,7 +1661,7 @@ abstract class AKAbstractPartObserver
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -1660,6 +1691,11 @@ class AKPostprocDirect extends AKAbstractPostproc
 		if ($this->timestamp > 0)
 		{
 			@touch($this->filename, $this->timestamp);
+		}
+
+		if (@is_file($this->filename) || @is_link($this->filename))
+		{
+			clearFileInOPCache($this->filename);
 		}
 
 		return true;
@@ -1765,7 +1801,7 @@ class AKPostprocDirect extends AKAbstractPostproc
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -1793,12 +1829,11 @@ class AKPostprocFTP extends AKAbstractPostproc
 
 	public function __construct()
 	{
-		parent::__construct();
-
 		$this->useSSL  = AKFactory::get('kickstart.ftp.ssl', false);
 		$this->passive = AKFactory::get('kickstart.ftp.passive', true);
 		$this->host    = AKFactory::get('kickstart.ftp.host', '');
 		$this->port    = AKFactory::get('kickstart.ftp.port', 21);
+
 		if (trim($this->port) == '')
 		{
 			$this->port = 21;
@@ -1834,10 +1869,12 @@ class AKPostprocFTP extends AKAbstractPostproc
 				}
 				$absoluteDirToHere = $tempDir;
 				$tempDir           = rtrim(str_replace('\\', '/', $tempDir), '/');
+
 				if (!empty($tempDir))
 				{
 					$tempDir .= '/';
 				}
+
 				$this->tempDir = $tempDir;
 				// Is this directory writable?
 				$writable = $this->isDirWritable($tempDir);
@@ -1859,6 +1896,7 @@ class AKPostprocFTP extends AKAbstractPostproc
 			{
 				// Let's see if the user has specified one
 				$userdir = AKFactory::get('kickstart.ftp.tempdir', '');
+
 				if (!empty($userdir))
 				{
 					// Is it an absolute or a relative directory?
@@ -1866,6 +1904,7 @@ class AKPostprocFTP extends AKAbstractPostproc
 					$absolute = $absolute || (substr($userdir, 0, 1) == '/');
 					$absolute = $absolute || (substr($userdir, 1, 1) == ':');
 					$absolute = $absolute || (substr($userdir, 2, 1) == ':');
+
 					if (!$absolute)
 					{
 						// Make absolute
@@ -1884,6 +1923,7 @@ class AKPostprocFTP extends AKAbstractPostproc
 					}
 				}
 			}
+
 			$this->tempDir = $tempDir;
 
 			if (!$writable)
@@ -1910,6 +1950,7 @@ class AKPostprocFTP extends AKAbstractPostproc
 		{
 			$this->handle = @ftp_connect($this->host, $this->port);
 		}
+
 		if ($this->handle === false)
 		{
 			$this->setError(AKText::_('WRONG_FTP_HOST'));
@@ -1948,6 +1989,7 @@ class AKPostprocFTP extends AKAbstractPostproc
 		// Try to download ourselves
 		$testFilename = defined('KSSELFNAME') ? KSSELFNAME : basename(__FILE__);
 		$tempHandle   = fopen('php://temp', 'r+');
+
 		if (@ftp_fget($this->handle, $tempHandle, $testFilename, FTP_ASCII, 0) === false)
 		{
 			$this->setError(AKText::_('WRONG_FTP_PATH2'));
@@ -1956,6 +1998,7 @@ class AKPostprocFTP extends AKAbstractPostproc
 
 			return false;
 		}
+
 		fclose($tempHandle);
 
 		return true;
@@ -1963,7 +2006,8 @@ class AKPostprocFTP extends AKAbstractPostproc
 
 	private function isDirWritable($dir)
 	{
-		$fp = @fopen($dir . '/kickstart.dat', 'wb');
+		$fp = @fopen($dir . '/kickstart.dat', 'w');
+
 		if ($fp === false)
 		{
 			return false;
@@ -1981,6 +2025,7 @@ class AKPostprocFTP extends AKAbstractPostproc
 	{
 		// Strip absolute filesystem path to website's root
 		$removePath = AKFactory::get('kickstart.setup.destdir', '');
+
 		if (!empty($removePath))
 		{
 			// UNIXize the paths
@@ -1991,17 +2036,20 @@ class AKPostprocFTP extends AKAbstractPostproc
 			$dirName    = rtrim($dirName, '/\\') . '/';
 			// Process the path removal
 			$left = substr($dirName, 0, strlen($removePath));
+
 			if ($left == $removePath)
 			{
 				$dirName = substr($dirName, strlen($removePath));
 			}
 		}
+
 		if (empty($dirName))
 		{
 			$dirName = '';
 		} // 'cause the substr() above may return FALSE.
 
 		$check = '/' . trim($this->dir, '/') . '/' . trim($dirName, '/');
+
 		if ($this->is_dir($check))
 		{
 			return true;
@@ -2009,9 +2057,11 @@ class AKPostprocFTP extends AKAbstractPostproc
 
 		$alldirs     = explode('/', $dirName);
 		$previousDir = '/' . trim($this->dir);
+
 		foreach ($alldirs as $curdir)
 		{
 			$check = $previousDir . '/' . $curdir;
+
 			if (!$this->is_dir($check))
 			{
 				// Proactively try to delete a file by the same name
@@ -2021,6 +2071,7 @@ class AKPostprocFTP extends AKAbstractPostproc
 				{
 					// If we couldn't create the directory, attempt to fix the permissions in the PHP level and retry!
 					$this->fixPermissions($removePath . $check);
+
 					if (@ftp_mkdir($this->handle, $check) === false)
 					{
 						// Can we fall back to pure PHP mode, sire?
@@ -2041,8 +2092,11 @@ class AKPostprocFTP extends AKAbstractPostproc
 						}
 					}
 				}
+
 				@ftp_chmod($this->handle, $perms, $check);
+
 			}
+
 			$previousDir = $check;
 		}
 
@@ -2066,17 +2120,21 @@ class AKPostprocFTP extends AKAbstractPostproc
 		$relPath  = str_replace('\\', '/', $path);
 		$basePath = rtrim(str_replace('\\', '/', KSROOTDIR), '/');
 		$basePath = rtrim($basePath, '/');
+
 		if (!empty($basePath))
 		{
 			$basePath .= '/';
 		}
+
 		// Remove the leading relative root
 		if (substr($relPath, 0, strlen($basePath)) == $basePath)
 		{
 			$relPath = substr($relPath, strlen($basePath));
 		}
+
 		$dirArray  = explode('/', $relPath);
 		$pathBuilt = rtrim($basePath, '/');
+
 		foreach ($dirArray as $dir)
 		{
 			if (empty($dir))
@@ -2085,6 +2143,7 @@ class AKPostprocFTP extends AKAbstractPostproc
 			}
 			$oldPath = $pathBuilt;
 			$pathBuilt .= '/' . $dir;
+
 			if (is_dir($oldPath . $dir))
 			{
 				$trustMeIKnowWhatImDoing = 500 + 10 + 1; // working around overzealous scanners written by bozos
@@ -2107,7 +2166,26 @@ class AKPostprocFTP extends AKAbstractPostproc
 		}
 	}
 
-	function __wakeup()
+	public function __sleep()
+	{
+		if (!is_null($this->handle) && is_resource($this->handle))
+		{
+			@ftp_close($this->handle);
+		}
+
+		$this->handle = null;
+	}
+
+	public function __destruct()
+	{
+		if (!is_null($this->handle) && is_resource($this->handle))
+		{
+			@ftp_close($this->handle);
+		}
+	}
+
+
+	public function __wakeup()
 	{
 		$this->connect();
 	}
@@ -2123,11 +2201,13 @@ class AKPostprocFTP extends AKAbstractPostproc
 
 		$remotePath = dirname($this->filename);
 		$removePath = AKFactory::get('kickstart.setup.destdir', '');
+
 		if (!empty($removePath))
 		{
 			$removePath = ltrim($removePath, "/");
 			$remotePath = ltrim($remotePath, "/");
 			$left       = substr($remotePath, 0, strlen($removePath));
+
 			if ($left == $removePath)
 			{
 				$remotePath = substr($remotePath, strlen($removePath));
@@ -2142,16 +2222,20 @@ class AKPostprocFTP extends AKAbstractPostproc
 		$remoteName = $absoluteFTPPath . '/' . $onlyFilename;
 
 		$ret = @ftp_chdir($this->handle, $absoluteFTPPath);
+
 		if ($ret === false)
 		{
 			$ret = $this->createDirRecursive($absoluteFSPath, 0755);
+
 			if ($ret === false)
 			{
 				$this->setError(AKText::sprintf('FTP_COULDNT_UPLOAD', $this->filename));
 
 				return false;
 			}
+
 			$ret = @ftp_chdir($this->handle, $absoluteFTPPath);
+
 			if ($ret === false)
 			{
 				$this->setError(AKText::sprintf('FTP_COULDNT_UPLOAD', $this->filename));
@@ -2161,13 +2245,15 @@ class AKPostprocFTP extends AKAbstractPostproc
 		}
 
 		$ret = @ftp_put($this->handle, $remoteName, $this->tempFilename, FTP_BINARY);
+
 		if ($ret === false)
 		{
 			// If we couldn't create the file, attempt to fix the permissions in the PHP level and retry!
 			$this->fixPermissions($this->filename);
 			$this->unlink($this->filename);
 
-			$fp = @fopen($this->tempFilename, 'rb');
+			$fp = @fopen($this->tempFilename, 'r');
+
 			if ($fp !== false)
 			{
 				$ret = @ftp_fput($this->handle, $remoteName, $fp, FTP_BINARY);
@@ -2178,6 +2264,7 @@ class AKPostprocFTP extends AKAbstractPostproc
 				$ret = false;
 			}
 		}
+
 		@unlink($this->tempFilename);
 
 		if ($ret === false)
@@ -2186,7 +2273,9 @@ class AKPostprocFTP extends AKAbstractPostproc
 
 			return false;
 		}
+
 		$restorePerms = AKFactory::get('kickstart.setup.restoreperms', false);
+
 		if ($restorePerms)
 		{
 			@ftp_chmod($this->_handle, $this->perms, $remoteName);
@@ -2194,6 +2283,11 @@ class AKPostprocFTP extends AKAbstractPostproc
 		else
 		{
 			@ftp_chmod($this->_handle, 0644, $remoteName);
+		}
+
+		if (@is_file($this->filename) || @is_link($this->filename))
+		{
+			clearFileInOPCache($this->filename);
 		}
 
 		return true;
@@ -2208,9 +2302,11 @@ class AKPostprocFTP extends AKAbstractPostproc
 	public function unlink($file)
 	{
 		$removePath = AKFactory::get('kickstart.setup.destdir', '');
+
 		if (!empty($removePath))
 		{
 			$left = substr($file, 0, strlen($removePath));
+
 			if ($left == $removePath)
 			{
 				$file = substr($file, strlen($removePath));
@@ -2242,9 +2338,11 @@ class AKPostprocFTP extends AKAbstractPostproc
 
 		// Strip absolute filesystem path to website's root
 		$removePath = AKFactory::get('kickstart.setup.destdir', '');
+
 		if (!empty($removePath))
 		{
 			$left = substr($filename, 0, strlen($removePath));
+
 			if ($left == $removePath)
 			{
 				$filename = substr($filename, strlen($removePath));
@@ -2280,9 +2378,11 @@ class AKPostprocFTP extends AKAbstractPostproc
 	public function rmdir($directory)
 	{
 		$removePath = AKFactory::get('kickstart.setup.destdir', '');
+
 		if (!empty($removePath))
 		{
 			$left = substr($directory, 0, strlen($removePath));
+
 			if ($left == $removePath)
 			{
 				$directory = substr($directory, strlen($removePath));
@@ -2300,27 +2400,33 @@ class AKPostprocFTP extends AKAbstractPostproc
 		$originalTo   = $to;
 
 		$removePath = AKFactory::get('kickstart.setup.destdir', '');
+
 		if (!empty($removePath))
 		{
 			$left = substr($from, 0, strlen($removePath));
+
 			if ($left == $removePath)
 			{
 				$from = substr($from, strlen($removePath));
 			}
 		}
+
 		$from = '/' . trim($this->dir, '/') . '/' . trim($from, '/');
 
 		if (!empty($removePath))
 		{
 			$left = substr($to, 0, strlen($removePath));
+
 			if ($left == $removePath)
 			{
 				$to = substr($to, strlen($removePath));
 			}
 		}
+
 		$to = '/' . trim($this->dir, '/') . '/' . trim($to, '/');
 
 		$result = @ftp_rename($this->handle, $from, $to);
+
 		if ($result !== true)
 		{
 			return @rename($from, $to);
@@ -2339,7 +2445,7 @@ class AKPostprocFTP extends AKAbstractPostproc
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -2374,8 +2480,6 @@ class AKPostprocSFTP extends AKAbstractPostproc
 
 	public function __construct()
 	{
-		parent::__construct();
-
 		$this->host = AKFactory::get('kickstart.ftp.host', '');
 		$this->port = AKFactory::get('kickstart.ftp.port', 22);
 
@@ -2606,7 +2710,7 @@ class AKPostprocSFTP extends AKAbstractPostproc
 
 	private function isDirWritable($dir)
 	{
-		if (@fopen("ssh2.sftp://{$this->handle}$dir/kickstart.dat", 'wb') === false)
+		if (@fopen("ssh2.sftp://{$this->handle}$dir/kickstart.dat", 'w') === false)
 		{
 			return false;
 		}
@@ -2854,13 +2958,18 @@ class AKPostprocSFTP extends AKAbstractPostproc
 			$this->chmod($remoteName, 0644);
 		}
 
+		if (@is_file($this->filename) || @is_link($this->filename))
+		{
+			clearFileInOPCache($this->filename);
+		}
+
 		return true;
 	}
 
 	private function write($local, $remote)
 	{
 		$fp      = @fopen("ssh2.sftp://{$this->handle}$remote", 'w');
-		$localfp = @fopen($local, 'rb');
+		$localfp = @fopen($local, 'r');
 
 		if ($fp === false)
 		{
@@ -2983,7 +3092,7 @@ class AKPostprocSFTP extends AKAbstractPostproc
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -3028,8 +3137,6 @@ class AKPostprocHybrid extends AKAbstractPostproc
 	 */
 	public function __construct()
 	{
-		parent::__construct();
-
 		$this->useFTP  = true;
 		$this->useSSL  = AKFactory::get('kickstart.ftp.ssl', false);
 		$this->passive = AKFactory::get('kickstart.ftp.passive', true);
@@ -3232,7 +3339,7 @@ class AKPostprocHybrid extends AKAbstractPostproc
 	 */
 	private function isDirWritable($dir)
 	{
-		$fp = @fopen($dir . '/kickstart.dat', 'wb');
+		$fp = @fopen($dir . '/kickstart.dat', 'w');
 
 		if ($fp === false)
 		{
@@ -3423,7 +3530,7 @@ class AKPostprocHybrid extends AKAbstractPostproc
 	/**
 	 * Called after unserialisation, tries to reconnect to FTP
 	 */
-	function __wakeup()
+	public function __wakeup()
 	{
 		if ($this->useFTP)
 		{
@@ -3431,11 +3538,28 @@ class AKPostprocHybrid extends AKAbstractPostproc
 		}
 	}
 
-	function __destruct()
+	public function __sleep()
 	{
-		if (!$this->useFTP)
+		if ($this->useFTP)
 		{
-			@ftp_close($this->handle);
+			if (!is_null($this->_handle) && is_resource($this->_handle))
+			{
+				@ftp_close($this->_handle);
+			}
+		}
+
+		$this->_handle = null;
+	}
+
+
+	public function __destruct()
+	{
+		if ($this->useFTP)
+		{
+			if (!is_null($this->handle) && is_resource($this->handle))
+			{
+				@ftp_close($this->handle);
+			}
 		}
 	}
 
@@ -3520,7 +3644,7 @@ class AKPostprocHybrid extends AKAbstractPostproc
 				$this->fixPermissions($this->filename);
 				$this->unlink($this->filename);
 
-				$fp = @fopen($this->tempFilename, 'rb');
+				$fp = @fopen($this->tempFilename, 'r');
 				if ($fp !== false)
 				{
 					$ret = @ftp_fput($this->handle, $remoteName, $fp, FTP_BINARY);
@@ -3550,6 +3674,11 @@ class AKPostprocHybrid extends AKAbstractPostproc
 		if ($this->useFTP && ($ret === false))
 		{
 			@ftp_chmod($this->_handle, $perms, $remoteName);
+		}
+
+		if (@is_file($this->filename) || @is_link($this->filename))
+		{
+			clearFileInOPCache($this->filename);
 		}
 
 		return true;
@@ -3744,7 +3873,7 @@ class AKPostprocHybrid extends AKAbstractPostproc
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -3753,7 +3882,7 @@ class AKPostprocHybrid extends AKAbstractPostproc
  */
 class AKUnarchiverJPA extends AKAbstractUnarchiver
 {
-	protected $archiveHeaderData = array();
+	protected $archiveHeaderData = [];
 
 	protected function readArchiveHeader()
 	{
@@ -3773,6 +3902,24 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 			return false;
 		}
 
+		// Fuzzy check for the start of archive.
+		debugMsg('Fuzzy checking for archive signature');
+
+		$sigFound = $this->fuzzySignatureSearch([
+			'JPA',
+		], 3);
+
+		if (!$sigFound)
+		{
+			debugMsg('Cannot find a valid archive signature in the first 128Kb of the first part file');
+
+			$this->setError(AKText::sprintf('ERR_INVALID_ARCHIVE_LONG', 'jpa', 'j'));
+
+			return false;
+		}
+
+		debugMsg(sprintf('File signature found, position %d', ftell($this->fp)));
+
 		// Read the signature
 		$sig = fread($this->fp, 3);
 
@@ -3780,7 +3927,7 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 		{
 			// Not a JPA file
 			debugMsg('Invalid archive signature');
-			$this->setError(AKText::_('ERR_NOT_A_JPA_FILE'));
+			$this->setError(AKText::sprintf('ERR_INVALID_ARCHIVE_LONG', 'jpa', 'j'));
 
 			return false;
 		}
@@ -3793,20 +3940,8 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 		$bin_data    = fread($this->fp, 14);
 		$header_data = unpack('Cmajor/Cminor/Vcount/Vuncsize/Vcsize', $bin_data);
 
-		// Load any remaining header data (forward compatibility)
-		$rest_length = $header_length - 19;
-
-		if ($rest_length > 0)
-		{
-			$junk = fread($this->fp, $rest_length);
-		}
-		else
-		{
-			$junk = '';
-		}
-
 		// Temporary array with all the data we read
-		$temp = array(
+		$temp = [
 			'signature'        => $sig,
 			'length'           => $header_length,
 			'major'            => $header_data['major'],
@@ -3814,8 +3949,61 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 			'filecount'        => $header_data['count'],
 			'uncompressedsize' => $header_data['uncsize'],
 			'compressedsize'   => $header_data['csize'],
-			'unknowndata'      => $junk
-		);
+			'unknowndata'      => '',
+		];
+
+		// Load additional header data
+		$rest_length = $header_length - 19;
+		$junk        = '';
+
+		while ($rest_length > 8)
+		{
+			// Read the extra length signature and size
+			$extraSig    = fread($this->fp, 4);
+			$binData     = fread($this->fp, 2);
+			$extraHeader = unpack('vlength', $binData);
+			$length      = $extraHeader['length'] - 2;
+
+			$rest_length -= 6 + $length;
+
+			switch ($extraSig)
+			{
+				case "\x4A\x50\x01\x01":
+					$moreBinData        = fread($this->fp, $length);
+					$moreExtraHeader    = unpack('vtotalParts', $moreBinData);
+					$temp['totalParts'] = $moreExtraHeader['totalParts'];
+					break;
+
+				case "\x4A\x50\x01\x02":
+					$moreBinData              = fread($this->fp, $length);
+
+					// Only decode on 64-bit versions of PHP
+					if (PHP_INT_SIZE >= 8)
+					{
+						$moreExtraHeader          = unpack('Puncompressed/Pcompressed', $moreBinData);
+						$header_data['uncsize']   = $moreExtraHeader['uncompressed'];
+						$header_data['csize']     = $moreExtraHeader['compressed'];
+						$temp['uncompressedsize'] = $moreExtraHeader['uncompressed'];
+						$temp['compressedsize']   = $moreExtraHeader['compressed'];
+					}
+
+					break;
+
+				default:
+					$moreBinData = fread($this->fp, $length);
+					$junk        .= $extraSig . $binData . $moreBinData;
+					break;
+			}
+		}
+
+		if ($rest_length > 0)
+		{
+			$junk .= fread($this->fp, $rest_length);
+		}
+		else
+		{
+			$junk .= '';
+		}
 
 		// Array-to-object conversion
 		foreach ($temp as $key => $value)
@@ -3829,7 +4017,8 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 		debugMsg('Minor               : ' . $header_data['minor']);
 		debugMsg('File count          : ' . $header_data['count']);
 		debugMsg('Uncompressed size   : ' . $header_data['uncsize']);
-		debugMsg('Compressed size	  : ' . $header_data['csize']);
+		debugMsg('Compressed size     : ' . $header_data['csize']);
+		debugMsg('Total Parts         : ' . (isset($header_data['totalParts']) ? $header_data['totalParts'] : '1'));
 
 		$this->currentPartOffset = @ftell($this->fp);
 
@@ -3867,12 +4056,33 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 			if ($this->isEOF(true))
 			{
 				// This file is finished; make sure it's the last one
-				$this->nextFile();
+				$gotNextFile = $this->nextFile();
+
+				if (!$gotNextFile && $this->getState() !== 'postrun')
+				{
+					debugMsg(sprintf('Cannot open file %s for part #%d', $this->archiveList[$this->currentPartNumber] ?: '(unknown)', $this->currentPartNumber));
+
+					$this->setError(AKText::sprintf(
+						'INVALID_FILE_HEADER_OFFSET_ZERO',
+						$this->archiveList[$this->currentPartNumber] ?: '(unknown)',
+						$this->currentPartNumber,
+						'jpa',
+						'j'
+					));
+
+					return false;
+				}
 
 				if (!$this->isEOF(false))
 				{
 					debugMsg('Invalid file signature before end of archive encountered');
-					$this->setError(AKText::sprintf('INVALID_FILE_HEADER', $this->currentPartNumber, $this->currentPartOffset));
+					$this->setError(AKText::sprintf(
+						'INVALID_FILE_HEADER',
+						$this->currentPartNumber,
+						$this->currentPartOffset,
+						'jpa',
+						'j'
+					));
 
 					return false;
 				}
@@ -3901,8 +4111,22 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 
 				if ($screwed)
 				{
-					debugMsg('Invalid file block signature');
 					// This is not a file block! The archive is corrupt.
+					debugMsg('Invalid file block signature');
+
+					if (count($this->archiveList) > 1)
+					{
+						$this->setError(AKText::sprintf(
+							'INVALID_FILE_HEADER_MULTIPART',
+							$this->currentPartNumber,
+							$this->currentPartOffset,
+							'jpa',
+							'j'
+						));
+
+						return false;
+					}
+
 					$this->setError(AKText::sprintf('INVALID_FILE_HEADER', $this->currentPartNumber, $this->currentPartOffset));
 
 					return false;
@@ -3959,34 +4183,45 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 			// Start reading the extra fields
 			while ($restBytes >= 4)
 			{
-				$extra_header_data = fread($this->fp, 4);
-				$extra_header      = unpack('vsignature/vlength', $extra_header_data);
-				$restBytes -= 4;
+				$extra_header_data      = fread($this->fp, 4);
+				$extra_header           = unpack('vsignature/vlength', $extra_header_data);
+				$restBytes              -= 4;
 				$extra_header['length'] -= 4;
 
-				switch ($extra_header['signature'])
+				if ($extra_header['length'] > 0)
 				{
-					case 256:
-						// File modified timestamp
-						if ($extra_header['length'] > 0)
-						{
-							$bindata = fread($this->fp, $extra_header['length']);
-							$restBytes -= $extra_header['length'];
+					switch ($extra_header['signature'])
+					{
+						case 256:
+							// File modified timestamp
+							$bindata                     = fread($this->fp, $extra_header['length']);
+							$restBytes                   -= $extra_header['length'];
 							$timestamps                  = unpack('Vmodified', substr($bindata, 0, 4));
 							$filectime                   = $timestamps['modified'];
 							$this->fileHeader->timestamp = $filectime;
-						}
-						break;
+							break;
 
-					default:
-						// Unknown field
-						if ($extra_header['length'] > 0)
-						{
-							$junk = fread($this->fp, $extra_header['length']);
+						case 512:
+							$bindata                   = fread($this->fp, $extra_header['length']);
+							$restBytes                 -= $extra_header['length'];
+
+							// Only decode on 64-bit versions of PHP
+							if (PHP_INT_SIZE >= 8)
+							{
+								$sizes                     = unpack('Pclen/Punclen', $bindata);
+								$header_data['compsize']   = $sizes['clen'];
+								$header_data['uncompsize'] = $sizes['unclen'];
+							}
+							break;
+
+						default:
+							// Unknown field
+							$junk      = fread($this->fp, $extra_header['length']);
 							$restBytes -= $extra_header['length'];
-						}
-						break;
+							break;
+					}
 				}
+
 			}
 
 			if ($restBytes > 0)
@@ -4282,8 +4517,8 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 			$toReadBytes     = ($leftBytes > $this->chunkSize) ? $this->chunkSize : $leftBytes;
 			$mydata          = $this->fread($this->fp, $toReadBytes);
 			$reallyReadBytes = akstringlen($mydata);
-			$data .= $mydata;
-			$leftBytes -= $reallyReadBytes;
+			$data            .= $mydata;
+			$leftBytes       -= $reallyReadBytes;
 
 			if ($reallyReadBytes < $toReadBytes)
 			{
@@ -4346,11 +4581,11 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 
 			if ($this->dataReadLength == 0)
 			{
-				$outfp = @fopen($this->fileHeader->realFile, 'wb');
+				$outfp = @fopen($this->fileHeader->realFile, 'w');
 			}
 			else
 			{
-				$outfp = @fopen($this->fileHeader->realFile, 'ab');
+				$outfp = @fopen($this->fileHeader->realFile, 'a');
 			}
 
 			// Can we write to the file?
@@ -4387,10 +4622,10 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 		// Loop while there's data to read and enough time to do it
 		while (($leftBytes > 0) && ($timer->getTimeLeft() > 0))
 		{
-			$toReadBytes     = ($leftBytes > $this->chunkSize) ? $this->chunkSize : $leftBytes;
-			$data            = $this->fread($this->fp, $toReadBytes);
-			$reallyReadBytes = akstringlen($data);
-			$leftBytes -= $reallyReadBytes;
+			$toReadBytes          = ($leftBytes > $this->chunkSize) ? $this->chunkSize : $leftBytes;
+			$data                 = $this->fread($this->fp, $toReadBytes);
+			$reallyReadBytes      = akstringlen($data);
+			$leftBytes            -= $reallyReadBytes;
 			$this->dataReadLength += $reallyReadBytes;
 
 			if ($reallyReadBytes < $toReadBytes)
@@ -4452,7 +4687,7 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 			$this->setCorrectPermissions($this->fileHeader->file);
 
 			// Open the output file
-			$outfp = @fopen($this->fileHeader->realFile, 'wb');
+			$outfp = @fopen($this->fileHeader->realFile, 'w');
 
 			// Can we write to the file?
 			$ignore =
@@ -4494,7 +4729,7 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
 				// Yeap. Read from the next file
 				$this->nextFile();
 				$bytes_left = $this->fileHeader->compressed - akstringlen($zipData);
-				$zipData .= $this->fread($this->fp, $bytes_left);
+				$zipData    .= $this->fread($this->fp, $bytes_left);
 			}
 			else
 			{
@@ -4534,7 +4769,7 @@ class AKUnarchiverJPA extends AKAbstractUnarchiver
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -4568,6 +4803,26 @@ class AKUnarchiverZIP extends AKUnarchiverJPA
 			return false;
 		}
 
+		// Fuzzy check for the start of archive.
+		debugMsg('Fuzzy checking for archive signature');
+
+		$sigFound = $this->fuzzySignatureSearch(array(
+			pack('V', 0x08074b50), // Multi-part ZIP
+			pack('V', 0x30304b50), // Multi-part ZIP (alternate)
+			pack('V', 0x04034b50)  // Single file
+		), 4);
+
+		if (!$sigFound)
+		{
+			debugMsg('Cannot find a valid archive signature in the first 128Kb of the first part file');
+
+			$this->setError(AKText::sprintf('ERR_INVALID_ARCHIVE_LONG', 'zip', 'z'));
+
+			return false;
+		}
+
+		debugMsg(sprintf('File signature found, position %d', ftell($this->fp)));
+
 		// Read a possible multipart signature
 		$sigBinary  = fread($this->fp, 4);
 		$headerData = unpack('Vsig', $sigBinary);
@@ -4584,14 +4839,14 @@ class AKUnarchiverZIP extends AKUnarchiverJPA
 		}
 
 		$multiPartSigs = array(
-			0x08074b50,        // Multi-part ZIP
-			0x30304b50,        // Multi-part ZIP (alternate)
-			0x04034b50        // Single file
+			0x08074b50, // Multi-part ZIP
+			0x30304b50, // Multi-part ZIP (alternate)
+			0x04034b50  // Single file
 		);
 		if (!in_array($headerData['sig'], $multiPartSigs))
 		{
 			debugMsg('Invalid header signature ' . dechex($headerData['sig']));
-			$this->setError(AKText::_('ERR_CORRUPT_ARCHIVE'));
+			$this->setError(AKText::sprintf('ERR_INVALID_ARCHIVE_LONG', 'zip', 'z'));
 
 			return false;
 		}
@@ -4615,7 +4870,7 @@ class AKUnarchiverZIP extends AKUnarchiverJPA
 		if ($this->isEOF(true))
 		{
 			debugMsg('Opening next archive part');
-			$this->nextFile();
+			$gotNextFile = $this->nextFile();
 		}
 
 		$this->currentPartOffset = ftell($this->fp);
@@ -4645,7 +4900,7 @@ class AKUnarchiverZIP extends AKUnarchiverJPA
 			{
 				debugMsg('EOF before reading header');
 
-				$this->nextFile();
+				$gotNextFile = $this->nextFile();
 			}
 		}
 
@@ -4672,8 +4927,56 @@ class AKUnarchiverZIP extends AKUnarchiverJPA
 			}
 			else
 			{
+				if (isset($gotNextFile) && !$gotNextFile && $this->getState() !== 'postrun')
+				{
+					debugMsg(sprintf('Cannot open file %s for part #%d', $this->archiveList[$this->currentPartNumber] ?: '(unknown)', $this->currentPartNumber));
+
+					$this->setError(AKText::sprintf(
+						'INVALID_FILE_HEADER_OFFSET_ZERO',
+						$this->archiveList[$this->currentPartNumber] ?: '(unknown)',
+						$this->currentPartNumber,
+						'zip',
+						'z'
+					));
+
+					return false;
+				}
+
+				if ($this->currentPartOffset === 0 && $this->currentPartNumber > 0)
+				{
+					$this->setError(AKText::sprintf(
+						'INVALID_FILE_HEADER_MULTIPART',
+						$this->currentPartNumber,
+						$this->currentPartOffset,
+						'jpa',
+						'j'
+					));
+
+					return false;
+				}
+
 				debugMsg('Invalid signature ' . dechex($headerData['sig']) . ' at ' . ftell($this->fp));
-				$this->setError(AKText::_('ERR_CORRUPT_ARCHIVE'));
+
+				if (count($this->archiveList) > 1)
+				{
+					$this->setError(AKText::sprintf(
+						'INVALID_FILE_HEADER_MULTIPART',
+						$this->currentPartNumber,
+						$this->currentPartOffset,
+						'zip',
+						'z'
+					));
+
+					return false;
+				}
+
+				$this->setError(AKText::sprintf(
+					'INVALID_FILE_HEADER',
+					$this->currentPartNumber,
+					$this->currentPartOffset,
+					'zip',
+					'z'
+				));
 
 				return false;
 			}
@@ -4862,7 +5165,7 @@ class AKUnarchiverZIP extends AKUnarchiverJPA
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -4922,8 +5225,6 @@ class AKUnarchiverJPS extends AKUnarchiverJPA
 
 	public function __construct()
 	{
-		parent::__construct();
-
 		$this->password = AKFactory::get('kickstart.jps.password', '');
 	}
 
@@ -4953,13 +5254,31 @@ class AKUnarchiverJPS extends AKUnarchiverJPA
 			return false;
 		}
 
+		// Fuzzy check for the start of archive.
+		debugMsg('Fuzzy checking for archive signature');
+
+		$sigFound = $this->fuzzySignatureSearch(array(
+			'JPS'
+		), 3);
+
+		if (!$sigFound)
+		{
+			debugMsg('Cannot find a valid archive signature in the first 128Kb of the first part file');
+
+			$this->setError(AKText::sprintf('ERR_INVALID_ARCHIVE_LONG', 'jps', 'j'));
+
+			return false;
+		}
+
+		debugMsg(sprintf('File signature found, position %d', ftell($this->fp)));
+
 		// Read the signature
 		$sig = fread($this->fp, 3);
 
 		if ($sig != 'JPS')
 		{
-			// Not a JPA file
-			$this->setError(AKText::_('ERR_NOT_A_JPS_FILE'));
+			// Not a JPS file
+			$this->setError(AKText::sprintf('ERR_INVALID_ARCHIVE_LONG', 'jps', 'j'));
 
 			return false;
 		}
@@ -5043,7 +5362,23 @@ class AKUnarchiverJPS extends AKUnarchiverJPA
 			if ($this->isEOF(true))
 			{
 				// This file is finished; make sure it's the last one
-				$this->nextFile();
+				$gotNextFile = $this->nextFile();
+
+				if (!$gotNextFile && $this->getState() !== 'postrun')
+				{
+					debugMsg(sprintf('Cannot open file %s for part #%d', $this->archiveList[$this->currentPartNumber] ?: '(unknown)', $this->currentPartNumber));
+
+					$this->setError(AKText::sprintf(
+						'INVALID_FILE_HEADER_OFFSET_ZERO',
+						$this->archiveList[$this->currentPartNumber] ?: '(unknown)',
+						$this->currentPartNumber,
+						'jps',
+						'j'
+					));
+
+					return false;
+				}
+
 				if (!$this->isEOF(false))
 				{
 					$this->setError(AKText::sprintf('INVALID_FILE_HEADER', $this->currentPartNumber, $this->currentPartOffset));
@@ -5063,7 +5398,26 @@ class AKUnarchiverJPS extends AKUnarchiverJPA
 					return false;
 				}
 
-				$this->setError(AKText::sprintf('INVALID_FILE_HEADER', $this->currentPartNumber, $this->currentPartOffset));
+				if (count($this->archiveList) > 1)
+				{
+					$this->setError(AKText::sprintf(
+						'INVALID_FILE_HEADER_MULTIPART',
+						$this->currentPartNumber,
+						$this->currentPartOffset,
+						'jps',
+						'j'
+					));
+
+					return false;
+				}
+
+				$this->setError(AKText::sprintf(
+					'INVALID_FILE_HEADER',
+					$this->currentPartNumber,
+					$this->currentPartOffset,
+					'jps',
+					'j'
+				));
 
 				return false;
 			}
@@ -5479,11 +5833,11 @@ class AKUnarchiverJPS extends AKUnarchiverJPA
 				AKFactory::get('kickstart.setup.ignoreerrors', false) || $this->isIgnoredDirectory($this->fileHeader->file);
 			if ($this->dataReadLength == 0)
 			{
-				$outfp = @fopen($this->fileHeader->realFile, 'wb');
+				$outfp = @fopen($this->fileHeader->realFile, 'w');
 			}
 			else
 			{
-				$outfp = @fopen($this->fileHeader->realFile, 'ab');
+				$outfp = @fopen($this->fileHeader->realFile, 'a');
 			}
 
 			// Can we write to the file?
@@ -5529,7 +5883,7 @@ class AKUnarchiverJPS extends AKUnarchiverJPA
 		if (!$this->mustSkip())
 		{
 			// Open the output file
-			$outfp = @fopen($this->fileHeader->realFile, 'wb');
+			$outfp = @fopen($this->fileHeader->realFile, 'w');
 
 			// Can we write to the file?
 			$ignore =
@@ -5753,7 +6107,7 @@ class AKUnarchiverJPS extends AKUnarchiverJPA
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -5775,8 +6129,6 @@ class AKCoreTimer extends AKAbstractObject
 	 */
 	public function __construct()
 	{
-		parent::__construct();
-
 		// Initialize start time
 		$this->start_time = $this->microtime_float();
 
@@ -5902,7 +6254,7 @@ class AKCoreTimer extends AKAbstractObject
 		// Only run a sleep delay if we haven't reached the minexectime execution time
 		if (($minexectime > $elapsed_time) && ($elapsed_time > 0))
 		{
-			$sleep_msec = $minexectime - $elapsed_time;
+			$sleep_msec = (int)($minexectime - $elapsed_time);
 
 			if (function_exists('usleep'))
 			{
@@ -5949,7 +6301,136 @@ class AKCoreTimer extends AKAbstractObject
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @license   GNU General Public License version 3, or later
+ */
+
+
+class AKUtilsHtaccess extends AKAbstractObject
+{
+	/**
+	 * Extract the PHP handler configuration from a .htaccess file.
+	 *
+	 * This method supports AddHandler lines and SetHandler blocks.
+	 *
+	 * @param   string  $htaccess
+	 *
+	 * @return  string|null  NULL when not found
+	 */
+	public static function extractHandler($htaccess)
+	{
+		// Normalize the .htaccess
+		$htaccess = self::normalizeHtaccess($htaccess);
+
+		// Look for SetHandler and AddHandler in Files and FilesMatch containers
+		foreach (['Files', 'FilesMatch'] as $container)
+		{
+			$result = self::extractContainer($container, $htaccess);
+
+			if (!is_null($result))
+			{
+				return $result;
+			}
+		}
+
+		// Fallback: extract an AddHandler line
+		$found = preg_match('#^AddHandler\s?.*\.php.*$#mi', $htaccess, $matches);
+
+		if ($found >= 1)
+		{
+			return $matches[0];
+		}
+
+		return null;
+	}
+
+	/**
+	 * Extracts a Files or FilesMatch container with an AddHandler or SetHandler line
+	 *
+	 * @param   string  $container  "Files" or "FilesMatch"
+	 * @param   string  $htaccess   The .htaccess file content
+	 *
+	 * @return  string|null  NULL when not found
+	 */
+	protected static function extractContainer($container, $htaccess)
+	{
+		// Try to find the opening container tag e.g. <Files....>
+		$pattern = sprintf('#<%s\s*.*\.php.*>#m', $container);
+		$found   = preg_match($pattern, $htaccess, $matches, PREG_OFFSET_CAPTURE);
+
+		if (!$found)
+		{
+			return null;
+		}
+
+		// Get the rest of the .htaccess sample
+		$openContainer = $matches[0][0];
+		$htaccess      = trim(substr($htaccess, $matches[0][1] + strlen($matches[0][0])));
+
+		// Try to find the closing container tag
+		$pattern = sprintf('#</%s\s*>#m', $container);
+		$found   = preg_match($pattern, $htaccess, $matches, PREG_OFFSET_CAPTURE);
+
+		if (!$found)
+		{
+			return null;
+		}
+
+		// Get the rest of the .htaccess sample
+		$htaccess       = trim(substr($htaccess, 0, $matches[$found - 1][1]));
+		$closeContainer = $matches[$found - 1][0];
+
+		if (empty($htaccess))
+		{
+			return null;
+		}
+
+		// Now we'll explode remaining lines and find the first SetHandler or AddHandler line
+		$lines = array_map('trim', explode("\n", $htaccess));
+		$lines = array_filter($lines, function ($line) {
+			return preg_match('#(Add|Set)Handler\s?#i', $line) >= 1;
+		});
+
+		if (empty($lines))
+		{
+			return null;
+		}
+
+		return $openContainer . "\n" . array_shift($lines) . "\n" . $closeContainer;
+	}
+
+	/**
+	 * Normalize the .htaccess file content, making it suitable for handler extraction
+	 *
+	 * @param   string  $htaccess  The original file
+	 *
+	 * @return  string  The normalized file
+	 */
+	private static function normalizeHtaccess($htaccess)
+	{
+		// Convert all newlines into UNIX style
+		$htaccess = str_replace("\r\n", "\n", $htaccess);
+		$htaccess = str_replace("\r", "\n", $htaccess);
+
+		// Return only non-comment, non-empty lines
+		$isNonEmptyNonComment = function ($line) {
+			$line = trim($line);
+
+			return !empty($line) && (substr($line, 0, 1) !== '#');
+		};
+
+		$lines = array_map('trim', explode("\n", $htaccess));
+
+		return implode("\n", array_filter($lines, $isNonEmptyNonComment));
+	}
+}
+
+/**
+ * Akeeba Restore
+ * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
+ *
+ * @package   restore
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -6054,7 +6535,7 @@ class AKUtilsLister extends AKAbstractObject
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -6320,6 +6801,7 @@ class AKUtilsZapper extends AKAbstractPart
             if (!$this->dryRun)
             {
                 $postProc->unlink($file);
+	            clearFileInOPCache($file);
             }
 
 			// Mark a done file
@@ -6648,7 +7130,8 @@ class AKUtilsZapper extends AKAbstractPart
 		if (defined('KICKSTART'))
 		{
 			$langDir        = defined('KSLANGDIR') ? KSLANGDIR : KSROOTDIR;
-            $iniFilePattern = basename(KSSELFNAME, '.php') . '.*.ini';
+			$myName         = defined('KSSELFNAME') ? KSSELFNAME : basename(__FILE__);
+			$iniFilePattern = basename($myName, '.php') . '.*.ini';
 
 			if ($langDir != KSROOTDIR)
             {
@@ -6692,6 +7175,7 @@ class AKUtilsZapper extends AKAbstractPart
 			$skippedFiles = array_merge(array(
 				// Akeeba Backup for Joomla!
 				'administrator/components/com_akeeba/restoration.php',
+				'administrator/components/com_akeebabackup/restoration.php',
 				// Joomla! Update
 				'administrator/components/com_joomlaupdate/restoration.php',
 				// Akeeba Backup for WordPress
@@ -6854,7 +7338,7 @@ function runZapper(AKAbstractPartObserver $observer = null)
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -6868,9 +7352,11 @@ class AKText extends AKAbstractObject
 	 *
 	 * @var array
 	 */
-	private $default_translation = array(
+	private $default_translation = [
+		'AUTOMODEON'                      => 'Auto-mode enabled',
 		'ERR_NOT_A_JPA_FILE'              => 'The file is not a JPA archive',
 		'ERR_CORRUPT_ARCHIVE'             => 'The archive file is corrupt, truncated or archive parts are missing',
+		'ERR_INVALID_ARCHIVE_LONG'        => 'The archive file appears to be corrupt, or archive parts are missing. If your backups consists of multiple files, please make sure that you have downloaded all the archive part files (files with the same name and extensions .%s, .%s01, .%2$s02…). Please make sure to download <em>and</em> upload files using SFTP, or FTP in Binary transfer mode and do check that their file size matches the sizes reported in the Manage Backups page of Akeeba Backup / Akeeba Solo.',
 		'ERR_INVALID_LOGIN'               => 'Invalid login',
 		'COULDNT_CREATE_DIR'              => 'Could not create %s folder',
 		'COULDNT_WRITE_FILE'              => 'Could not open %s for writing.',
@@ -6913,32 +7399,32 @@ class AKText extends AKAbstractObject
 		'SFTP_CONNECTION_FAILURE'         => 'The SFTP Connection Failed',
 		'FTP_TEMPDIR_WRITABLE'            => 'The temporary directory is writable.',
 		'FTP_TEMPDIR_UNWRITABLE'          => 'The temporary directory is not writable. Please check the permissions.',
-		'FTPBROWSER_ERROR_HOSTNAME'       => "Invalid FTP host or port",
-		'FTPBROWSER_ERROR_USERPASS'       => "Invalid FTP username or password",
-		'FTPBROWSER_ERROR_NOACCESS'       => "Directory doesn't exist or you don't have enough permissions to access it",
-		'FTPBROWSER_ERROR_UNSUPPORTED'    => "Sorry, your FTP server doesn't support our FTP directory browser.",
-		'FTPBROWSER_LBL_GOPARENT'         => "&lt;up one level&gt;",
+		'FTP_BROWSE'                      => 'Browse',
 		'FTPBROWSER_LBL_INSTRUCTIONS'     => 'Click on a directory to navigate into it. Click on OK to select that directory, Cancel to abort the procedure.',
+		'FTPBROWSER_ERROR_HOSTNAME'       => 'Invalid FTP host or port',
+		'FTPBROWSER_ERROR_USERPASS'       => 'Invalid FTP username or password',
+		'FTPBROWSER_ERROR_NOACCESS'       => 'Directory doesn\'t exist or you don\'t have enough permissions to access it',
+		'FTPBROWSER_ERROR_UNSUPPORTED'    => 'Sorry, your FTP server doesn\'t support our FTP directory browser.',
+		'FTPBROWSER_LBL_GOPARENT'         => '&lt;up one level&gt;',
 		'FTPBROWSER_LBL_ERROR'            => 'An error occurred',
 		'SFTP_NO_SSH2'                    => 'Your web server does not have the SSH2 PHP module, therefore can not connect to SFTP servers.',
 		'SFTP_NO_FTP_SUPPORT'             => 'Your SSH server does not allow SFTP connections',
 		'SFTP_WRONG_USER'                 => 'Wrong SFTP username or password',
 		'SFTP_WRONG_STARTING_DIR'         => 'You must supply a valid absolute path',
-		'SFTPBROWSER_ERROR_NOACCESS'      => "Directory doesn't exist or you don't have enough permissions to access it",
+		'SFTPBROWSER_ERROR_NOACCESS'      => 'Directory doesn\'t exist or you don\'t have enough permissions to access it',
 		'SFTP_COULDNT_UPLOAD'             => 'Could not upload %s',
 		'SFTP_CANT_CREATE_DIR'            => 'Could not create directory %s',
 		'UI-ROOT'                         => '&lt;root&gt;',
 		'CONFIG_UI_FTPBROWSER_TITLE'      => 'FTP Directory Browser',
-		'FTP_BROWSE'                      => 'Browse',
 		'BTN_CHECK'                       => 'Check',
 		'BTN_RESET'                       => 'Reset',
 		'BTN_TESTFTPCON'                  => 'Test FTP connection',
 		'BTN_TESTSFTPCON'                 => 'Test SFTP connection',
 		'BTN_GOTOSTART'                   => 'Start over',
+		'BTN_RETRY'                       => 'Retry',
 		'FINE_TUNE'                       => 'Fine tune',
 		'MIN_EXEC_TIME'                   => 'Minimum execution time:',
 		'MAX_EXEC_TIME'                   => 'Maximum execution time:',
-		'TIME_SETTINGS_HELP'              => "Increase the minimum to 3 if you get AJAX errors. Increase the maximum to 10 for faster extraction, decrease back to 5 if you get AJAX errors. Try minimum 5, maximum 1 (not a typo!) if you keep getting AJAX errors.",
 		'SECONDS_PER_STEP'                => 'seconds per step',
 		'EXTRACT_FILES'                   => 'Extract files',
 		'BTN_START'                       => 'Start',
@@ -6952,32 +7438,58 @@ class AKText extends AKAbstractObject
 		'WARNINGS'                        => 'Extraction Warnings',
 		'ERROR_OCCURED'                   => 'An error occurred',
 		'STEALTH_MODE'                    => 'Stealth mode',
-		'STEALTH_MODE_HELP'               => 'When enabled, only visitors from your IP address will be able to see the site until the restoration is complete. Everyone else will be redirected to and only see the URL above. Your server must see the real IP of the visitor (this is controlled by your host, not you or us).',
 		'STEALTH_URL'                     => 'HTML file to show to web visitors',
 		'ERR_NOT_A_JPS_FILE'              => 'The file is not a JPA archive',
 		'ERR_INVALID_JPS_PASSWORD'        => 'The password you gave is wrong or the archive is corrupt',
 		'JPS_PASSWORD'                    => 'Archive Password (for JPS files)',
-		'INVALID_FILE_HEADER'             => 'Invalid header in archive file, part %s, offset %s',
+		'INVALID_FILE_HEADER_OFFSET_ZERO' => 'Cannot open the file %s for reading. This is part #%d of your backup archive which consists of multiple files (files with the same name and extensions .%s, .%s01, .%4$s02…). Please make sure that you have all of these files in the same folder as Kickstart.',
+		'INVALID_FILE_HEADER'             => 'Invalid header in archive file, part %s, offset %s. Please make sure to download <em>and</em> upload backup archive files using SFTP, or FTP in Binary transfer mode and do check that their file size matches the sizes reported in the Manage Backups page of Akeeba Backup / Akeeba Solo.',
+		'INVALID_FILE_HEADER_MULTIPART'   => 'Invalid header in archive file, part %s, offset %s. Your backup archive consists of multiple files (files with the same name and extensions .%s, .%s01, .%4$s02…). Either some files are missing, or they are corrupt or truncated. You will need all of these files to be present in the same directory. Please make sure to download <em>and</em> upload backup archive files using SFTP, or FTP in Binary transfer mode and do check that their file size matches the sizes reported in the Manage Backups page of Akeeba Backup / Akeeba Solo.',
+		'UPDATE_HEADER'                   => 'An updated version of Akeeba Kickstart (<span id="update-version">unknown</span>) is available!',
+		'UPDATE_NOTICE'                   => 'You are advised to always use the latest version of Akeeba Kickstart available. Older versions may be subject to bugs and will not be supported.',
+		'UPDATE_DLNOW'                    => 'Download now',
+		'UPDATE_MOREINFO'                 => 'More information',
 		'NEEDSOMEHELPKS'                  => 'Want some help to use this tool? Read this first:',
-		'QUICKSTART'                      => 'Quick Start Guide',
+		'QUICKSTART'                      => 'Using Kickstart',
 		'CANTGETITTOWORK'                 => 'Can\'t get it to work? Click me!',
 		'NOARCHIVESCLICKHERE'             => 'No archives detected. Click here for troubleshooting instructions.',
 		'POSTRESTORATIONTROUBLESHOOTING'  => 'Something not working after the restoration? Click here for troubleshooting instructions.',
 		'IGNORE_MOST_ERRORS'              => 'Ignore most errors',
+		'TIME_SETTINGS_HELP'              => 'Increase the minimum to 3 if you get AJAX errors. Increase the maximum to 10 for faster extraction, decrease back to 5 if you get AJAX errors. Try minimum 5, maximum 1 (not a typo!) if you keep getting AJAX errors.',
+		'STEALTH_MODE_HELP'               => 'When enabled, only visitors from your IP address will be able to see the site until the restoration is complete. Everyone else will be redirected to and only see the URL above. Your server must see the real IP of the visitor (this is controlled by your host, not you or us).',
+		'RENAME_FILES_HELP'               => 'Renames .htaccess, web.config, php.ini and .user.ini contained in the archive while extracting. Files are renamed with a .bak extension. The file names are restored when you click on Clean Up.',
+		'RESTORE_PERMISSIONS_HELP'        => 'Applies the file permissions (but NOT file ownership) which was stored at backup time. Only works with JPA and JPS archives. Does not work on Windows (PHP does not offer such a feature).',
+		'EXTRACT_LIST'                    => 'Files to extract',
+		'EXTRACT_LIST_HELP'               => 'Enter a file path such as <code>images/cat.png</code> or shell pattern such as <code>images/*.png</code> on each line. Only files matching this list will be written to disk. Leave empty to extract everything (default).',
+		'AKS3_IMPORT'                     => 'Import from Amazon S3',
+		'AKS3_TITLE_STEP1'                => 'Connect to Amazon S3',
+		'AKS3_ACCESS'                     => 'Access Key',
+		'AKS3_SECRET'                     => 'Secret Key',
+		'AKS3_CONNECT'                    => 'Connect to Amazon S3',
+		'AKS3_CANCEL'                     => 'Cancel import',
+		'AKS3_TITLE_STEP2'                => 'Select your Amazon S3 bucket',
+		'AKS3_BUCKET'                     => 'Bucket',
+		'AKS3_LISTCONTENTS'               => 'List contents',
+		'AKS3_TITLE_STEP3'                => 'Select archive to import',
+		'AKS3_FOLDERS'                    => 'Folders',
+		'AKS3_FILES'                      => 'Archive Files',
+		'AKS3_TITLE_STEP4'                => 'Importing...',
+		'AKS3_DO_NOT_CLOSE'               => 'Please do not close this window while your backup archives are being imported',
+		'AKS3_TITLE_STEP5'                => 'Import is complete',
+		'AKS3_BTN_RELOAD'                 => 'Reload Kickstart',
 		'WRONG_FTP_PATH2'                 => 'Wrong FTP initial directory - the directory doesn\'t correspond to your site\'s web root',
 		'ARCHIVE_DIRECTORY'               => 'Archive directory:',
 		'RELOAD_ARCHIVES'                 => 'Reload',
 		'CONFIG_UI_SFTPBROWSER_TITLE'     => 'SFTP Directory Browser',
 		'ERR_COULD_NOT_OPEN_ARCHIVE_PART' => 'Could not open archive part file %s for reading. Check that the file exists, is readable by the web server and is not in a directory made out of reach by chroot, open_basedir restrictions or any other restriction put in place by your host.',
-		'RENAME_FILES'                    => 'Rename server configuration files',
-		'RENAME_FILES_HELP'               => 'Renames .htaccess, web.config, php.ini and .user.ini contained in the archive while extracting. Files are renamed with a .bak extension. The file names are restored when you click on Clean Up.',
+		'RENAME_FILES'                    => 'Rename server configuration files before extraction',
+		'BTN_SHOW_FINE_TUNE'              => 'Show advanced options (for experts)',
 		'RESTORE_PERMISSIONS'             => 'Restore file permissions',
-		'RESTORE_PERMISSIONS_HELP'        => 'Applies the file permissions (but NOT file ownership) which was stored at backup time. Only works with JPA and JPS archives. Does not work on Windows (PHP does not offer such a feature).',
-		'EXTRACT_LIST'                    => 'Files to extract',
-		'EXTRACT_LIST_HELP'               => 'Enter a file path such as <code>images/cat.png</code> or shell pattern such as <code>images/*.png</code> on each line. Only files matching this list will be written to disk. Leave empty to extract everything (default).',
 		'ZAPBEFORE'                       => 'Delete everything before extraction',
 		'ZAPBEFORE_HELP'                  => 'Tries to delete all existing files and folders under the directory where Kickstart is stored before extracting the backup archive. It DOES NOT take into account which files and folders exist in the backup archive. Files and folders deleted by this feature CAN NOT be recovered. <strong>WARNING! THIS MAY DELETE FILES AND FOLDERS WHICH DO NOT BELONG TO YOUR SITE. USE WITH EXTREME CAUTION. BY ENABLING THIS FEATURE YOU ASSUME ALL RESPONSIBILITY AND LIABILITY.</strong>',
-	);
+	];
+
+	/** END OF ARRAY — DO NOT EDIT OR REMOVE **/
 
 	/**
 	 * The array holding the translation keys
@@ -7011,60 +7523,15 @@ class AKText extends AKAbstractObject
 		}
 	}
 
-	private function loadTranslation($lang = null)
-	{
-		if (defined('KSLANGDIR'))
-		{
-			$dirname = KSLANGDIR;
-		}
-		else
-		{
-			$dirname = KSROOTDIR;
-		}
-
-		$myName = defined('KSSELFNAME') ? KSSELFNAME : basename(__FILE__);
-		$basename = basename($myName, '.php') . '.ini';
-
-		if (empty($lang))
-		{
-			$lang = $this->language;
-		}
-
-		$translationFilename = $dirname . DIRECTORY_SEPARATOR . $lang . '.' . $basename;
-		if (!@file_exists($translationFilename) && ($basename != 'kickstart.ini'))
-		{
-			$basename            = 'kickstart.ini';
-			$translationFilename = $dirname . DIRECTORY_SEPARATOR . $lang . '.' . $basename;
-		}
-		if (!@file_exists($translationFilename))
-		{
-			return;
-		}
-		$temp = self::parse_ini_file($translationFilename, false);
-
-		if (!is_array($this->strings))
-		{
-			$this->strings = array();
-		}
-		if (empty($temp))
-		{
-			$this->strings = array_merge($this->default_translation, $this->strings);
-		}
-		else
-		{
-			$this->strings = array_merge($this->strings, $temp);
-		}
-	}
-
 	/**
 	 * A PHP based INI file parser.
 	 *
 	 * Thanks to asohn ~at~ aircanopy ~dot~ net for posting this handy function on
 	 * the parse_ini_file page on http://gr.php.net/parse_ini_file
 	 *
-	 * @param    string $file             Filename to process
-	 * @param    bool   $process_sections True to also process INI sections
-	 * @param    bool   $rawdata          If true, the $file contains raw INI data, not a filename
+	 * @param   string  $file              Filename to process
+	 * @param   bool    $process_sections  True to also process INI sections
+	 * @param   bool    $rawdata           If true, the $file contains raw INI data, not a filename
 	 *
 	 * @return array An associative array of sections, keys and values
 	 * @access private
@@ -7080,24 +7547,24 @@ class AKText extends AKAbstractObject
 		else
 		{
 			$file = str_replace("\r", "", $file);
-			$ini = explode("\n", $file);
+			$ini  = explode("\n", $file);
 		}
 
 		if (!is_array($ini))
 		{
-			return array();
+			return [];
 		}
 
 		if (count($ini) == 0)
 		{
-			return array();
+			return [];
 		}
 
-		$sections = array();
-		$values = array();
-		$result = array();
-		$globals = array();
-		$i = 0;
+		$sections = [];
+		$values   = [];
+		$result   = [];
+		$globals  = [];
+		$i        = 0;
 		foreach ($ini as $line)
 		{
 			$line = trim($line);
@@ -7112,7 +7579,7 @@ class AKText extends AKAbstractObject
 			// Sections
 			if ($line[0] == '[')
 			{
-				$tmp = explode(']', $line);
+				$tmp        = explode(']', $line);
 				$sections[] = trim(substr($tmp[0], 1));
 				$i++;
 				continue;
@@ -7124,7 +7591,7 @@ class AKText extends AKAbstractObject
 			{
 				continue;
 			}
-			$key = trim($lineParts[0]);
+			$key   = trim($lineParts[0]);
 			$value = trim($lineParts[1]);
 			unset($lineParts);
 
@@ -7205,117 +7672,6 @@ class AKText extends AKAbstractObject
 		return $result + $globals;
 	}
 
-	public function getBrowserLanguage()
-	{
-		// Detection code from Full Operating system language detection, by Harald Hope
-		// Retrieved from http://techpatterns.com/downloads/php_language_detection.php
-		$user_languages = array();
-		//check to see if language is set
-		if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"]))
-		{
-			$languages = strtolower($_SERVER["HTTP_ACCEPT_LANGUAGE"]);
-			// $languages = ' fr-ch;q=0.3, da, en-us;q=0.8, en;q=0.5, fr;q=0.3';
-			// need to remove spaces from strings to avoid error
-			$languages = str_replace(' ', '', $languages);
-			$languages = explode(",", $languages);
-
-			foreach ($languages as $language_list)
-			{
-				// pull out the language, place languages into array of full and primary
-				// string structure:
-				$temp_array = array();
-				// slice out the part before ; on first step, the part before - on second, place into array
-				$temp_array[0] = substr($language_list, 0, strcspn($language_list, ';'));//full language
-				$temp_array[1] = substr($language_list, 0, 2);// cut out primary language
-				if ((strlen($temp_array[0]) == 5) && ((substr($temp_array[0], 2, 1) == '-') || (substr($temp_array[0], 2, 1) == '_')))
-				{
-					$langLocation  = strtoupper(substr($temp_array[0], 3, 2));
-					$temp_array[0] = $temp_array[1] . '-' . $langLocation;
-				}
-				//place this array into main $user_languages language array
-				$user_languages[] = $temp_array;
-			}
-		}
-		else// if no languages found
-		{
-			$user_languages[0] = array('', ''); //return blank array.
-		}
-
-		$this->language = null;
-		$basename       = basename(__FILE__, '.php') . '.ini';
-
-		// Try to match main language part of the filename, irrespective of the location, e.g. de_DE will do if de_CH doesn't exist.
-		if (class_exists('AKUtilsLister'))
-		{
-			$fs       = new AKUtilsLister();
-			$iniFiles = $fs->getFiles(KSROOTDIR, '*.' . $basename);
-			if (empty($iniFiles) && ($basename != 'kickstart.ini'))
-			{
-				$basename = 'kickstart.ini';
-				$iniFiles = $fs->getFiles(KSROOTDIR, '*.' . $basename);
-			}
-		}
-		else
-		{
-			$iniFiles = null;
-		}
-
-		if (is_array($iniFiles))
-		{
-			foreach ($user_languages as $languageStruct)
-			{
-				if (is_null($this->language))
-				{
-					// Get files matching the main lang part
-					$iniFiles = $fs->getFiles(KSROOTDIR, $languageStruct[1] . '-??.' . $basename);
-					if (count($iniFiles) > 0)
-					{
-						$filename       = $iniFiles[0];
-						$filename       = substr($filename, strlen(KSROOTDIR) + 1);
-						$this->language = substr($filename, 0, 5);
-					}
-					else
-					{
-						$this->language = null;
-					}
-				}
-			}
-		}
-
-		if (is_null($this->language))
-		{
-			// Try to find a full language match
-			foreach ($user_languages as $languageStruct)
-			{
-				if (@file_exists($languageStruct[0] . '.' . $basename) && is_null($this->language))
-				{
-					$this->language = $languageStruct[0];
-				}
-				else
-				{
-
-				}
-			}
-		}
-		else
-		{
-			// Do we have an exact match?
-			foreach ($user_languages as $languageStruct)
-			{
-				if (substr($this->language, 0, strlen($languageStruct[1])) == $languageStruct[1])
-				{
-					if (file_exists($languageStruct[0] . '.' . $basename))
-					{
-						$this->language = $languageStruct[0];
-					}
-				}
-			}
-		}
-
-		// Now, scan for full language based on the partial match
-
-	}
-
 	public static function sprintf($key)
 	{
 		$text = self::getInstance();
@@ -7369,6 +7725,113 @@ class AKText extends AKAbstractObject
 		return $string;
 	}
 
+	public function getBrowserLanguage()
+	{
+		// Detection code from Full Operating system language detection, by Harald Hope
+		// Retrieved from http://techpatterns.com/downloads/php_language_detection.php
+		$user_languages = [];
+		//check to see if language is set
+		if (isset($_SERVER["HTTP_ACCEPT_LANGUAGE"]))
+		{
+			$languages = strtolower($_SERVER["HTTP_ACCEPT_LANGUAGE"]);
+			// $languages = ' fr-ch;q=0.3, da, en-us;q=0.8, en;q=0.5, fr;q=0.3';
+			// need to remove spaces from strings to avoid error
+			$languages = str_replace(' ', '', $languages);
+			$languages = explode(",", $languages);
+
+			foreach ($languages as $language_list)
+			{
+				// pull out the language, place languages into array of full and primary
+				// string structure:
+				$temp_array = [];
+				// slice out the part before ; on first step, the part before - on second, place into array
+				$temp_array[0] = substr($language_list, 0, strcspn($language_list, ';'));//full language
+				$temp_array[1] = substr($language_list, 0, 2);// cut out primary language
+				if ((strlen($temp_array[0]) == 5) && ((substr($temp_array[0], 2, 1) == '-') || (substr($temp_array[0], 2, 1) == '_')))
+				{
+					$langLocation  = strtoupper(substr($temp_array[0], 3, 2));
+					$temp_array[0] = $temp_array[1] . '-' . $langLocation;
+				}
+				//place this array into main $user_languages language array
+				$user_languages[] = $temp_array;
+			}
+		}
+		else// if no languages found
+		{
+			$user_languages[0] = ['', '']; //return blank array.
+		}
+
+		$this->language = null;
+		$basename       = basename(__FILE__, '.php') . '.ini';
+
+		// Try to match main language part of the filename, irrespective of the location, e.g. de_DE will do if de_CH doesn't exist.
+		if (class_exists('AKUtilsLister'))
+		{
+			$fs       = new AKUtilsLister();
+			$iniFiles = $fs->getFiles(KSROOTDIR, '*.' . $basename);
+			if (empty($iniFiles) && ($basename != 'kickstart.ini'))
+			{
+				$basename = 'kickstart.ini';
+				$iniFiles = $fs->getFiles(KSROOTDIR, '*.' . $basename);
+			}
+		}
+		else
+		{
+			$iniFiles = null;
+		}
+
+		if (is_array($iniFiles))
+		{
+			foreach ($user_languages as $languageStruct)
+			{
+				if (is_null($this->language))
+				{
+					// Get files matching the main lang part
+					$iniFiles = $fs->getFiles(KSROOTDIR, $languageStruct[1] . '-??.' . $basename);
+					if (count($iniFiles) > 0)
+					{
+						$filename       = $iniFiles[0];
+						$filename       = substr($filename, strlen(KSROOTDIR) + 1);
+						$this->language = substr($filename, 0, 5);
+					}
+					else
+					{
+						$this->language = null;
+					}
+				}
+			}
+		}
+
+		if (is_null($this->language))
+		{
+			// Try to find a full language match
+			foreach ($user_languages as $languageStruct)
+			{
+				if (@file_exists($languageStruct[0] . '.' . $basename) && is_null($this->language))
+				{
+					$this->language = $languageStruct[0];
+				}
+			}
+		}
+		else
+		{
+			// Do we have an exact match?
+			foreach ($user_languages as $languageStruct)
+			{
+				if (substr($this->language, 0, strlen($languageStruct[1])) == $languageStruct[1])
+				{
+					if (file_exists($languageStruct[0] . '.' . $basename))
+					{
+						$this->language = $languageStruct[0];
+					}
+				}
+			}
+		}
+
+		// Now, scan for full language based on the partial match
+
+	}
+
 	public function dumpLanguage()
 	{
 		$out = '';
@@ -7402,7 +7865,7 @@ class AKText extends AKAbstractObject
 		$this->strings = $this->default_translation;
 	}
 
-	public function addDefaultLanguageStrings($stringList = array())
+	public function addDefaultLanguageStrings($stringList = [])
 	{
 		if (!is_array($stringList))
 		{
@@ -7415,6 +7878,51 @@ class AKText extends AKAbstractObject
 
 		$this->strings = array_merge($stringList, $this->strings);
 	}
+
+	private function loadTranslation($lang = null)
+	{
+		if (defined('KSLANGDIR'))
+		{
+			$dirname = KSLANGDIR;
+		}
+		else
+		{
+			$dirname = KSROOTDIR;
+		}
+
+		$myName   = defined('KSSELFNAME') ? KSSELFNAME : basename(__FILE__);
+		$basename = basename($myName, '.php') . '.ini';
+
+		if (empty($lang))
+		{
+			$lang = $this->language;
+		}
+
+		$translationFilename = $dirname . DIRECTORY_SEPARATOR . $lang . '.' . $basename;
+		if (!@file_exists($translationFilename) && ($basename != 'kickstart.ini'))
+		{
+			$basename            = 'kickstart.ini';
+			$translationFilename = $dirname . DIRECTORY_SEPARATOR . $lang . '.' . $basename;
+		}
+		if (!@file_exists($translationFilename))
+		{
+			return;
+		}
+		$temp = self::parse_ini_file($translationFilename, false);
+
+		if (!is_array($this->strings))
+		{
+			$this->strings = [];
+		}
+		if (empty($temp))
+		{
+			$this->strings = array_merge($this->default_translation, $this->strings);
+		}
+		else
+		{
+			$this->strings = array_merge($this->strings, $temp);
+		}
+	}
 }
 
 /**
@@ -7422,7 +7930,7 @@ class AKText extends AKAbstractObject
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -7565,6 +8073,7 @@ class AKFactory
 				$moreSkippedFiles     = array(
 					// Akeeba Backup for Joomla!
 					'administrator/components/com_akeeba/restoration.php',
+					'administrator/components/com_akeebabackup/restoration.php',
 					// Joomla! Update
 					'administrator/components/com_joomlaupdate/restoration.php',
 					// Akeeba Backup for WordPress
@@ -7737,7 +8246,7 @@ class AKFactory
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -7776,7 +8285,7 @@ interface AKEncryptionAESAdapterInterface
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -7863,7 +8372,7 @@ abstract class AKEncryptionAESAdapterAbstract
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -7964,7 +8473,7 @@ class Mcrypt extends AKEncryptionAESAdapterAbstract implements AKEncryptionAESAd
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -8068,7 +8577,7 @@ class OpenSSL extends AKEncryptionAESAdapterAbstract implements AKEncryptionAESA
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -8741,7 +9250,7 @@ class AKEncryptionAES
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -8793,11 +9302,46 @@ function masterSetup()
 	// In restore.php mode, require restoration.php or fail
 	if (!defined('KICKSTART'))
 	{
+		// On Joomla 5 we need to look for a defines.php file, in case we are in a custom public folder
+		$definesFile = '../../../defines.php';
+
+		if (file_exists($definesFile))
+		{
+			$fileContents = @file_get_contents($definesFile) ?: '';
+
+			if (strpos($fileContents, "define('JPATH_PUBLIC'") !== false)
+			{
+				defined('_JEXEC') || define('_JEXEC', 1);
+			}
+
+			require_once $definesFile;
+		}
+
 		// This is the standalone mode, used by Akeeba Backup Professional. It looks for a restoration.php
 		// file to perform its magic. If the file is not there, we will abort.
-		$setupFile = 'restoration.php';
+		$alternateFiles = [
+			__DIR__ . '/restoration.php',
+			'restoration.php',
+		];
 
-		if (!file_exists($setupFile))
+		if (defined('JPATH_PUBLIC'))
+		{
+			$alternateFiles[] = JPATH_PUBLIC . 'administrator/components/com_akeebabackup/restoration.php';
+		}
+
+		$foundSetupFile = false;
+
+		foreach ($alternateFiles as $setupFile)
+		{
+			if (file_exists($setupFile))
+			{
+				$foundSetupFile = true;
+
+				break;
+			}
+		}
+
+		if (!$foundSetupFile)
 		{
 			AKFactory::set('kickstart.enabled', false);
 
@@ -9057,7 +9601,7 @@ function masterSetup()
  * An AJAX-powered archive extraction library for JPA, JPS and ZIP archives
  *
  * @package   restore
- * @copyright Copyright (c)2008-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2008-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -9131,6 +9675,27 @@ if (!defined('KICKSTART'))
 			 */
 			case 'startRestore':
 			case 'stepRestore':
+				if ($task == 'startRestore')
+				{
+					// Fetch path to the site root from the restoration.php file, so we can tell the engine where it should operate
+					$siteRoot = AKFactory::get('kickstart.setup.destdir', '');
+
+					// Before starting, read and save any custom AddHandler directive
+					$phpHandlers = getPhpHandlers($siteRoot);
+					AKFactory::set('kickstart.setup.phphandlers', $phpHandlers);
+
+					// If the Stealth Mode is enabled, create the .htaccess file
+					if (AKFactory::get('kickstart.stealth.enable', false))
+					{
+						createStealthURL($siteRoot);
+					}
+					// No stealth mode, but we have custom handler directives, must write our own file
+					elseif ($phpHandlers)
+					{
+						writePhpHandlers($siteRoot);
+					}
+				}
+
 				/**
 				 * First try to run the filesystem zapper (remove all existing files and folders). If the Zapper is
 				 * disabled or has already finished running we will get a FALSE result. Otherwise it's a status array
@@ -9228,6 +9793,7 @@ if (!defined('KICKSTART'))
 				}
 
 				$postproc->unlink($basepath . 'restoration.php');
+				clearFileInOPCache($basepath . 'restoration.php');
 
 				// Import a custom finalisation file
 				$filename = dirname(__FILE__) . '/restore_finalisation.php';
@@ -9237,7 +9803,7 @@ if (!defined('KICKSTART'))
 					// opcode cache busting before including the filename
 					if (function_exists('opcache_invalidate'))
 					{
-						opcache_invalidate($filename);
+						opcache_invalidate($filename, true);
 					}
 
 					if (function_exists('apc_compile_file'))
@@ -9344,6 +9910,7 @@ function recursive_remove_directory($directory)
 				{
 					// we remove the file
 					$postproc->unlink($path);
+					clearFileInOPCache($path);
 				}
 			}
 		}
@@ -9361,4 +9928,132 @@ function recursive_remove_directory($directory)
 		// return success
 		return true;
 	}
+}
+
+function createStealthURL($siteRoot = '')
+{
+	$filename = AKFactory::get('kickstart.stealth.url', '');
+
+	// We need an HTML file!
+	if (empty($filename))
+	{
+		return;
+	}
+
+	// Make sure it ends in .html or .htm
+	$filename = basename($filename);
+
+	if ((strtolower(substr($filename, -5)) != '.html') && (strtolower(substr($filename, -4)) != '.htm'))
+	{
+		return;
+	}
+
+	if ($siteRoot)
+	{
+		$siteRoot = rtrim($siteRoot, '/').'/';
+	}
+
+	$filename_quoted = str_replace('.', '\\.', $filename);
+	$rewrite_base    = trim(dirname(AKFactory::get('kickstart.stealth.url', '')), '/');
+
+	// Get the IP
+	$userIP = $_SERVER['REMOTE_ADDR'];
+	$userIP = str_replace('.', '\.', $userIP);
+
+	// Get the .htaccess contents
+	$stealthHtaccess = <<<ENDHTACCESS
+RewriteEngine On
+RewriteBase /$rewrite_base
+RewriteCond %{REMOTE_ADDR}		!$userIP
+RewriteCond %{REQUEST_URI}		!$filename_quoted
+RewriteCond %{REQUEST_URI}		!(\.png|\.jpg|\.gif|\.jpeg|\.bmp|\.swf|\.css|\.js)$
+RewriteRule (.*)				$filename	[R=307,L]
+
+ENDHTACCESS;
+
+	$customHandlers = portPhpHandlers();
+
+	// Port any custom handlers in the stealth file
+	if ($customHandlers)
+	{
+		$stealthHtaccess .= "\n".$customHandlers."\n";
+	}
+
+	// Write the new .htaccess, removing the old one first
+	$postproc = AKFactory::getpostProc();
+	$postproc->unlink($siteRoot.'.htaccess');
+	$tempfile = $postproc->processFilename($siteRoot.'.htaccess');
+	@file_put_contents($tempfile, $stealthHtaccess);
+	$postproc->process();
+}
+
+/**
+ * Checks if there is an .htaccess file and has any AddHandler directive in it.
+ * In that case, we return the affected lines so they could be stored for later use
+ *
+ * @return  array
+ */
+function getPhpHandlers($root = null)
+{
+	if (!$root)
+	{
+		$root = AKKickstartUtils::getPath();
+	}
+
+	$htaccess   = $root.'/.htaccess';
+	$directives = array();
+
+	if (!file_exists($htaccess))
+	{
+		return $directives;
+	}
+
+	$contents   = file_get_contents($htaccess);
+	$directives = AKUtilsHtaccess::extractHandler($contents);
+	$directives = empty($directives) ? [] : explode("\n", $directives);
+
+	return $directives;
+}
+
+/**
+ * Fetches any stored php handler directive stored inside the factory and creates a string with the correct markers
+ *
+ * @return string
+ */
+function portPhpHandlers()
+{
+	$phpHandlers = AKFactory::get('kickstart.setup.phphandlers', array());
+
+	if (!$phpHandlers)
+	{
+		return '';
+	}
+
+	$customHandler  = "### AKEEBA_KICKSTART_PHP_HANDLER_BEGIN ###\n";
+	$customHandler .= implode("\n", $phpHandlers)."\n";
+	$customHandler .= "### AKEEBA_KICKSTART_PHP_HANDLER_END ###\n";
+
+	return $customHandler;
+}
+
+function writePhpHandlers($siteRoot = '')
+{
+	$contents = portPhpHandlers();
+
+	if (!$contents)
+	{
+		return;
+	}
+
+	if ($siteRoot)
+	{
+		$siteRoot = rtrim($siteRoot, '/').'/';
+	}
+
+	// Write the new .htaccess, removing the old one first
+	$postproc = AKFactory::getpostProc();
+	$postproc->unlink($siteRoot.'.htaccess');
+	$tempfile = $postproc->processFilename($siteRoot.'.htaccess');
+	@file_put_contents($tempfile, $contents);
+	$postproc->process();
 }

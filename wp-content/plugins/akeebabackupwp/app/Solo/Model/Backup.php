@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -10,15 +10,12 @@ namespace Solo\Model;
 use Akeeba\Engine\Base\Part;
 use Akeeba\Engine\Factory;
 use Akeeba\Engine\Platform;
+use Akeeba\Engine\Psr\Log\LogLevel;
 use Akeeba\Engine\Util\PushMessages;
 use Awf\Application\Application;
-use Awf\Database\Driver;
-use Awf\Date\Date;
 use Awf\Mvc\Model;
 use Awf\Text\Text;
-use Closure;
 use Exception;
-use Psr\Log\LogLevel;
 
 class Backup extends Model
 {
@@ -75,25 +72,32 @@ class Backup extends Model
 	 */
 	public function startBackup(array $overrides = [])
 	{
+		/**
+		 * Make sure the database schema is OK. Absolutely necessary in case the update is installed but the application
+		 * has never been visited. Practical examples: WordPress automatic updates, user updating Solo/ABWP through FTP
+		 * and in all cases only ever running scheduled and / or remove backups.
+		 */
+		try
+		{
+			/** @var Main $mainModel */
+			$mainModel = $this->container->mvcFactory->makeModel('Main');
+			$mainModel->checkAndFixDatabase();
+		}
+		catch (Exception $e)
+		{
+			// Hopefully the backup dies in an informative way, thank you very much.
+		}
+
 		// Get information from the session
 		$tag         = $this->getState('tag', null, 'string');
-		$backupId    = $this->getState('backupid', null, 'string');
 		$description = $this->getState('description', '', 'string');
 		$comment     = $this->getState('comment', '', 'html');
 		$jpskey      = $this->getState('jpskey', null, 'raw');
 		$angiekey    = $this->getState('angiekey', null, 'raw');
-
-		// Try to get a backup ID if none is provided
-		if (is_null($backupId))
-		{
-			$backupId = $this->getBackupId();
-		}
+		$backupId    = $this->getBackupId();
 
 		// Use the default description if none specified
-		if (empty($description))
-		{
-			$description = $this->getDefaultDescription();
-		}
+		$description = $description ?: $this->getDefaultDescription();
 
 		// Try resetting the engine
 		try
@@ -121,6 +125,18 @@ class Backup extends Model
 		Factory::getLog()->log(LogLevel::DEBUG, " -- Resetting Akeeba Engine factory ($tag.$backupId)");
 		Platform::getInstance()->load_configuration();
 
+		// Autofix the output directory
+		/** @var Wizard $confWizModel */
+		$confWizModel = $this->getContainer()->mvcFactory->makeTempModel('Wizard');
+		$confWizModel->autofixDirectories();
+
+		// Rebase Off-site Folder Inclusion filters to use site path variables
+		if (class_exists('\Solo\Model\Extradirs'))
+		{
+			$incFoldersModel = $this->getContainer()->mvcFactory->makeTempModel('Extradirs');
+			$incFoldersModel->rebaseFiltersToSiteDirs();
+		}
+
 		// Should I apply any configuration overrides?
 		if (is_array($overrides) && !empty($overrides))
 		{
@@ -135,6 +151,8 @@ class Backup extends Model
 
 			$config->setProtectedKeys($protectedKeys);
 		}
+
+		Platform::getInstance()->apply_quirk_definitions();
 
 		// Check if there are critical issues preventing the backup
 		if (!Factory::getConfigurationChecks()->getShortStatus())
@@ -194,7 +212,7 @@ class Backup extends Model
 		 * installing updates and taking backups automatically, without visiting the Control Panel except in rare cases.
 		 */
 		/** @var Main $cpModel */
-		$cpModel = Model::getTmpInstance($this->container->application_name, 'Main', $this->container);
+		$cpModel = $this->container->mvcFactory->makeTempModel('Main');
 		$cpModel->convertLogFiles(3);
 
 
@@ -264,35 +282,15 @@ class Backup extends Model
 	 */
 	public function stepBackup($requireBackupId = true)
 	{
-		// Get the tag. If not specified use the AKEEBA_BACKUP_ORIGIN constant.
-		$tag = $this->getState('tag', null, 'string');
-
-		if (is_null($tag) && defined('AKEEBA_BACKUP_ORIGIN'))
-		{
-			$tag = AKEEBA_BACKUP_ORIGIN;
-		}
-
-		// Get the Backup ID. If not specified use the AKEEBA_BACKUP_ID constant.
+		// Get information from the model state
+		$tag      = $this->getState('tag', defined('AKEEBA_BACKUP_ORIGIN') ? AKEEBA_BACKUP_ORIGIN : null, 'string');
 		$backupId = $this->getState('backupid', null, 'string');
 
-		if (is_null($backupId) && defined('AKEEBA_BACKUP_ID'))
-		{
-			$backupId = AKEEBA_BACKUP_ID;
-		}
-
 		// Get the profile from the session, the AKEEBA_PROFILE constant or the model state – in this order
-		$session = Application::getInstance()->getContainer()->segment;
-		$profile = $session->get('profile', null);
-		$profile = defined('AKEEBA_PROFILE') ? AKEEBA_PROFILE : $profile;
-		$profile = $this->getState('profile', $profile, 'int');
-		$profile = max(0, (int) $profile);
-
-		if (empty($profile))
-		{
-			$profile = $this->getLastBackupProfile($tag, $backupId);
-		}
+		$profile = max(0, (int) $this->getState('profile', 0)) ?: $this->getLastBackupProfile($tag, $backupId);
 
 		// Set the active profile
+		$session = $this->getContainer()->segment;
 		$session->set('profile', $profile);
 
 		if (!defined('AKEEBA_PROFILE'))
@@ -321,7 +319,6 @@ class Backup extends Model
 
 			// Set the backup ID and run a backup step
 			$kettenrad = Factory::getKettenrad();
-			$kettenrad->setBackupId($backupId);
 			$kettenrad->tick();
 			$ret_array = $kettenrad->getStatusArray();
 		}
@@ -422,7 +419,7 @@ class Backup extends Model
 	 *
 	 * @return  int  The profile ID of the latest backup taken with the specified tag / backup ID
 	 */
-	protected function getLastBackupProfile($tag, $backupId = null)
+	public function getLastBackupProfile($tag, $backupId = null)
 	{
 		$filters = [
 			['field' => 'tag', 'value' => $tag],
@@ -459,69 +456,24 @@ class Backup extends Model
 	}
 
 	/**
-	 * @return string
+	 * Get a new backup ID string.
+	 *
+	 * In the past we were trying to get the next backup record ID using two methods:
+	 * - Querying the information_schema.tables metadata table. In many cases we saw this returning the wrong value,
+	 *   even though the MySQL documentation said this should return the next autonumber (WTF?)
+	 * - Doing a MAX(id) on the table and adding 1. This didn't work correctly if the latest records were deleted by the
+	 *   user.
+	 *
+	 * However, the backup ID does not need to be the same as the backup record ID. It only needs to be *unique*. So
+	 * this time around we are using a simple, unique ID based on the current GMT date and time.
+	 *
+	 * @return  string
 	 */
-	private function getBackupId()
+	private function getBackupId(): string
 	{
-		$db = Application::getInstance()->getContainer()->db;
+		$microtime    = explode(' ', microtime(false));
+		$microseconds = (int) ($microtime[0] * 1000000);
 
-		/**
-		 * I need to get the current database name. I'll use Ocramius' trick.
-		 * See https://ocramius.github.io/blog/accessing-private-php-class-members-without-reflection/
-		 */
-		$protectedMethodAccessor = function (Driver $db) {
-			return $db->getDatabase();
-		};
-		$boundClosure            = Closure::bind($protectedMethodAccessor, null, $db);
-		$dbName                  = $boundClosure($db);
-		$tableName               = $db->replacePrefix('#__ak_stats');
-
-		/**
-		 * Now, I will first try to get the AUTO_INCREMENT value via INFORMATION_SCHEMA.
-		 * See https://stackoverflow.com/questions/15821532/get-current-auto-increment-value-for-any-table
-		 */
-		$query = $db->getQuery(true)
-			->select($db->qn('AUTO_INCREMENT'))
-			->from($db->qn('INFORMATION_SCHEMA.TABLES'))
-			->where($db->qn('TABLE_SCHEMA') . ' = ' . $db->q($dbName))
-			->where($db->qn('TABLE_NAME') . ' = ' . $db->q($tableName));
-
-		try
-		{
-			$backupId = $db->setQuery($query)->loadResult();
-
-			if (!empty($backupId))
-			{
-				return $backupId;
-			}
-		}
-		catch (Exception $e)
-		{
-			// This didn't work. No problem, I'll use my legacy method instead.
-		}
-
-		/**
-		 * Get the maximum ID already in use and add 1. This is not the same as the table's auto_increment value if the
-		 * user has deleted the latest backup records. If the latest existing backup record has an ID of 20 but the user
-		 * had already deleted records 21 and 22 then the auto_increment is 23. However, this legacy method will return
-		 * a backup ID of 21 instead of the correct value of 23. There's not much I can do since I could not read the
-		 * actual auto_increment value above. Oh well, it's not the end of the world :)
-		 */
-		$query = $db->getQuery(true)
-			->select('MAX(' . $db->qn('id') . ')')
-			->from($db->qn('#__ak_stats'));
-
-		try
-		{
-			$maxId = $db->setQuery($query)->loadResult();
-		}
-		catch (Exception $e)
-		{
-			$maxId = 0;
-		}
-
-		$backupId = 'id' . ($maxId + 1);
-
-		return $backupId;
+		return 'id-' . gmdate('Ymd-His') . '-' . $microseconds;
 	}
 } 

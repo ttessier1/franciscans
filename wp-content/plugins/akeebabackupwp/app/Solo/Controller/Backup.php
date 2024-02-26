@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -60,6 +60,7 @@ class Backup extends ControllerDefault
 		$model->setState('angiekey',	$this->input->get('angiekey', '', 'raw'));
 		$model->setState('returnurl',	$returnUrl);
 		$model->setState('backupid',	$this->input->get('backupid', null, 'cmd'));
+		$model->setState('autostart', $this->input->getBool('autostart', false));
 
 		$this->display();
 	}
@@ -76,7 +77,7 @@ class Backup extends ControllerDefault
 		$model->setState('profile',			$this->input->get('profile', Platform::getInstance()->get_active_profile(), 'int'));
 		$model->setState('ajax',			$this->input->get('ajax', '', 'cmd'));
 		$model->setState('description',		$this->input->get('description', '', 'raw'));
-		$model->setState('comment',			$this->input->get('comment', '','default', 'raw'));
+		$model->setState('comment',			$this->input->get('comment', '','raw'));
 		$model->setState('jpskey',			$this->input->get('jpskey', '', 'raw'));
 		$model->setState('angiekey',		$this->input->get('angiekey', '', 'raw'));
 		$model->setState('backupid',		$this->input->get('backupid', null, 'cmd'));
@@ -102,7 +103,7 @@ class Backup extends ControllerDefault
 		@ob_end_clean();
 		header('Content-type: text/plain');
 		header('Connection: close');
-		echo '###' . json_encode($ret_array) . '###';
+		echo '#"\#\"#' . json_encode($ret_array) . '#"\#\"#';
 		flush();
 
 		$this->container->application->close();
@@ -128,7 +129,7 @@ class Backup extends ControllerDefault
 		// Change and reload the profile if necessary
 		if ($profile != $current_profile)
 		{
-			$session = \Awf\Application\Application::getInstance()->getContainer()->segment;
+			$session = $this->getContainer()->segment;
 			$session->profile = $profile;
 
 			/**

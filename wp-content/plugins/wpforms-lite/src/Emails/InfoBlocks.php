@@ -13,7 +13,28 @@ class InfoBlocks {
 	 *
 	 * @since 1.5.4
 	 */
-	const SOURCE_URL = 'https://cdn.wpforms.com/wp-content/email-summaries.json';
+	const SOURCE_URL = 'https://wpforms.com/wp-content/email-summaries.json';
+
+	/**
+	 * Get info blocks info from the cache file or remote.
+	 *
+	 * @since 1.6.4
+	 *
+	 * @return array
+	 */
+	public function get_all() {
+
+		$cache_file = $this->get_cache_file_path();
+
+		if ( empty( $cache_file ) || ! is_readable( $cache_file ) ) {
+			return $this->fetch_all();
+		}
+
+		$contents = file_get_contents( $cache_file );
+		$contents = json_decode( $contents, true );
+
+		return $this->verify_fetched( $contents );
+	}
 
 	/**
 	 * Fetch info blocks info from remote.
@@ -24,21 +45,27 @@ class InfoBlocks {
 	 */
 	public function fetch_all() {
 
-		$info = array();
+		$info = [];
 
-		$res = \wp_remote_get( self::SOURCE_URL );
+		$res = wp_remote_get(
+			self::SOURCE_URL,
+			[
+				'timeout'    => 10,
+				'user-agent' => wpforms_get_default_user_agent(),
+			]
+		);
 
-		if ( \is_wp_error( $res ) ) {
+		if ( is_wp_error( $res ) ) {
 			return $info;
 		}
 
-		$body = \wp_remote_retrieve_body( $res );
+		$body = wp_remote_retrieve_body( $res );
 
 		if ( empty( $body ) ) {
 			return $info;
 		}
 
-		$body = \json_decode( $body, true );
+		$body = json_decode( $body, true );
 
 		return $this->verify_fetched( $body );
 	}
@@ -54,7 +81,7 @@ class InfoBlocks {
 	 */
 	protected function verify_fetched( $fetched ) {
 
-		$info = array();
+		$info = [];
 
 		if ( ! \is_array( $fetched ) ) {
 			return $info;
@@ -87,8 +114,8 @@ class InfoBlocks {
 	 */
 	protected function get_by_license() {
 
-		$data     = $this->fetch_all();
-		$filtered = array();
+		$data     = $this->get_all();
+		$filtered = [];
 
 		if ( empty( $data ) || ! \is_array( $data ) ) {
 			return $filtered;
@@ -125,7 +152,7 @@ class InfoBlocks {
 	protected function get_first_with_id( $data ) {
 
 		if ( empty( $data ) || ! \is_array( $data ) ) {
-			return array();
+			return [];
 		}
 
 		foreach ( $data as $item ) {
@@ -135,7 +162,7 @@ class InfoBlocks {
 			}
 		}
 
-		return array();
+		return [];
 	}
 
 	/**
@@ -148,7 +175,7 @@ class InfoBlocks {
 	public function get_next() {
 
 		$data  = $this->get_by_license();
-		$block = array();
+		$block = [];
 
 		if ( empty( $data ) || ! \is_array( $data ) ) {
 			return $block;
@@ -177,26 +204,74 @@ class InfoBlocks {
 	 */
 	public function register_sent( $info_block ) {
 
-		$block_id = isset( $info_block['id'] ) ? \absint( $info_block['id'] ) : false;
+		$block_id = isset( $info_block['id'] ) ? absint( $info_block['id'] ) : false;
 
 		if ( empty( $block_id ) ) {
 			return;
 		}
 
 		$option_name = 'wpforms_email_summaries_info_blocks_sent';
-		$blocks      = \get_option( $option_name );
+		$blocks      = get_option( $option_name );
 
-		if ( empty( $blocks ) || ! \is_array( $blocks ) ) {
-			\update_option( $option_name, array( $block_id ) );
+		if ( empty( $blocks ) || ! is_array( $blocks ) ) {
+			update_option( $option_name, [ $block_id ] );
+
 			return;
 		}
 
-		if ( \in_array( $block_id, $blocks, true ) ) {
+		if ( in_array( $block_id, $blocks, true ) ) {
 			return;
 		}
 
 		$blocks[] = $block_id;
 
-		\update_option( $option_name, $blocks );
+		update_option( $option_name, $blocks );
+	}
+
+	/**
+	 * Get a path of the blocks cache file.
+	 *
+	 * @since 1.6.4
+	 *
+	 * @return string
+	 */
+	public function get_cache_file_path() {
+
+		$upload_dir = wpforms_upload_dir();
+
+		if ( ! isset( $upload_dir['path'] ) ) {
+			return '';
+		}
+
+		$cache_dir = trailingslashit( $upload_dir['path'] ) . 'cache';
+
+		return wp_normalize_path( trailingslashit( $cache_dir ) . 'email-summaries.json' );
+	}
+
+	/**
+	 * Fetch and cache blocks in a file.
+	 *
+	 * @since 1.6.4
+	 */
+	public function cache_all() {
+
+		$file_path = $this->get_cache_file_path();
+
+		if ( empty( $file_path ) ) {
+			return;
+		}
+
+		$dir = dirname( $file_path );
+
+		if ( ! wp_mkdir_p( $dir ) ) {
+			return;
+		}
+
+		wpforms_create_index_html_file( $dir );
+		wpforms_create_upload_dir_htaccess_file();
+
+		$info_blocks = $this->fetch_all();
+
+		file_put_contents( $file_path, wp_json_encode( $info_blocks ) ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents
 	}
 }

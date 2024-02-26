@@ -1,0 +1,19 @@
+/*!*
+ * @package   admintoolswp
+ * @copyright Copyright (c)2017-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @license   GNU GPL version 3 or later
+ */
+
+@import 'sources/variables';
+
+// Changelog
+@import 'sources/changelog';
+
+// PHP File Change Scanner
+@import 'sources/scanner';
+
+// Tooltips (popovers)
+@import 'sources/tooltips';
+
+// Modal dialogs
+@import 'sources/modal';

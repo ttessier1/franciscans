@@ -97,7 +97,7 @@ class Widget extends Widget_Base {
 	 *
 	 * @since 1.6.2
 	 */
-	protected function _register_controls() { // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
+	protected function register_controls() { // phpcs:ignore PSR2.Methods.MethodDeclaration.Underscore
 
 		$this->content_controls();
 	}
@@ -132,7 +132,7 @@ class Widget extends Widget_Base {
 							'br' => [],
 						]
 					),
-					'content_classes' => 'elementor-panel-alert elementor-panel-alert-info',
+					'content_classes' => 'elementor-panel-alert elementor-panel-alert-info wpforms-elementor-no-forms-notice',
 				]
 			);
 		}
@@ -249,29 +249,43 @@ class Widget extends Widget_Base {
 	}
 
 	/**
-	 * Render widget output on the frontend.
+	 * Render widget output.
 	 *
 	 * @since 1.6.2
 	 */
 	protected function render() {
 
+		if ( Plugin::$instance->editor->is_edit_mode() ) {
+			$this->render_edit_mode();
+		} else {
+			$this->render_frontend();
+		}
+	}
+
+	/**
+	 * Render widget output in edit mode.
+	 *
+	 * @since 1.6.3.1
+	 */
+	protected function render_edit_mode() {
+
 		$form_id = $this->get_settings_for_display( 'form_id' );
 
 		// Popup markup template.
-		echo wpforms_render( 'integrations/elementor/popup' );  // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		echo wpforms_render( 'integrations/elementor/popup' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
-		// No forms block.
 		if ( count( $this->get_forms() ) < 2 ) {
 
-			echo wpforms_render( 'integrations/elementor/no-forms' );  // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			// No forms block.
+			echo wpforms_render( 'integrations/elementor/no-forms' ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
 			return;
 		}
 
-		if ( empty( $form_id ) && Plugin::$instance->editor->is_edit_mode() ) {
+		if ( empty( $form_id ) ) {
 
 			// Render form selector.
-			$preview = wpforms_render(   // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			echo wpforms_render( // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 				'integrations/elementor/form-selector',
 				[
 					'forms' => $this->get_form_selector_options(),
@@ -279,14 +293,32 @@ class Widget extends Widget_Base {
 				true
 			);
 
-		} else {
-
-			// Render selected form.
-			$preview = do_shortcode( $this->render_shortcode() );
-
+			return;
 		}
 
-		echo $preview; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		// Finally, render selected form.
+		$this->render_frontend();
+	}
+
+	/**
+	 * Render widget output on the frontend.
+	 *
+	 * @since 1.6.3.1
+	 */
+	protected function render_frontend() {
+
+		static $is_root_vars_displayed = false;
+
+		$css_vars_obj = wpforms()->get( 'css_vars' );
+
+		if ( ! empty( $css_vars_obj ) && wpforms_get_render_engine() === 'modern' && ! $is_root_vars_displayed ) {
+			$css_vars_obj->output_root( true );
+
+			$is_root_vars_displayed = true;
+		}
+
+		// Render selected form.
+		$this->render_form();
 	}
 
 	/**
@@ -296,21 +328,38 @@ class Widget extends Widget_Base {
 	 */
 	public function render_plain_content() {
 
-		echo $this->render_shortcode(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+		$this->render_form();
 	}
 
 	/**
 	 * Render shortcode.
 	 *
 	 * @since 1.6.2
+	 * @deprecated 1.8.3
 	 */
 	public function render_shortcode() {
+
+		_deprecated_function( __METHOD__, '1.8.3 of the WPForms plugin', __CLASS__ . '::render_form()' );
 
 		return sprintf(
 			'[wpforms id="%1$d" title="%2$s" description="%3$s"]',
 			absint( $this->get_settings_for_display( 'form_id' ) ),
 			sanitize_key( $this->get_settings_for_display( 'display_form_name' ) === 'yes' ? 'true' : 'false' ),
 			sanitize_key( $this->get_settings_for_display( 'display_form_description' ) === 'yes' ? 'true' : 'false' )
+		);
+	}
+
+	/**
+	 * Render a form.
+	 *
+	 * @since 1.8.3
+	 */
+	public function render_form() {
+
+		wpforms_display(
+			$this->get_settings_for_display( 'form_id' ),
+			$this->get_settings_for_display( 'display_form_name' ) === 'yes',
+			$this->get_settings_for_display( 'display_form_description' ) === 'yes'
 		);
 	}
 
@@ -326,7 +375,7 @@ class Widget extends Widget_Base {
 		static $forms_list = [];
 
 		if ( empty( $forms_list ) ) {
-			$forms = wpforms()->form->get();
+			$forms = wpforms()->get( 'form' )->get();
 
 			if ( ! empty( $forms ) ) {
 				$forms_list[0] = esc_html__( 'Select a form', 'wpforms-lite' );

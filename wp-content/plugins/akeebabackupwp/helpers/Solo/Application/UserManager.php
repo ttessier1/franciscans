@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -35,6 +35,12 @@ class UserManager extends Manager
 				else
 				{
 					$defaultId = 0;
+				}
+
+				// If we execute too early to have wp_get_current_user() we won't store the (invalid) current user.
+				if ($defaultId === 0)
+				{
+					return $this->getUser(0);
 				}
 
 				// Load the current user

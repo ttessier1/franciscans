@@ -1,19 +1,21 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
+use Akeeba\Engine\Factory;
+use Awf\Container\Container;
 use Awf\Database\Installer;
-use Awf\Mvc\Model;
+use Solo\Model\Cron;
+use Solo\Model\Main;
 
 /**
- * @package		akeebabackupwp
- * @copyright	2014-2019 Nicholas K. Dionysopoulos / Akeeba Ltd
- * @license		GNU GPL version 3 or later
+ * @package        akeebabackupwp
+ * @copyright      Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @license        GNU GPL version 3 or later
  */
-
 class AkeebaBackupWP
 {
 	/** @var string The name of the wp-content/plugins directory we live in */
@@ -25,206 +27,370 @@ class AkeebaBackupWP
 	/** @var string Absolute filename to self */
 	public static $absoluteFileName = null;
 
-	/** @var array List of all JS files we can possibly load */
-	public static $jsFiles = array();
-
-	/** @var array List of all CSS files we can possibly load */
-	public static $cssFiles = array();
+	/**
+	 * @var string
+	 */
+	public static $pluginUrl;
 
 	/** @var bool Do we have an outdated PHP version? */
 	public static $wrongPHP = false;
 
-	/** @var string Minimum PHP version */
-	public static $minimumPHP = '7.1.0';
+	/**
+	 * The plugin basename, used for detecting the plugin having been updated
+	 *
+	 * @var   string
+	 * @since 8.0.0
+	 */
+	public static $pluginBaseName = '';
 
-	protected static $loadedScripts = array();
+	/** @var string Minimum PHP version */
+	public static $minimumPHP = '7.4.0';
 
 	/**
 	 * @var array Application configuration, read from helpers/private/config.php
 	 */
-	private static $appConfig = null;
+	public static $appConfig = null;
+
+	protected static $loadedScripts = [];
+
+	/**
+	 * The application container
+	 *
+	 * @var   \Solo\Container|null
+	 * @since 8.1.0
+	 */
+	private static $container = null;
 
 	/**
 	 * Initialization, runs once when the plugin is loaded by WordPress
 	 *
-	 * @param  string  $pluginFile  The absolute path of the plugin file being loaded
+	 * @param   string  $pluginFile  The absolute path of the plugin file being loaded
+	 *
+	 * @return  void
+	 */
+	public static function initialization(string $pluginFile): void
+	{
+		if (defined('AKEEBABACKUPWP_PATH'))
+		{
+			return;
+		}
+
+		$pluginUrl    = plugins_url('', $pluginFile);
+		$baseUrlParts = explode('/', $pluginUrl);
+
+		self::$minimumPHP = defined('AKEEBABACKUP_MINPHP') ? AKEEBABACKUP_MINPHP : '7.4.0';
+		self::$pluginUrl        = $pluginUrl;
+		self::$dirName          = end($baseUrlParts);
+		self::$fileName         = basename($pluginFile);
+		self::$absoluteFileName = $pluginFile;
+		self::$wrongPHP         = version_compare(PHP_VERSION, AkeebaBackupWP::$minimumPHP, 'lt');
+
+		if (!defined('AKEEBABACKUPWP_PATH'))
+		{
+			define('AKEEBABACKUPWP_PATH', plugin_dir_path($pluginFile));
+		}
+
+		if (!defined('AKEEBABACKUPWP_ROOTURL'))
+		{
+			define('AKEEBABACKUPWP_ROOTURL', site_url());
+		}
+
+		if (!defined('AKEEBABACKUPWP_URL'))
+		{
+			define(
+				'AKEEBABACKUPWP_URL',
+				admin_url() . (is_multisite() ? 'network/' : '') . 'admin.php?page=' .
+				self::$dirName . '/' . self::$fileName
+			);
+		}
+
+		if (!defined('AKEEBABACKUPWP_SITEURL'))
+		{
+			$baseUrl = plugins_url('app/index.php', self::$absoluteFileName);
+			define('AKEEBABACKUPWP_SITEURL', substr($baseUrl, 0, -10));
+		}
+
+		if (!defined('AKEEBABACKUP_VERSION'))
+		{
+			$versionFile = dirname(self::$absoluteFileName) . '/app/version.php';
+
+			if (@is_file($versionFile) && @is_readable($versionFile))
+			{
+				@include_once $versionFile;
+			}
+		}
+
+		defined('AKEEBABACKUP_PRO')
+		|| define(
+			'AKEEBABACKUP_PRO',
+			@is_dir(__DIR__ . '/../app/Solo/AliceChecks') ? '1' : '0'
+		);
+		defined('AKEEBABACKUP_VERSION') || define('AKEEBABACKUP_VERSION', '0.0.0.a1');
+		defined('AKEEBABACKUP_DATE') || define('AKEEBABACKUP_DATE', gmdate('Y-m-d'));
+		defined('AKEEBABACKUP_MINPHP') || define('AKEEBABACKUP_MINPHP', self::$minimumPHP);
+
+		self::storeUnquotedRequest();
+	}
+
+	/**
+	 * Load the WordPress plugin updater integration, unless the `integratedupdate` flag in the configuration is unset.
+	 * The default behavior is to add the integration.
 	 *
 	 * @return void
 	 */
-	public static function preboot_initialization($pluginFile)
+	public static function loadIntegratedUpdater()
 	{
-		if (defined('AKEEBA_SOLOWP_PATH'))
+		if (is_null(self::$appConfig))
+		{
+			self::loadAppConfig();
+		}
+
+		if (
+			!is_array(self::$appConfig['options'] ?? null)
+			|| (self::$appConfig['options']['integratedupdate'] ?? 1) == 0
+		)
 		{
 			return;
 		}
 
-		$baseUrlParts = explode('/', plugins_url('', $pluginFile));
+		self::$pluginBaseName = plugin_basename(self::$absoluteFileName);
 
-		AkeebaBackupWP::$dirName = end($baseUrlParts);
-		AkeebaBackupWP::$fileName = basename($pluginFile);
-		AkeebaBackupWP::$absoluteFileName = $pluginFile;
-		AkeebaBackupWP::$wrongPHP = version_compare(PHP_VERSION, AkeebaBackupWP::$minimumPHP, 'lt');
-
-		$aksolowpPath = plugin_dir_path($pluginFile);
-		define('AKEEBA_SOLOWP_PATH', $aksolowpPath);
+		add_filter(
+			'pre_set_site_transient_update_plugins',
+			['AkeebaBackupWPUpdater', 'getUpdateInformation'],
+			10, 2
+		);
+		add_filter(
+			'plugins_api',
+			['AkeebaBackupWPUpdater', 'pluginInformationPage'],
+			10, 3
+		);
+		add_filter(
+			'upgrader_pre_download',
+			['AkeebaBackupWPUpdater', 'addDownloadID'],
+			10, 3
+		);
+		add_filter(
+			'after_plugin_row_' . self::$pluginBaseName,
+			['AkeebaBackupWPUpdater', 'updateMessage'], 10, 3
+		);
 	}
 
 	/**
-	 * Store the unquoted request variables to prevent WordPress from killing JSON requests.
+	 * Installs the plugin hooks.
+	 *
+	 * This is what makes the Akeeba Backup plugin tick. It is wrapped in its own method for easier error control.
+	 *
+	 * @return  void
+	 * @since   8.1.2
 	 */
-	public static function fakeRequest()
+	public static function installHooks(string $pluginFile): void
 	{
-		// See http://stackoverflow.com/questions/8949768/with-magic-quotes-disabled-why-does-php-wordpress-continue-to-auto-escape-my
-		global $_REAL_REQUEST;
-		$_REAL_REQUEST = $_REQUEST;
-	}
-
-	/**
-	 * Start a session (if not already started). It also takes care of our magic trick for displaying raw views without
-	 * rendering WordPress' admin interface.
-	 */
-	public static function startSession()
-	{
-		// We no longer start a session; we are now using a session handler that uses nothing but the database
 		/**
-		if (!session_id())
+		 * Register public plugin hooks
+		 */
+		register_activation_hook(self::$absoluteFileName, ['AkeebaBackupWP', 'install']);
+
+		/**
+		 * Register public plugin deactivation hooks
+		 *
+		 * This is called when the plugin is deactivated which precedes (but does not necessarily imply) uninstallation.
+		 */
+		register_deactivation_hook(self::$absoluteFileName, ['AkeebaBackupWP', 'onDeactivate']);
+		register_uninstall_hook(self::$absoluteFileName, ['AkeebaBackupWP', 'uninstall']);
+
+		/**
+		 * Register administrator plugin hooks
+		 */
+		if (is_admin() && (!defined('DOING_AJAX') || !DOING_AJAX))
 		{
-			session_start();
+			// Menu items
+			add_action('admin_menu', ['AkeebaBackupWP', 'adminMenu']);
+			add_action('network_admin_menu', ['AkeebaBackupWP', 'networkAdminMenu']);
+
+			// Output buffering, wherever it is needed
+			add_action('init', ['AkeebaBackupWP', 'startOutputBuffering'], 1);
+			add_action('in_admin_footer', ['AkeebaBackupWP', 'stopOutputBuffering']);
+
+			add_action('init', ['AkeebaBackupWP', 'loadCommonCSS'], 1);
+			add_action('clear_auth_cookie', ['AkeebaBackupWP', 'onUserLogout'], 1);
 		}
-		/**/
-
-		$page = self::$dirName . '/' . self::$fileName;
-
-		// Is this an Akeeba Solo page?
-		if (isset($_REQUEST['page']) && ($_REQUEST['page'] == $page))
+		elseif (defined('DOING_AJAX') && DOING_AJAX)
 		{
-			// Is it a format=raw, format=json or tmpl=component page?
-			if (
-				(isset($_REQUEST['format']) && ($_REQUEST['format'] == 'raw')) ||
-				(isset($_REQUEST['format']) && ($_REQUEST['format'] == 'json')) ||
-				(isset($_REQUEST['tmpl']) && ($_REQUEST['tmpl'] == 'component'))
-			)
+			add_action('wp_ajax_akeebabackup_api', ['AkeebaBackupWP', 'jsonApi'], 1);
+			add_action('wp_ajax_nopriv_akeebabackup_api', ['AkeebaBackupWP', 'jsonApi'], 1);
+
+			add_action('wp_ajax_akeebabackup_legacy', ['AkeebaBackupWP', 'legacyFrontendBackup'], 1);
+			add_action('wp_ajax_nopriv_akeebabackup_legacy', ['AkeebaBackupWP', 'legacyFrontendBackup'], 1);
+
+			add_action('wp_ajax_akeebabackup_check', ['AkeebaBackupWP', 'frontendBackupCheck'], 1);
+			add_action('wp_ajax_nopriv_akeebabackup_check', ['AkeebaBackupWP', 'frontendBackupCheck'], 1);
+		}
+
+		// PseudoCRON with WP-CRON
+		// -- Add an "every ten seconds" interval rule (schedule)
+		add_filter('cron_schedules', function ($schedules) {
+			$interval = max(defined('WP_CRON_LOCK_TIMEOUT') ? WP_CRON_LOCK_TIMEOUT : 60, 10);
+
+			$schedules['akeebabackup_interval'] = [
+				'interval' => $interval,
+				'display'  => sprintf(__('Every %s seconds'), $interval),
+			];
+
+			return $schedules;
+		});
+
+		// -- Register the abwp_cron_scheduling action
+		add_action('abwp_cron_scheduling', ['AkeebaBackupWP', 'handlePseudoCron']);
+		// -- Make sure the abwp_cron_scheduling action is scheduled to run once every 10 seconds
+		if (!wp_next_scheduled('abwp_cron_scheduling'))
+		{
+			wp_schedule_event(time(), 'akeebabackup_interval', 'abwp_cron_scheduling');
+		}
+
+		// Register WP-CLI commands
+		if (defined('WP_CLI') && WP_CLI)
+		{
+			if (file_exists(dirname(self::$absoluteFileName) . '/wpcli/register_commands.php'))
 			{
-				define('AKEEBA_SOLOWP_OBFLAG', 1);
-				@ob_start();
+				require_once dirname(self::$absoluteFileName) . '/wpcli/register_commands.php';
 			}
 		}
 	}
 
 	/**
-	 * Load template scripts with fallback to our own copies (useful for support)
+	 * Starts output bufferring, if necessary
 	 */
-	public static function loadJavascript()
+	public static function startOutputBuffering(): void
 	{
-		// We no longer start a session; we are now using a session handler that uses nothing but the database
-		/**
-		if (!session_id())
-		{
-		session_start();
-		}
-		/**/
+		global $AKEEBABACKUPWP_REAL_REQUEST;
 
-		$page = self::$dirName . '/' . self::$fileName;
+		$ourPluginPage = self::$dirName . '/' . self::$fileName;
+		$requestPage   = $AKEEBABACKUPWP_REAL_REQUEST['page'] ?? null;
+		$format        = $AKEEBABACKUPWP_REAL_REQUEST['format'] ?? 'html';
+		$tmpl          = $AKEEBABACKUPWP_REAL_REQUEST['tmpl'] ?? 'index';
 
-		// Is this an Akeeba Solo page?
-		if (!isset($_REQUEST['page']) || !($_REQUEST['page'] == $page))
+		// If this is not a page in our plugin, or we've already started the output buffering, bail out.
+		if (defined('AKEEBABACKUPWP_OBFLAG') || $requestPage !== $ourPluginPage)
 		{
 			return;
 		}
 
-		/**
-		 * We preload all of our CSS files.
-		 *
-		 * We have to do that to prevent an ugly flash of the page since, by default, WordPress adds the CSS to the
-		 * footer (right above the closing body tag). This would cause the browser to re-evaluate the stylesheet,
-		 * causing the flash.
-		 */
-		$theEntireUniverseOfStyles = array(
-			// FEF
-			'fef-wp',
-			// Custom CSS
-			'theme',
-		);
+		// We only need output buffering in very specific situations
+		if ($format !== 'raw' && $format !== 'json' && $tmpl !== 'component')
+		{
+			return;
+		}
 
-		$relPath = __DIR__ . '/../';
+		define('AKEEBABACKUPWP_OBFLAG', 1);
+		@ob_start();
+	}
+
+	/**
+	 * Stop the output buffering, when necessary
+	 */
+	public static function stopOutputBuffering(): void
+	{
+		if (!defined('AKEEBABACKUPWP_OBFLAG'))
+		{
+			return;
+		}
+
+		@ob_end_clean();
+		exit(0);
+	}
+
+	/**
+	 * Preload our common CSS files.
+	 *
+	 * We have to do that to prevent an ugly flash of the page since, by default, WordPress adds the CSS to the
+	 * footer (right above the closing body tag). This would cause the browser to re-evaluate the stylesheet,
+	 * causing the flash.
+	 */
+	public static function loadCommonCSS(): void
+	{
+		$ourPluginPage = self::$dirName . '/' . self::$fileName;
+		$requestPage   = $AKEEBABACKUPWP_REAL_REQUEST['page'] ?? null;
+
+		// Is this a page of our plugin?
+		if ($requestPage !== $ourPluginPage)
+		{
+			return;
+		}
+
+		$styleSheets = ['fef-wp', 'theme'];
+		$relPath     = __DIR__ . '/../';
 
 		self::loadAppConfig();
 
-		if (isset(self::$appConfig['darkmode']) && (self::$appConfig['darkmode'] == 1))
+		if ((self::$appConfig['darkmode'] ?? 0) == 1)
 		{
-			$theEntireUniverseOfStyles[] = 'dark';
+			$styleSheets[] = 'dark';
 		}
 
-		foreach ($theEntireUniverseOfStyles as $style)
+		foreach ($styleSheets as $style)
 		{
 			$scriptPath = 'app/media/css/' . $style . '.min.css';
 
-			if (file_exists($relPath . $scriptPath))
+			if (!file_exists($relPath . $scriptPath))
 			{
-				AkeebaBackupWP::enqueueStyle(plugins_url($scriptPath, self::$absoluteFileName));
+				continue;
 			}
-		}
 
-	}
-
-	/**
-	 * Terminate a session if it's already started
-	 */
-	public static function endSession()
-	{
-		if (session_id())
-		{
-			session_destroy();
+			AkeebaBackupWP::enqueueStyle(plugins_url($scriptPath, self::$absoluteFileName));
 		}
 	}
 
 	/**
-	 * Part of our magic trick for displaying raw views without rendering WordPress' admin interface.
+	 * Installation hook.
+	 *
+	 * Creates the database tables if they do not exist and performs any post-installation work required.
 	 */
-	public static function clearBuffer()
+	public static function install(): void
 	{
-		if (defined('AKEEBA_SOLOWP_OBFLAG'))
-		{
-			@ob_end_clean();
-			exit(0);
-		}
-	}
+		self::$dirName = self::getPluginSlug();
 
-	/**
-	 * Installation hook. Creates the database tables if they do not exist and performs any post-installation work
-	 * required.
-	 */
-	public static function install()
-	{
-		// Require WordPress 3.1 or later
-		if (version_compare(get_bloginfo('version'), '3.1', 'lt'))
+		// Require WordPress 6.0 or later
+		if (version_compare(get_bloginfo('version'), '6.0', 'lt'))
 		{
 			deactivate_plugins(self::$fileName);
 		}
 
-		$container = self::loadAkeebaBackup();
+		$container = self::loadAkeebaBackupContainer();
 
 		if ($container)
 		{
-			/** @var \Solo\Model\Main $cpanelModel */
-			$cpanelModel = Model::getInstance($container->application_name, 'Main', $container);
+			/** @var Main $cpanelModel */
+			$cpanelModel = $container->mvcFactory->makeModel('Main');
 
 			try
 			{
-				$cpanelModel->checkAndFixDatabase();
+				$cpanelModel->checkAndFixDatabase(false);
 			}
-			catch (\RuntimeException $e)
+			catch (Throwable $e)
 			{
 				// The update is stuck. We will display a warning in the Control Panel
+				@ob_end_clean();
+				echo <<< HTML
+<h1>Plugin activation failed</h1>
+<p>
+	The Akeeba Backup plugin failed to activate because the database server did not allow the database tables to be installed or updated. You will need to contact our support.
+</p>
+<h2>
+	Technical information
+</h2>
+<p>
+	<code>{$e->getCode()}</code> &mdash; {$e->getMessage()}
+</p>
+<pre>{$e->getTraceAsString()}</pre>
+HTML;
+				die;
 			}
-
-			// Run the update scripts, if necessary
-			$cpanelModel->postUpgradeActions();
 
 			update_option('akeebabackupwp_plugin_dir', self::$dirName);
 
 			// Copy the mu-plugins in the correct folder
-			$mu_folder = ABSPATH.'wp-content/mu-plugins';
+			$mu_folder = ABSPATH . 'wp-content/mu-plugins';
 
 			if (defined('WPMU_PLUGIN_DIR') && WPMU_PLUGIN_DIR)
 			{
@@ -236,12 +402,34 @@ class AkeebaBackupWP
 				mkdir($mu_folder, 0755, true);
 			}
 
-			@copy(WP_PLUGIN_DIR.'/'.self::$dirName.'/helpers/assets/mu-plugins/akeeba-backup-coreupdate.php',
-				$mu_folder.'/akeeba-backup-coreupdate.php');
+			@copy(
+				WP_PLUGIN_DIR . '/' . self::$dirName . '/helpers/assets/mu-plugins/akeeba-backup-coreupdate.php',
+				$mu_folder . '/akeeba-backup-coreupdate.php'
+			);
 		}
 
 		// Register the uninstallation hook
-		register_uninstall_hook(self::$absoluteFileName, array('AkeebaBackupWP', 'uninstall'));
+		register_uninstall_hook(self::$absoluteFileName, ['AkeebaBackupWP', 'uninstall']);
+	}
+
+	/**
+	 * Plugin deactivation hook handler.
+	 *
+	 * This precedes (but does not necessarily imply) uninstallation. A deactivated plugin can be reactivated at any
+	 * time. This used solely to clean up temporary data, such as WP-CRON hooks.
+	 *
+	 * @return  void
+	 * @since   7.8.0
+	 */
+	public static function onDeactivate(): void
+	{
+		// Unregister the CRON handler
+		$timestamp = wp_next_scheduled('abwp_cron_scheduling');
+
+		if ($timestamp)
+		{
+			wp_unschedule_event($timestamp, 'abwp_cron_scheduling');
+		}
 	}
 
 	/**
@@ -251,9 +439,9 @@ class AkeebaBackupWP
 	 *
 	 * @return  void
 	 */
-	public static function uninstall()
+	public static function uninstall(): void
 	{
-		$container = self::loadAkeebaBackup();
+		$container = self::loadAkeebaBackupContainer();
 
 		if ($container)
 		{
@@ -275,29 +463,52 @@ class AkeebaBackupWP
 	/**
 	 * Create the administrator menu for Akeeba Backup
 	 */
-	public static function adminMenu()
+	public static function adminMenu(): void
 	{
 		if (is_multisite())
 		{
 			return;
 		}
 
-		$page_hook_suffix = add_menu_page('Akeeba Backup', 'Akeeba Backup', 'edit_others_posts', self::$absoluteFileName, array('AkeebaBackupWP', 'boot'), plugins_url('app/media/logo/abwp-24-white.png', self::$absoluteFileName));
+		$container = self::loadAkeebaBackupContainer();
 
-		//add_action('admin_print_scripts-' . $page_hook_suffix, array(__CLASS__, 'adminPrintScripts'));
+		if (!$container)
+		{
+			return;
+		}
+
+		if ($container->appConfig->get('under_tools', 0) == 1)
+		{
+			add_management_page(
+				'Akeeba Backup', 'Akeeba Backup', 'edit_others_posts',
+				self::$absoluteFileName, ['AkeebaBackupWP', 'bootApplication']
+			);
+		}
+		else
+		{
+			add_menu_page(
+				'Akeeba Backup', 'Akeeba Backup', 'edit_others_posts',
+				self::$absoluteFileName, ['AkeebaBackupWP', 'bootApplication'],
+				plugins_url('app/media/logo/abwp-24-white.png', self::$absoluteFileName)
+			);
+		}
 	}
 
 	/**
 	 * Create the blog network administrator menu for Akeeba Backup
 	 */
-	public static function networkAdminMenu()
+	public static function networkAdminMenu(): void
 	{
 		if (!is_multisite())
 		{
 			return;
 		}
 
-		add_menu_page('Akeeba Backup', 'Akeeba Backup', 'manage_options', self::$absoluteFileName, array('AkeebaBackupWP', 'boot'), plugins_url('app/media/logo/abwp-24-white.png', self::$absoluteFileName));
+		add_menu_page(
+			'Akeeba Backup', 'Akeeba Backup', 'manage_options',
+			self::$absoluteFileName, ['AkeebaBackupWP', 'bootApplication'],
+			plugins_url('app/media/logo/abwp-24-white.png', self::$absoluteFileName)
+		);
 	}
 
 	/**
@@ -305,52 +516,19 @@ class AkeebaBackupWP
 	 *
 	 * @param   string  $bootstrapFile  The name of the application bootstrap file to use.
 	 */
-	public static function boot($bootstrapFile = 'boot_webapp.php')
+	public static function bootApplication(string $bootstrapFile = 'boot_webapp.php'): void
 	{
-		if (empty($bootstrapFile))
-		{
-			$bootstrapFile = 'boot_webapp.php';
-		}
+		$bootstrapFile = $bootstrapFile ?: 'boot_webapp.php';
 
-		if (!defined('AKEEBA_COMMON_WRONGPHP'))
+		if (self::$wrongPHP)
 		{
-			define('AKEEBA_COMMON_WRONGPHP', 1);
-		}
-
-		$minPHPVersion         = '7.1.0';
-		$recommendedPHPVersion = '7.3';
-		$softwareName          = 'Akeeba Backup for WordPress';
-
-		if (!require_once(dirname(self::$absoluteFileName) . '/helpers/wrongphp.php'))
-		{
-			return;
-		}
-
-		// HHVM made sense in 2013, now PHP 7 is a way better solution than an hybrid PHP interpreter
-		if (defined('HHVM_VERSION'))
-		{
-			include_once dirname(self::$absoluteFileName) . '/helpers/hhvm.php';
+			echo sprintf(
+				'Akeeba Backup for WordPress requires PHP %s or later. Your site is currently using PHP %s',
+				self::$minimumPHP,
+				PHP_VERSION
+			);
 
 			return;
-		}
-
-		$network = is_multisite() ? 'network/' : '';
-
-		if (!defined('AKEEBA_SOLO_WP_ROOTURL'))
-		{
-			define('AKEEBA_SOLO_WP_ROOTURL', site_url());
-		}
-
-		if (!defined('AKEEBA_SOLO_WP_URL'))
-		{
-			$bootstrapUrl = admin_url() . $network . 'admin.php?page=' . self::$dirName . '/' . self::$fileName;
-			define('AKEEBA_SOLO_WP_URL', $bootstrapUrl);
-		}
-
-		if (!defined('AKEEBA_SOLO_WP_SITEURL'))
-		{
-			$baseUrl = plugins_url('app/index.php', self::$absoluteFileName);
-			define('AKEEBA_SOLO_WP_SITEURL', substr($baseUrl, 0, -10));
 		}
 
 		$strapFile = dirname(self::$absoluteFileName) . '/helpers/' . $bootstrapFile;
@@ -358,6 +536,13 @@ class AkeebaBackupWP
 		if (!file_exists($strapFile))
 		{
 			die("Oops! Cannot initialize Akeeba Backup. Cannot locate the file $strapFile");
+		}
+
+		$container = self::loadAkeebaBackupContainer();
+
+		if (!$container)
+		{
+			return;
 		}
 
 		include_once $strapFile;
@@ -368,10 +553,10 @@ class AkeebaBackupWP
 	 *
 	 * @param   string  $url  The URL of the Javascript file to load
 	 */
-	public static function enqueueScript($url)
+	public static function enqueueScript(string $url): void
 	{
 		$parts = explode('?', $url);
-		$url = $parts[0];
+		$url   = $parts[0];
 
 		if (in_array($url, self::$loadedScripts))
 		{
@@ -380,14 +565,9 @@ class AkeebaBackupWP
 
 		self::$loadedScripts[] = $url;
 
-		if (!defined('AKEEBABACKUP_VERSION'))
-		{
-			@include_once dirname(self::$absoluteFileName) . '/app/version.php';
-		}
-
 		$handle = 'akjs' . md5($url);
 
-		wp_enqueue_script($handle, $url, [], AKEEBABACKUP_VERSION, false);
+		wp_enqueue_script($handle, $url, [], self::getMediaVersion(), false);
 	}
 
 	/**
@@ -395,7 +575,7 @@ class AkeebaBackupWP
 	 *
 	 * @param   string  $content  The script contents
 	 */
-	public static function enqueueInlineScript($content)
+	public static function enqueueInlineScript(string $content): void
 	{
 		/**
 		 * WordPress only adds inline scripts as "extra data" of an already queued script file. Since we want to add our
@@ -407,11 +587,6 @@ class AkeebaBackupWP
 		 */
 		$url = end(self::$loadedScripts);
 
-		if (!defined('AKEEBABACKUP_VERSION'))
-		{
-			@include_once dirname(self::$absoluteFileName) . '/app/version.php';
-		}
-
 		$handle = 'akjs' . md5($url);
 
 		wp_add_inline_script($handle, $content);
@@ -422,7 +597,7 @@ class AkeebaBackupWP
 	 *
 	 * @param   string  $url  The URL of the CSS file to load
 	 */
-	public static function enqueueStyle($url)
+	public static function enqueueStyle(string $url): void
 	{
 		if (!defined('AKEEBABACKUP_VERSION'))
 		{
@@ -430,7 +605,8 @@ class AkeebaBackupWP
 		}
 
 		$handle = 'akcss' . md5($url);
-		wp_enqueue_style($handle, $url, array(), AKEEBABACKUP_VERSION);
+
+		wp_enqueue_style($handle, $url, [], self::getMediaVersion());
 	}
 
 	/**
@@ -438,171 +614,123 @@ class AkeebaBackupWP
 	 *
 	 * @return  void
 	 */
-	public static function onUserLogout()
+	public static function onUserLogout(): void
 	{
 		// Remove the user meta which are used in our fake session handler
-		$userId         = get_current_user_id();
-		$allMeta        = get_user_meta($userId);
+		$userId  = get_current_user_id();
+		$allMeta = get_user_meta($userId);
 
-		if (empty($allMeta))
+		foreach ($allMeta ?: [] as $key => $value)
 		{
-			return;
-		}
-
-		foreach ($allMeta as $key => $value)
-		{
-			if (strpos($key, 'AkeebaSession_') === 0)
+			if (strpos($key, 'AkeebaSession_') !== 0)
 			{
-				delete_user_meta($userId, $key);
+				continue;
 			}
+
+			delete_user_meta($userId, $key);
 		}
 	}
 
 	/**
-	 * Load the WordPress plugin updater integration, unless the integratedupdate flag in the configuration is unset.
-	 * The default behavior is to add the integration.
+	 * Returns the backup profile that should be used on Manual WordPress update.
 	 *
-	 * @return void
+	 * Returns NULL if we don't want to take a backup
+	 *
+	 * @return int|null
 	 */
-	public static function loadIntegratedUpdater()
+	public static function getProfileManualCoreUpdate(): ?int
 	{
 		if (is_null(self::$appConfig))
 		{
 			self::loadAppConfig();
 		}
 
-		if (isset(self::$appConfig['options']['integratedupdate']) && (self::$appConfig['options']['integratedupdate'] == 0))
+		$isPro = defined('AKEEBABACKUP_PRO') ? AKEEBABACKUP_PRO : 0;
+
+		if (!$isPro)
 		{
-			return;
+			return null;
 		}
 
-		add_filter ('pre_set_site_transient_update_plugins', array('AkeebaBackupWPUpdater', 'getupdates'), 10, 2);
-		add_filter ('plugins_api', array('AkeebaBackupWPUpdater', 'checkinfo'), 10, 3);
-		add_filter ('upgrader_pre_download', array('AkeebaBackupWPUpdater', 'addDownloadID'), 10, 3);
-		add_filter ('upgrader_package_options', array('AkeebaBackupWPUpdater', 'packageOptions'), 10, 2);
-		add_filter ('after_plugin_row_akeebabackupwp/akeebabackupwp.php', array('AkeebaBackupWPUpdater', 'updateMessage'), 10, 3);
-	}
-
-	/**
-	 * Returns the backup profile that should be used on Manual WordPress update. Returns false if we don't want to take a backup
-	 *
-	 * @return bool|int
-	 */
-	public static function getProfileManualCoreUpdate()
-	{
-		if (is_null(self::$appConfig))
+		// If the option has been set, and it's false, let's stop. Otherwise, continue (enabled by default)
+		if (!(self::$appConfig['options']['backuponupdate_core_manual'] ?? false))
 		{
-			self::loadAppConfig();
-		}
-
-		// If the option has been set and it's false, let's stop. Otherwise continue (enabled by default)
-		if (isset(self::$appConfig['options']['backuponupdate_core_manual']) && !self::$appConfig['options']['backuponupdate_core_manual'])
-		{
-			return false;
+			return null;
 		}
 
 		// Default backup profile is 1
-		$profile = 1;
+		$profile = self::$appConfig['options']['backuponupdate_core_manual_profile'] ?? 1;
 
-		if (isset(self::$appConfig['options']['backuponupdate_core_manual_profile']) && (self::$appConfig['options']['backuponupdate_core_manual_profile'] > 0))
+		if ($profile <= 0)
 		{
-			$profile = self::$appConfig['options']['backuponupdate_core_manual_profile'];
+			return null;
 		}
 
-		return $profile;
-	}
-
-	private static function loadAppConfig()
-	{
-		self::$appConfig = [];
-		$filePath        = __DIR__ . '/private/config.php';
-
-		if (!file_exists($filePath) || !is_readable($filePath))
-		{
-			return;
-		}
-
-		$fileData = @file_get_contents($filePath);
-
-		if ($fileData === false)
-		{
-			return;
-		}
-
-		$fileData = explode("\n", $fileData, 2);
-		$fileData = $fileData[1];
-		$config   = @json_decode($fileData, true);
-
-		if (is_null($config) || !is_array($config))
-		{
-			return;
-		}
-
-		self::$appConfig = $config;
+		return (int) $profile;
 	}
 
 	/**
 	 * Includes all the required pieces to load Akeeba Backup from within a standard WordPress page
 	 *
-	 * @return \Solo\Container|false
+	 * @return \Solo\Container|null
 	 */
-	public static function loadAkeebaBackup()
+	public static function loadAkeebaBackupContainer()
 	{
-		static $localContainer;
-
-		// Do not run the whole logic if we already have a valid Container
-		if ($localContainer)
+		if (self::$container)
 		{
-			return $localContainer;
+			return self::$container;
 		}
 
-		if (!defined('AKEEBASOLO'))
-		{
-			define('AKEEBASOLO', 1);
-		}
+		// Load the basics
+		self::$dirName = self::getPluginSlug();
 
-		@include_once __DIR__.'/../app/version.php';
-
-		// Include the autoloader
-		if (!include_once __DIR__ . '/../app/Awf/Autoloader/Autoloader.php')
-		{
-			return false;
-		}
-
-		global $akeebaBackupWordPressLoadPlatform;
-		$akeebaBackupWordPressLoadPlatform = true;
+		defined('AKEEBASOLO') || define('AKEEBASOLO', 1);
 
 		if (!file_exists(__DIR__ . '/../helpers/integration.php'))
 		{
-			return false;
+			return null;
 		}
 
 		/** @var \Solo\Container $container */
-		$container = require __DIR__ . '/../helpers/integration.php';
+		self::$container = require __DIR__ . '/../helpers/integration.php';
 
-		// Ok, really don't know why but this function gets called TWICE. It seems to completely ignore the first result
-		// (even if we report that there's an update) and calls it again. This means that the require_once above will be ignored.
-		// I can't simply return the current $transient because it doesn't contain the updated info.
-		// So I'll save a previous copy of the container and then use it later.
-		if (!$localContainer)
+		self::$container = self::$container ?: null;
+
+		if (!self::$container)
 		{
-			$localContainer = $container;
+			return null;
 		}
 
-		if (!$localContainer)
-		{
-			return false;
-		}
+		// Since the Platform is already loaded at this point, we can tell it to use the correct key file
+		Factory::getSecureSettings()->setKeyFilename(
+			rtrim(
+				(defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : (rtrim(ABSPATH, '/') . '/wp-content')),
+				'/'
+			) . '/akeebabackup_secretkey.php'
+		);
 
 		// Get all info saved inside the configuration
-		$container->appConfig->loadConfiguration();
-		$container->basePath = WP_PLUGIN_DIR.'/akeebabackupwp/app/Solo';
+		self::$container->appConfig->loadConfiguration();
+		self::$container->basePath = realpath(__DIR__ . '/../app/Solo');
 
-		// Require the application for the first time by passing all values. In this way we prime the internal cache and
-		// we will be covered on cases where we fetch the application from the getInstance method instead of using the container
-		\Awf\Application\Application::getInstance('Solo', $container);
+		if (!@is_dir(self::$container->basePath))
+		{
+			self::$container->basePath = WP_PLUGIN_DIR . '/akeebabackupwp/app/Solo';
+		}
 
-		return $localContainer;
+		// Make sure post-upgrade code has executed before doing anything else!
+		try
+		{
+			/** @var Main $mainModel */
+			$mainModel = self::$container->mvcFactory->makeTempModel('Main');
+			$mainModel->postUpgradeActions(true);
+		}
+		catch (Exception $e)
+		{
+			// The post-upgrade code failed. All bets are off!
+		}
+
+		return self::$container;
 	}
 
 	/**
@@ -641,11 +769,9 @@ class AkeebaBackupWP
 		try
 		{
 			// Required by the integration.php file
-			define('AKEEBASOLO', 1);
+			defined('AKEEBASOLO') || define('AKEEBASOLO', 1);
 			// Creates the application container, required for translations to work
-			global $akeebaBackupWordPressLoadPlatform;
-			$akeebaBackupWordPressLoadPlatform = true;
-			/** @var \Awf\Container\Container $container */
+			/** @var Container $container */
 			$container = require 'integration.php';
 			// This tells AWF to consider the 'solo' app as the default
 			$app = Awf\Application\Application::getInstance($container->application->getName());
@@ -679,4 +805,268 @@ HTML;
 
 		exit(200);
 	}
+
+	/**
+	 * New JSON API entry point.
+	 *
+	 * You can access it as /wp-admin/admin-ajax.php?action=akeebabackup_api
+	 *
+	 * @return  void
+	 * @since   7.7.0
+	 */
+	public static function jsonApi()
+	{
+		// Make sure the application configuration has been loaded
+		if (is_null(self::$appConfig))
+		{
+			self::loadAppConfig();
+		}
+
+		// Get the container
+		$container = self::loadAkeebaBackupContainer();
+
+		if (!$container)
+		{
+			return;
+		}
+
+		// This is necessary to load the language files
+		$container->application->initialise();
+		// tell it this is the Api view and execute Akeeba Backup.
+		$container->input->set('view', 'api');
+		$container->dispatcher->dispatch();
+	}
+
+	/**
+	 * New Legacy Frontend Backup entry point.
+	 *
+	 * You can access it as /wp-admin/admin-ajax.php?action=akeebabackup_legacy
+	 *
+	 * @return  void
+	 * @since   7.7.0
+	 */
+	public static function legacyFrontendBackup()
+	{
+		// Make sure the application configuration has been loaded
+		if (is_null(self::$appConfig))
+		{
+			self::loadAppConfig();
+		}
+
+		// Get the container
+		$container = self::loadAkeebaBackupContainer();
+
+		if (!$container)
+		{
+			return;
+		}
+
+		// This is necessary to load the language files
+		$container->application->initialise();
+		// Tell it this is the Remote view and execute Akeeba Backup.
+		$container->input->set('view', 'remote');
+		$container->dispatcher->dispatch();
+	}
+
+	/**
+	 * New Frontend Backup Check entry point.
+	 *
+	 * You can access it as /wp-admin/admin-ajax.php?action=akeebabackup_check
+	 *
+	 * @return  void
+	 * @since   7.7.0
+	 */
+	public static function frontendBackupCheck()
+	{
+		// Make sure the application configuration has been loaded
+		if (is_null(self::$appConfig))
+		{
+			self::loadAppConfig();
+		}
+
+		// Get the container
+		$container = self::loadAkeebaBackupContainer();
+
+		if (!$container)
+		{
+			return;
+		}
+
+		// This is necessary to load the language files
+		$container->application->initialise();
+		// Tell it this is the Api view and execute Akeeba Backup.
+		$container->input->set('view', 'check');
+		$container->dispatcher->dispatch();
+	}
+
+	/**
+	 * Handle pseudo-CRON
+	 *
+	 * @return void
+	 * @since  7.8.0
+	 */
+	public static function handlePseudoCron()
+	{
+		// Make sure the application configuration has been loaded
+		if (is_null(self::$appConfig))
+		{
+			self::loadAppConfig();
+		}
+
+		// Get the application container
+		$container = self::loadAkeebaBackupContainer();
+
+		if (!$container)
+		{
+			return;
+		}
+
+		// This feature is only available in the Professional version
+		$isPro = defined('AKEEBABACKUP_PRO') ? AKEEBABACKUP_PRO : 0;
+
+		if (!$isPro)
+		{
+			return null;
+		}
+
+		/** @var Cron $model */
+		$model = $container->mvcFactory->makeTempModel('Cron');
+		$model->runNextTask();
+	}
+
+	/**
+	 * Store the unquoted request variables to prevent WordPress from killing JSON requests.
+	 */
+	private static function storeUnquotedRequest(): void
+	{
+		// See http://stackoverflow.com/questions/8949768/with-magic-quotes-disabled-why-does-php-wordpress-continue-to-auto-escape-my
+		global $AKEEBABACKUPWP_REAL_REQUEST;
+
+		if (!empty($AKEEBABACKUPWP_REAL_REQUEST))
+		{
+			return;
+		}
+
+		/**
+		 * Some very misguided web hosts set request_order = "" in the php.ini. As a result, the $_REQUEST superglobal
+		 * is not set at all. Since ini_get is not realiably available on these hosts we have to check for that
+		 * condition in an oblique way and work around it if needed.
+		 */
+		$AKEEBABACKUPWP_REAL_REQUEST = (empty($_REQUEST) && (!empty($_GET) || !empty($_POST))) ? array_merge_recursive(
+			$_GET, $_POST
+		)
+			: array_merge($_REQUEST, []);
+	}
+
+	/**
+	 * Get the value for the media version query string.
+	 *
+	 * @return  string
+	 */
+	private static function getMediaVersion()
+	{
+		// The media version is cached for performance reasons
+		static $mediaVersion;
+
+		if (!empty($mediaVersion))
+		{
+			return $mediaVersion;
+		}
+
+		// Get a per-site key to scramble the software version: the size of this file plus its modification time
+		$filesize  = @filesize(__FILE__) ?: 0;
+		$filemtime = @filemtime(__FILE__) ?: 0;
+		$key       = sprintf("%d@%s", $filesize, $filemtime);
+
+		/**
+		 * If WordPress debug is enabled add a per-request element to the key, guaranteeing an ever-changing media
+		 * version which prevents the browser from ever caching the media files of this plugin. This is useful in
+		 * development.
+		 */
+		if (defined('WP_DEBUG') && WP_DEBUG)
+		{
+			$key .= ':' . microtime(true);
+		}
+
+		// At the very least use a simple MD5 hash as the media version
+		$mediaVersion = md5(
+			(defined('AKEEBABACKUP_VERSION') ? AKEEBABACKUP_VERSION : '') . ':' . $key
+		);
+
+		// If possible, use HMAC-MD5 which makes it harder to deduce the plugin version just from the media version.
+		if (function_exists('hash_hmac'))
+		{
+			$mediaVersion = hash_hmac(
+				'md5',
+				defined('AKEEBABACKUP_VERSION') ? AKEEBABACKUP_VERSION : '',
+				$key
+			);
+		}
+
+		return $mediaVersion;
+	}
+
+	private static function loadAppConfig()
+	{
+		self::$appConfig = [];
+
+		$container = self::loadAkeebaBackupContainer();
+
+		if (!$container)
+		{
+			return;
+		}
+
+		try
+		{
+			$config = @json_decode($container->appConfig->toString('JSON'), true);
+		}
+		catch (Exception $e)
+		{
+			return;
+		}
+
+		if (!is_array($config))
+		{
+			return;
+		}
+
+		self::$appConfig = $config;
+	}
+
+	private static function getPluginSlug(): string
+	{
+		$pluginsUrl   = plugins_url('', realpath(__DIR__ . '/../akeebabackupwp.php')) ?: realpath(__DIR__ . '/..');
+		$baseUrlParts = explode('/', $pluginsUrl);
+		$dirSlug      = end($baseUrlParts);
+
+		if (!empty($dirSlug) && ($dirSlug != '..'))
+		{
+			return $dirSlug;
+		}
+
+		$fullDir  = __DIR__;
+		$dirParts = explode(DIRECTORY_SEPARATOR, $fullDir, 3);
+		$dirSlug  = $dirParts[1] ?? 'akeebabackup';
+
+		return $dirSlug;
+	}
 }
+
+call_user_func(
+	function () {
+		if (!defined('WPINC'))
+		{
+			return;
+		}
+
+		$filePath = @realpath(__DIR__ . '/../akeebabackupwp.php');
+
+		if (empty($filePath) || basename($filePath) !== 'akeebabackupwp.php')
+		{
+			return;
+		}
+
+		AkeebaBackupWP::initialization($filePath);
+	}
+);

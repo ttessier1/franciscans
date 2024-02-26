@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -22,9 +22,9 @@ class SiteDatabase extends FilterBase
 	public function __construct()
 	{
 		// This is a directory inclusion filter.
-		$this->object = 'db';
-		$this->subtype = 'inclusion';
-		$this->method = 'direct';
+		$this->object      = 'db';
+		$this->subtype     = 'inclusion';
+		$this->method      = 'direct';
 		$this->filter_name = 'SiteDatabase';
 
 		// Add a new record for the core Joomla! database
@@ -33,14 +33,22 @@ class SiteDatabase extends FilterBase
 
 		if ($configuration->get('akeeba.platform.override_db', 0))
 		{
-			$options = array(
+			$options = [
 				'port'     => $configuration->get('akeeba.platform.dbport', ''),
 				'host'     => $configuration->get('akeeba.platform.dbhost', ''),
 				'user'     => $configuration->get('akeeba.platform.dbusername', ''),
 				'password' => $configuration->get('akeeba.platform.dbpassword', ''),
 				'database' => $configuration->get('akeeba.platform.dbname', ''),
 				'prefix'   => $configuration->get('akeeba.platform.dbprefix', ''),
-			);
+				'ssl'      => [
+					'enable'             => $configuration->get('akeeba.platform.dbencryption', '0') == 1,
+					'cipher'             => $configuration->get('akeeba.platform.dbsslcipher', ''),
+					'ca'                 => $configuration->get('akeeba.platform.dbsslca', ''),
+					'key'                => $configuration->get('akeeba.platform.dbsslkey', ''),
+					'cert'               => $configuration->get('akeeba.platform.dbsslcert', ''),
+					'verify_server_cert' => $configuration->get('akeeba.platform.dbsslverifyservercert', 0) == 1,
+				],
+			];
 
 			$dbdriver = $configuration->get('akeeba.platform.dbdriver', 'mysqli');
 
@@ -54,57 +62,32 @@ class SiteDatabase extends FilterBase
 		else
 		{
 			$options = Platform::getInstance()->get_platform_database_options();
-			$driver = Platform::getInstance()->get_default_database_driver(true);
-		}
-
-		$host = $options['host'];
-		$port = array_key_exists('port', $options) ? $options['port'] : null;
-
-		if (empty($port))
-		{
-			$port = null;
-		}
-
-		$socket = null;
-		$targetSlot = substr(strstr($host, ":"), 1);
-
-		if (!empty($targetSlot))
-		{
-			// Get the port number or socket name
-			if (is_numeric($targetSlot) && is_null($port))
-			{
-				$port = $targetSlot;
-			}
-			else
-			{
-				$socket = $targetSlot;
-			}
-
-			// Extract the host name only
-			$host = substr($host, 0, strlen($host) - (strlen($targetSlot) + 1));
-
-			// This will take care of the following notation: ":3306"
-			if ($host == '')
-			{
-				$host = 'localhost';
-			}
+			$driver  = Platform::getInstance()->get_default_database_driver(true);
 		}
 
 		// This is the format of the database inclusion filters
-		$entry = array(
-			'host'     => $host,
-			'port'     => is_null($socket) ? (is_null($port) ? '' : $port) : $socket,
-			'username' => $options['user'],
-			'password' => $options['password'],
-			'database' => $options['database'],
-			'prefix'   => $options['prefix'],
-			'dumpFile' => 'site.sql',
-			'driver'   => $driver
-		);
+		$options['ssl'] = $options['ssl'] ?? [];
+		$options['ssl'] = is_array($options['ssl']) ? $options['ssl'] : [];
+
+		$entry = [
+			'host'                  => ($options['host'] ?? null) ?: null,
+			'port'                  => ($options['port'] ?? null) ?: null,
+			'socket'                => ($options['socket'] ?? null) ?: null,
+			'username'              => $options['user'] ?? null,
+			'password'              => $options['password'] ?? null,
+			'database'              => $options['database'] ?? null,
+			'prefix'                => $options['prefix'] ?? '',
+			'dumpFile'              => 'site.sql',
+			'driver'                => $driver,
+			'dbencryption'          => ($options['ssl']['enable'] ?? false) ? 1 : 0,
+			'dbsslcipher'           => ($options['ssl']['cipher'] ?? '') ?: '',
+			'dbsslca'               => ($options['ssl']['ca'] ?? '') ?: '',
+			'dbsslkey'              => ($options['ssl']['key'] ?? '') ?: '',
+			'dbsslcert'             => ($options['ssl']['cert'] ?? '') ?: '',
+			'dbsslverifyservercert' => ($options['ssl']['verify_server_cert'] ?? false) ? 1 : 0,
+		];
 
 		// We take advantage of the filter class magic to inject our custom filters
-		$configuration = Factory::getConfiguration();
-
 		$this->filter_data['[SITEDB]'] = $entry;
 
 		parent::__construct();

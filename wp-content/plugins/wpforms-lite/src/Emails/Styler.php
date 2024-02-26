@@ -2,7 +2,7 @@
 
 namespace WPForms\Emails;
 
-use TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
+use WPForms\Vendor\TijsVerkoyen\CssToInlineStyles\CssToInlineStyles;
 use WPForms\Helpers\Templates;
 
 /**
@@ -61,8 +61,8 @@ class Styler {
 
 		$this->email = $email;
 
-		$this->style_templates = \is_array( $style_templates ) ? $style_templates : array();
-		$this->style_overrides = \is_array( $style_overrides ) ? $style_overrides : array();
+		$this->style_templates = is_array( $style_templates ) ? $style_templates : [];
+		$this->style_overrides = is_array( $style_overrides ) ? $style_overrides : [];
 	}
 
 	/**
@@ -74,9 +74,7 @@ class Styler {
 	 */
 	protected function get_style_overrides() {
 
-		$defaults = array(
-			'email_background_color' => \wpforms_setting( 'email-background-color', '#e9eaec' ),
-		);
+		$defaults = Helpers::get_current_template_style_overrides();
 
 		$overrides = \wp_parse_args( $this->style_overrides, $defaults );
 

@@ -52,7 +52,7 @@ var WPFormsElementor = window.WPFormsElementor || ( function( document, window, 
 				elementor.channels.editor.on( 'elementorWPFormsAddFormBtnClick', app.addFormBtnClick );
 
 				// Widget frontend events.
-				elementorFrontend.hooks.addAction( 'frontend/element_ready/widget', app.widgetPreviewEvents );
+				elementorFrontend.hooks.addAction( 'frontend/element_ready/wpforms.default', app.widgetPreviewEvents );
 
 				// Initialize widget controls.
 				elementor.hooks.addAction( 'panel/open_editor/widget/wpforms', app.widgetPanelOpen );
@@ -73,7 +73,37 @@ var WPFormsElementor = window.WPFormsElementor || ( function( document, window, 
 				.on( 'click', '.wpforms-btn', app.addFormBtnClick )
 				.on( 'click', '.wpforms-admin-no-forms-container a', app.clickLinkInPreview )
 				.on( 'change', '.wpforms-elementor-form-selector select', app.selectFormInPreview )
-				.on( 'click mousedown focus keydown submit', '.wpforms-container *', app.disableEvents );
+				.on( 'click mousedown focus keydown submit', '.wpforms-container *', app.disableEvents )
+				.on( 'click', '.wpforms-comprehensive-link', app.openComprehensiveLink );
+
+			app.updateSameForms( $scope );
+		},
+
+		/**
+		 * Update all the same forms on the preview.
+		 *
+		 * @since 1.6.3
+		 *
+		 * @param {jQuery} $scope The current element wrapped with jQuery.
+		 */
+		updateSameForms: function( $scope ) {
+
+			var elementId = $scope.data( 'id' ),
+				$formContainer = $scope.find( '.wpforms-container' ),
+				formContainerHtml = $formContainer.html(),
+				formContainerId = $formContainer.attr( 'id' );
+
+			$scope
+				.closest( '.elementor-editor-active' )
+				.find( '.elementor-widget-wpforms:not(.elementor-element-' + elementId + ')' )
+				.each( function() {
+
+					var $anotherFormContainer = $( this ).find( '.wpforms-container' );
+
+					if ( $anotherFormContainer.attr( 'id' ) === formContainerId ) {
+						$anotherFormContainer.html( formContainerHtml );
+					}
+				} );
 		},
 
 		/**
@@ -91,7 +121,7 @@ var WPFormsElementor = window.WPFormsElementor || ( function( document, window, 
 
 			app.widgetPanelInit( panel );
 
-			app.widgetPanelSectionClickObserver( panel );
+			app.widgetPanelObserver.init( panel );
 		},
 
 		/**
@@ -143,57 +173,129 @@ var WPFormsElementor = window.WPFormsElementor || ( function( document, window, 
 		},
 
 		/**
-		 * Initialize observer to re-init controls on form section toggles.
+		 * The observer needed to re-init controls when the widget panel section and tabs switches.
 		 *
-		 * @since 1.6.2
+		 * @since 1.6.3
 		 *
-		 * @param {object} panel Panel object.
+		 * @member {object}
 		 */
-		widgetPanelSectionClickObserver: function( panel ) {
+		widgetPanelObserver: {
 
-			if ( vars.observerWidgetId === vars.widgetId ) {
-				return;
-			}
+			/**
+			 * Initialize observer.
+			 *
+			 * @since 1.6.3
+			 *
+			 * @param {object} panel Panel object.
+			 */
+			init: function( panel ) {
 
-			// Disconnect previous widget observer.
-			if ( typeof vars.observer !== 'undefined' && $.isFunction( vars.observer.disconnect ) ) {
-				vars.observer.disconnect();
-			}
+				// Skip if observer for current widget already initialized.
+				if ( vars.observerWidgetId === vars.widgetId ) {
+					return;
+				}
 
-			var obs = {
-				targetNode  : panel.$el.find( '#elementor-panel-page-editor' )[0],
-				config      : {
-					childList: true,
-					subtree: true,
-				},
-			};
+				// Disconnect previous widget observer.
+				if ( typeof vars.observer !== 'undefined' && typeof vars.observer.disconnect === 'function' ) {
+					vars.observer.disconnect();
+				}
 
-			obs.callback = function( mutationsList, observer ) {
+				var obs = {
+					targetNode  : panel.$el.find( '#elementor-panel-content-wrapper' )[0],
+					config      : {
+						childList: true,
+						subtree: true,
+						attributes: true,
+					},
+				};
 
-				var mutation, node;
+				app.widgetPanelObserver.panel = panel;
+
+				obs.observer = new MutationObserver( app.widgetPanelObserver.callback );
+				obs.observer.observe( obs.targetNode, obs.config );
+
+				vars.observerWidgetId = vars.widgetId;
+				vars.observer = obs.observer;
+			},
+
+			/**
+			 * Observer callback.
+			 *
+			 * @since 1.6.3
+			 *
+			 * @param {Array} mutationsList Mutation list.
+			 */
+			callback: function( mutationsList ) {
+
+				var mutation,
+					quit = false;
 
 				for ( var i in mutationsList ) {
 					mutation = mutationsList[ i ];
 
-					if ( mutation.type !== 'childList' || mutation.addedNodes.length < 1 ) {
-						continue;
+					if ( mutation.type === 'childList' && mutation.addedNodes.length > 0 ) {
+						quit = app.widgetPanelObserver.callbackMutationChildList( mutation );
 					}
 
-					for ( var n in mutation.addedNodes ) {
-						node = mutation.addedNodes[ n ];
+					if ( mutation.type === 'attributes' ) {
+						quit = app.widgetPanelObserver.callbackMutationAttributes( mutation );
+					}
 
-						if ( node && node.classList && node.classList.contains( 'elementor-control-section_form' ) ) {
-							app.widgetPanelInit( panel );
-						}
+					if ( quit ) {
+						return;
 					}
 				}
-			};
+			},
 
-			obs.observer = new MutationObserver( obs.callback );
-			obs.observer.observe( obs.targetNode, obs.config );
+			/**
+			 * Process 'childList' mutation.
+			 *
+			 * @since 1.6.3
+			 *
+			 * @param {MutationRecord} mutation Mutation record.
+			 *
+			 * @returns {boolean} True if detect needed node.
+			 */
+			callbackMutationChildList: function( mutation ) {
 
-			vars.observerWidgetId = vars.widgetId;
-			vars.observer = obs.observer;
+				var addedNodes = mutation.addedNodes || [],
+					node;
+
+				for ( var n in addedNodes ) {
+					node = addedNodes[ n ];
+
+					if ( node && node.classList && node.classList.contains( 'elementor-control-section_form' ) ) {
+						app.widgetPanelInit( app.widgetPanelObserver.panel );
+						return true;
+					}
+				}
+
+				return false;
+			},
+
+			/**
+			 * Process 'attributes' mutation.
+			 *
+			 * @since 1.6.3
+			 *
+			 * @param {MutationRecord} mutation Mutation record.
+			 *
+			 * @returns {boolean} True if detect needed target.
+			 */
+			callbackMutationAttributes: function( mutation ) {
+
+				if (
+					mutation.target &&
+					mutation.target.classList &&
+					mutation.target.classList.contains( 'elementor-tab-control-content' )
+				) {
+					app.widgetPanelInit( app.widgetPanelObserver.panel );
+
+					return true;
+				}
+
+				return false;
+			},
 		},
 
 		/**
@@ -231,6 +333,13 @@ var WPFormsElementor = window.WPFormsElementor || ( function( document, window, 
 		 */
 		findFormSelector: function( event ) {
 
+			let view = elementor.getPanelView().getCurrentPageView();
+
+			// We need to be sure that we are on the widget Content section.
+			if ( view.activeSection && view.activeSection !== 'section_form' ) {
+				$( view.ui.tabs[0] ).trigger( 'click' );
+			}
+
 			vars.$select = event && event.$el ?
 				event.$el.closest( '#elementor-controls' ).find( 'select[data-setting="form_id"]' ) :
 				window.parent.jQuery( '#elementor-controls select[data-setting="form_id"]' );
@@ -246,7 +355,9 @@ var WPFormsElementor = window.WPFormsElementor || ( function( document, window, 
 			vars.formId = $( this ).val();
 
 			app.findFormSelector();
-			vars.$select.val( vars.formId ).trigger( 'change' );
+
+			// To be sure, that both form selector selects are in sync.
+			app.refreshFormsList( null, vars.formId );
 		},
 
 		/**
@@ -278,6 +389,22 @@ var WPFormsElementor = window.WPFormsElementor || ( function( document, window, 
 			event.stopImmediatePropagation();
 
 			return false;
+		},
+
+		/**
+		 * Open the compreshenvie guide link,
+		 * as elementor disables all links in the preview.
+		 *
+		 * @since 1.8.3
+		 *
+		 * @param {object} event Event object.
+		 */
+		openComprehensiveLink: function( event ) {
+
+			const url = $( this ).attr( 'href' );
+
+			// Open the url in a new tab with JS bc elementor doesn't allow links in the preview.
+			window.open( url, '_blank' ).focus();
 		},
 
 		/**

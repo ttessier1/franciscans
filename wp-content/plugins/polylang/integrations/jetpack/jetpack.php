@@ -4,24 +4,24 @@
  */
 
 /**
- * Manages the compatibility with Jetpack
+ * Manages the compatibility with Jetpack.
  *
  * @since 2.3
  */
 class PLL_Jetpack {
 	/**
-	 * Constructor
+	 * Constructor.
 	 *
 	 * @since 2.3
 	 */
 	public function __construct() {
 		add_action( 'init', array( $this, 'jetpack_init' ) );
-		add_action( 'jetpack_widget_get_top_posts', array( $this, 'jetpack_widget_get_top_posts' ), 10, 3 );
-		add_filter( 'grunion_contact_form_field_html', array( $this, 'grunion_contact_form_field_html_filter' ), 10, 3 );
+		add_action( 'jetpack_widget_get_top_posts', array( $this, 'jetpack_widget_get_top_posts' ) );
+		add_filter( 'grunion_contact_form_field_html', array( $this, 'grunion_contact_form_field_html_filter' ), 10, 2 );
 		add_filter( 'jetpack_open_graph_tags', array( $this, 'jetpack_ogp' ) );
 		add_filter( 'jetpack_relatedposts_filter_filters', array( $this, 'jetpack_relatedposts_filter_filters' ), 10, 2 );
 
-		// Jetpack infinite scroll
+		// Jetpack infinite scroll.
 		if ( isset( $_GET['infinity'], $_POST['action'] ) && 'infinite_scroll' == $_POST['action'] ) { // phpcs:ignore WordPress.Security.NonceVerification
 			add_filter( 'pll_is_ajax_on_front', '__return_true' );
 		}
@@ -37,7 +37,7 @@ class PLL_Jetpack {
 			return;
 		}
 
-		// Infinite scroll ajax url must be on the right domain
+		// Infinite scroll ajax url must be on the right domain.
 		if ( did_action( 'pll_init' ) && PLL()->options['force_lang'] > 1 ) {
 			add_filter( 'infinite_scroll_ajax_url', array( PLL()->links_model, 'site_url' ) );
 			add_filter( 'infinite_scroll_js_settings', array( $this, 'jetpack_infinite_scroll_js_settings' ) );
@@ -50,12 +50,10 @@ class PLL_Jetpack {
 	 *
 	 * @since 1.5.4
 	 *
-	 * @param array  $posts    Array of the most popular posts.
-	 * @param array  $post_ids Array of Post IDs.
-	 * @param string $count    Number of Top Posts we want to display.
+	 * @param array $posts Array of the most popular posts.
 	 * @return array
 	 */
-	public function jetpack_widget_get_top_posts( $posts, $post_ids, $count ) {
+	public function jetpack_widget_get_top_posts( $posts ) {
 		foreach ( $posts as $k => $post ) {
 			if ( pll_current_language() !== pll_get_post_language( $post['post_id'] ) ) {
 				unset( $posts[ $k ] );
@@ -68,16 +66,15 @@ class PLL_Jetpack {
 	/**
 	 * Filter the HTML of the Contact Form and output the one requested by language.
 	 * Adapted from the same function in jetpack-3.0.2/3rd-party/wpml.php
-	 * Keeps using 'icl_translate' as the function registers the string
+	 * Keeps using 'icl_translate' as the function registers the string.
 	 *
 	 * @since 1.5.4
 	 *
-	 * @param string   $r           Contact Form HTML output.
-	 * @param string   $field_label Field label.
-	 * @param int|null $id          Post ID.
+	 * @param string $r           Contact Form HTML output.
+	 * @param string $field_label Field label.
 	 * @return string
 	 */
-	public function grunion_contact_form_field_html_filter( $r, $field_label, $id ) {
+	public function grunion_contact_form_field_html_filter( $r, $field_label ) {
 		if ( function_exists( 'icl_translate' ) ) {
 			if ( pll_current_language() !== pll_default_language() ) {
 				$label_translation = icl_translate( 'jetpack ', $field_label . '_label', $field_label );
@@ -89,11 +86,11 @@ class PLL_Jetpack {
 	}
 
 	/**
-	 * Adds opengraph support for locale and translations
+	 * Adds opengraph support for locale and translations.
 	 *
 	 * @since 1.6
 	 *
-	 * @param array $tags opengraph tags to output
+	 * @param array $tags Opengraph tags to output.
 	 * @return array
 	 */
 	public function jetpack_ogp( $tags ) {
@@ -111,7 +108,7 @@ class PLL_Jetpack {
 	}
 
 	/**
-	 * Allows to make sure that related posts are in the correct language
+	 * Allows to make sure that related posts are in the correct language.
 	 *
 	 * @since 1.8
 	 *
@@ -126,15 +123,15 @@ class PLL_Jetpack {
 	}
 
 	/**
-	 * Fixes the settings history host for infinite scroll when using subdomains or multiple domains
+	 * Fixes the settings history host for infinite scroll when using subdomains or multiple domains.
 	 *
 	 * @since 2.1
 	 *
-	 * @param array $settings
+	 * @param array $settings Infinite scroll JS settings outputted in the head.
 	 * @return array
 	 */
 	public function jetpack_infinite_scroll_js_settings( $settings ) {
-		$settings['history']['host'] = wp_parse_url( pll_home_url(), PHP_URL_HOST ); // Jetpack uses get_option( 'home' )
+		$settings['history']['host'] = wp_parse_url( pll_home_url(), PHP_URL_HOST ); // Jetpack uses get_option( 'home' ).
 		return $settings;
 	}
 }

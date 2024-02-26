@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -97,16 +97,17 @@ class Sysconfig extends ControllerDefault
 			$url = $this->container->router->route('index.php');
 		}
 
-		$this->setRedirect($url, Text::_('SOLO_SYSCONFIG_SAVE'));
-
 		// Akeeba Backup for WordPress: reset update information
 		if (defined('WPINC'))
 		{
 			$transient = (object) [
 				'response' => []
 			];
-			\AkeebaBackupWPUpdater::getupdates($transient);
+			\AkeebaBackupWPUpdater::getUpdateInformation($transient);
 		}
+
+		// Finally, redirect
+		$this->setRedirect($url, Text::_('SOLO_SYSCONFIG_SAVE'));
 	}
 
 	public function apply()
@@ -121,7 +122,7 @@ class Sysconfig extends ControllerDefault
     public function testemail()
     {
         $config = $this->container->appConfig;
-        $mailer = $this->container->mailer;
+        $mailer = $this->container->mailer();
         $user   = $this->container->userManager->getUser();
 
         $from     = $config->get('mail.mailfrom');

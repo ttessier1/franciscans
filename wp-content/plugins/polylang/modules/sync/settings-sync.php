@@ -21,7 +21,7 @@ class PLL_Settings_Sync extends PLL_Settings_Module {
 	 *
 	 * @since 1.8
 	 *
-	 * @param object $polylang polylang object
+	 * @param object $polylang The polylang object.
 	 */
 	public function __construct( &$polylang ) {
 		parent::__construct(
@@ -67,34 +67,35 @@ class PLL_Settings_Sync extends PLL_Settings_Module {
 	}
 
 	/**
-	 * Sanitizes the settings before saving
+	 * Sanitizes the settings before saving.
 	 *
 	 * @since 1.8
 	 *
-	 * @param array $options
+	 * @param array $options Unsanitized options to save.
+	 * @return array
 	 */
 	protected function update( $options ) {
 		$newoptions = array( 'sync' => empty( $options['sync'] ) ? array() : array_keys( $options['sync'], 1 ) );
-		return $newoptions; // take care to return only validated options
+		return $newoptions; // Take care to return only validated options.
 	}
 
 	/**
-	 * Get the row actions
+	 * Get the row actions.
 	 *
 	 * @since 1.8
 	 *
-	 * @return array
+	 * @return string[] Row actions.
 	 */
 	protected function get_actions() {
 		return empty( $this->options['sync'] ) ? array( 'configure' ) : array( 'configure', 'deactivate' );
 	}
 
 	/**
-	 * List the post metas to synchronize
+	 * Get the list of synchronization settings.
 	 *
 	 * @since 1.0
 	 *
-	 * @return array
+	 * @return string[] Array synchronization options.
 	 */
 	public static function list_metas_to_sync() {
 		return array(

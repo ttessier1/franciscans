@@ -2,6 +2,8 @@
 
 namespace WPForms\Tasks;
 
+use WPForms_DB;
+
 /**
  * Class Meta helps to manage the tasks meta information
  * between Action Scheduler and WPForms hooks arguments.
@@ -10,7 +12,7 @@ namespace WPForms\Tasks;
  *
  * @since 1.5.9
  */
-class Meta extends \WPForms_DB {
+class Meta extends WPForms_DB {
 
 	/**
 	 * Primary key (unique field) for the database table.
@@ -61,12 +63,12 @@ class Meta extends \WPForms_DB {
 	 */
 	public function get_columns() {
 
-		return array(
+		return [
 			'id'     => '%d',
 			'action' => '%s',
 			'data'   => '%s',
 			'date'   => '%s',
-		);
+		];
 	}
 
 	/**
@@ -78,11 +80,11 @@ class Meta extends \WPForms_DB {
 	 */
 	public function get_column_defaults() {
 
-		return array(
+		return [
 			'action' => '',
 			'data'   => '',
 			'date'   => gmdate( 'Y-m-d H:i:s' ),
-		);
+		];
 	}
 
 	/**
@@ -90,6 +92,8 @@ class Meta extends \WPForms_DB {
 	 * Used in migration and on plugin activation.
 	 *
 	 * @since 1.5.9
+	 *
+	 * @noinspection UnusedFunctionResultInspection
 	 */
 	public function create_table() {
 
@@ -97,22 +101,15 @@ class Meta extends \WPForms_DB {
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 
-		$charset_collate = '';
+		$charset_collate = $wpdb->get_charset_collate();
 
-		if ( ! empty( $wpdb->charset ) ) {
-			$charset_collate .= "DEFAULT CHARACTER SET {$wpdb->charset}";
-		}
-		if ( ! empty( $wpdb->collate ) ) {
-			$charset_collate .= " COLLATE {$wpdb->collate}";
-		}
-
-		$sql = "CREATE TABLE {$this->table_name} (
+		$sql = "CREATE TABLE IF NOT EXISTS $this->table_name (
 			id bigint(20) NOT NULL AUTO_INCREMENT,
 			action varchar(255) NOT NULL,
 			data longtext NOT NULL,
 			date datetime NOT NULL,
 			PRIMARY KEY  (id)
-		) {$charset_collate};";
+		) $charset_collate;";
 
 		dbDelta( $sql );
 	}
@@ -143,7 +140,7 @@ class Meta extends \WPForms_DB {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
 		return (int) $wpdb->query(
 			$wpdb->prepare(
-				"DELETE FROM `$table` WHERE action = %s AND date < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"DELETE FROM $table WHERE action = %s AND date < %s", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				$action,
 				$date
 			)
@@ -169,21 +166,7 @@ class Meta extends \WPForms_DB {
 		$data['action'] = sanitize_key( $data['action'] );
 
 		if ( isset( $data['data'] ) ) {
-			$string = wp_json_encode( $data['data'] );
-
-			if ( $string === false ) {
-				$string = '';
-			}
-
-			/*
-			 * We are encoding the string representation of all the data
-			 * to make sure that nothing can harm the database.
-			 * This is not an encryption, and we need this data later as is,
-			 * so we are using one of the fastest way to do that.
-			 * This data is removed from DB on a daily basis.
-			 */
-			// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-			$data['data'] = base64_encode( $string );
+			$data['data'] = $this->prepare_data( $data['data'] );
 		}
 
 		if ( empty( $type ) ) {
@@ -194,13 +177,42 @@ class Meta extends \WPForms_DB {
 	}
 
 	/**
+	 * Prepare data.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param array $data Meta data.
+	 *
+	 * @return string
+	 */
+	private function prepare_data( $data ) {
+
+		$string = wp_json_encode( $data );
+
+		if ( $string === false ) {
+			$string = '';
+		}
+
+		/*
+		 * We are encoding the string representation of all the data
+		 * to make sure that nothing can harm the database.
+		 * This is not an encryption, and we need this data later "as is",
+		 * so we are using one of the fastest way to do that.
+		 * This data is removed from DB on a daily basis.
+		 */
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		return base64_encode( $string );
+	}
+
+	/**
 	 * Retrieve a row from the database based on a given row ID.
 	 *
-	 * @since 1.5.9}
+	 * @since 1.5.9
 	 *
 	 * @param int $meta_id Meta ID.
 	 *
 	 * @return null|object
+	 * @noinspection PhpParameterNameChangedDuringInheritanceInspection
 	 */
 	public function get( $meta_id ) {
 
@@ -220,5 +232,34 @@ class Meta extends \WPForms_DB {
 		}
 
 		return $meta;
+	}
+
+	/**
+	 * Get meta ID by action name and params.
+	 *
+	 * @since 1.7.0
+	 *
+	 * @param string $action Action name.
+	 * @param array  $params Action params.
+	 *
+	 * @return int
+	 */
+	public function get_meta_id( $action, $params ) {
+
+		global $wpdb;
+
+		$table  = self::get_table_name();
+		$action = sanitize_key( $action );
+		$data   = $this->prepare_data( array_values( $params ) );
+
+		return absint(
+			$wpdb->get_var( // phpcs:ignore WordPress.DB.DirectDatabaseQuery.NoCaching
+				$wpdb->prepare(
+					"SELECT id FROM $table WHERE action = %s AND data = %s LIMIT 1", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+					$action,
+					$data
+				)
+			)
+		);
 	}
 }

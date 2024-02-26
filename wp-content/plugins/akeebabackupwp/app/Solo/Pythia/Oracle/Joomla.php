@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -30,7 +30,7 @@ class Joomla extends AbstractOracle
 	 *
 	 * @return  boolean
 	 */
-	public function isRecognised()
+	public function isRecognised(): bool
 	{
 		if (!@file_exists($this->path . '/configuration.php'))
 		{
@@ -42,7 +42,7 @@ class Joomla extends AbstractOracle
 			return false;
 		}
 
-		if (!@is_dir($this->path . '/libraries/joomla'))
+		if (!@is_dir($this->path . '/libraries/joomla') && !@is_dir($this->path . '/libraries/src'))
 		{
 			return false;
 		}
@@ -55,7 +55,7 @@ class Joomla extends AbstractOracle
 	 *
 	 * @return  array
 	 */
-	public function getDbInformation()
+	public function getDbInformation(): array
 	{
 		$ret = array(
 			'driver'	=> 'mysqli',
@@ -87,7 +87,7 @@ class Joomla extends AbstractOracle
 				$line = rtrim($line, ';');
 				$line = ltrim($line, '$');
 				$line = trim($line);
-				list($key, $value) = explode('=', $line);
+				[$key, $value] = explode('=', $line);
 				$key = trim($key);
 				$value = trim($value);
 

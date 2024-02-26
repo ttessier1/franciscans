@@ -2,6 +2,8 @@
 
 namespace WPForms\Lite\Admin\Settings;
 
+use WPForms\Admin\Education\Helpers;
+
 /**
  * Settings Access tab.
  *
@@ -35,9 +37,9 @@ class Access {
 	 */
 	public function hooks() {
 
-		add_action( 'admin_enqueue_scripts', array( $this, 'enqueues' ) );
-		add_filter( 'wpforms_settings_tabs', array( $this, 'add_tab' ) );
-		add_filter( 'wpforms_settings_defaults', array( $this, 'add_section' ) );
+		add_action( 'admin_enqueue_scripts', [ $this, 'enqueues' ] );
+		add_filter( 'wpforms_settings_tabs', [ $this, 'add_tab' ] );
+		add_filter( 'wpforms_settings_defaults', [ $this, 'add_section' ] );
 	}
 
 	/**
@@ -54,15 +56,15 @@ class Access {
 		// Lity.
 		wp_enqueue_style(
 			'wpforms-lity',
-			WPFORMS_PLUGIN_URL . 'assets/css/lity.min.css',
+			WPFORMS_PLUGIN_URL . 'assets/lib/lity/lity.min.css',
 			null,
 			'3.0.0'
 		);
 
 		wp_enqueue_script(
 			'wpforms-lity',
-			WPFORMS_PLUGIN_URL . 'assets/js/lity.min.js',
-			array( 'jquery' ),
+			WPFORMS_PLUGIN_URL . 'assets/lib/lity/lity.min.js',
+			[ 'jquery' ],
 			'3.0.0',
 			true
 		);
@@ -79,15 +81,15 @@ class Access {
 	 */
 	public function add_tab( $tabs ) {
 
-		$tab = array(
-			self::SLUG => array(
+		$tab = [
+			self::SLUG => [
 				'name'   => esc_html__( 'Access', 'wpforms-lite' ),
 				'form'   => false,
 				'submit' => false,
-			),
-		);
+			],
+		];
 
-		return wpforms_list_insert_after( $tabs, 'integrations', $tab );
+		return wpforms_list_insert_after( $tabs, 'geolocation', $tab );
 	}
 
 	/**
@@ -101,39 +103,86 @@ class Access {
 	 */
 	public function add_section( $settings ) {
 
-		$section_rows = array(
-			'heading',
-			'screenshots',
-			'caps',
-			'upgrade_to_pro',
-		);
-
-		foreach ( $section_rows as $section_row ) {
-
-			$settings[ self::SLUG ][ self::SLUG . '-' . $section_row ] = array(
-				'id'       => self::SLUG . '-' . $section_row,
-				'content'  => method_exists( $this, 'output_section_row_' . $section_row ) ? $this->{ 'output_section_row_' . $section_row }() : '',
-				'type'     => 'content',
-				'no_label' => true,
-				'class'    => array( $section_row ),
-			);
-		}
+		$settings[ self::SLUG ][ self::SLUG . '-page' ] = [
+			'id'       => self::SLUG . '-page',
+			'content'  => wpforms_render( 'education/admin/page', $this->template_data(),true ),
+			'type'     => 'content',
+			'no_label' => true,
+		];
 
 		return $settings;
+	}
+
+	/**
+	 * Get the template data.
+	 *
+	 * @since 1.8.6
+	 *
+	 * @return array
+	 */
+	private function template_data(): array {
+
+		$images_url = WPFORMS_PLUGIN_URL . 'assets/images/lite-settings-access/';
+
+		return [
+			'features'             => [
+				__( 'Create Forms', 'wpforms-lite' ),
+				__( 'Delete Forms', 'wpforms-lite' ),
+				__( 'Edit Forms Entries', 'wpforms-lite' ),
+				__( 'Edit Forms', 'wpforms-lite' ),
+				__( 'Delete Others Forms', 'wpforms-lite' ),
+				__( 'Edit Others Forms Entries', 'wpforms-lite' ),
+				__( 'Edit Others Forms', 'wpforms-lite' ),
+				__( 'View Forms Entries', 'wpforms-lite' ),
+				__( 'Delete Forms Entries', 'wpforms-lite' ),
+				__( 'View Forms', 'wpforms-lite' ),
+				__( 'View Others Forms Entries', 'wpforms-lite' ),
+				__( 'Delete Others Forms Entries', 'wpforms-lite' ),
+				__( 'View Others Forms', 'wpforms-lite' ),
+			],
+			'images'               => [
+				[
+					'url'   => $images_url . 'screenshot-access-controls.png',
+					'url2x' => $images_url . 'screenshot-access-controls@2x.png',
+					'title' => __( 'Simple Built-in Controls', 'wpforms-lite' ),
+				],
+				[
+					'url'   => $images_url . 'screenshot-members.png',
+					'url2x' => $images_url . 'screenshot-members@2x.png',
+					'title' => __( 'Members Integration', 'wpforms-lite' ),
+				],
+				[
+					'url'   => $images_url . 'screenshot-user-role-editor.png',
+					'url2x' => $images_url . 'screenshot-user-role-editor@2x.png',
+					'title' => __( 'User Role Editor Integration', 'wpforms-lite' ),
+				],
+			],
+			'utm_medium'           => 'Settings - Access',
+			'utm_content'          => 'Access Controls',
+			'heading_title'        => __( 'Access Controls', 'wpforms-lite' ),
+			'heading_description'  => sprintf(
+				'<p>%1$s</p>',
+				__( 'Access controls allows you to manage and customize access to WPForms functionality. You can easily grant or restrict access using the simple built-in controls, or use our official integrations with Members and User Role Editor plugins.', 'wpforms-lite' )
+			),
+			'badge'                => __( 'Pro', 'wpforms-lite' ),
+			'features_description' => __( 'Custom access to the following capabilities…', 'wpforms-lite' ),
+		];
 	}
 
 	/**
 	 * Generate and output section "Heading" row HTML.
 	 *
 	 * @since 1.5.8
+	 * @deprecated 1.8.6
 	 */
 	public function output_section_row_heading() {
 
+		_deprecated_function( __METHOD__, '1.8.6 of the WPForms plugin' );
+
 		return sprintf(
-			'<h4>%1$s<img src="%2$s" alt="%3$s"></h4><p>%4$s</p><p>%5$s</p>',
+			'<h4>%1$s%2$s</h4><p>%3$s</p><p>%4$s</p>',
 			esc_html__( 'Access Controls', 'wpforms-lite' ),
-			esc_url( WPFORMS_PLUGIN_URL . 'assets/images/lite-settings-access/pro-plus.svg' ),
-			esc_attr__( 'Pro+', 'wpforms-lite' ),
+			Helpers::get_badge( 'Pro' ),
 			esc_html__( 'Access controls allows you to manage and customize access to WPForms functionality.', 'wpforms-lite' ),
 			esc_html__( 'You can easily grant or restrict access using the simple built-in controls, or use our official integrations with Members and User Role Editor plugins.', 'wpforms-lite' )
 		);
@@ -143,8 +192,11 @@ class Access {
 	 * Generate and output section "Screenshots" row HTML.
 	 *
 	 * @since 1.5.8
+	 * @deprecated 1.8.6
 	 */
 	public function output_section_row_screenshots() {
+
+		_deprecated_function( __METHOD__, '1.8.6 of the WPForms plugin' );
 
 		$format = '<div class="cont">
 			<img src="%1$s" srcset="%2$s 2x" alt="%6$s"/>
@@ -191,30 +243,33 @@ class Access {
 	 * Generate and output section "Capabilities" row HTML.
 	 *
 	 * @since 1.5.8
+	 * @deprecated 1.8.6
 	 */
 	public function output_section_row_caps() {
 
-		$caps = array(
-			array(
+		_deprecated_function( __METHOD__, '1.8.6 of the WPForms plugin' );
+
+		$caps = [
+			[
 				esc_html__( 'Create Forms', 'wpforms-lite' ),
 				esc_html__( 'Edit Forms', 'wpforms-lite' ),
 				esc_html__( 'Edit Others Forms', 'wpforms-lite' ),
 				esc_html__( 'View Forms', 'wpforms-lite' ),
 				esc_html__( 'View Others Forms', 'wpforms-lite' ),
-			),
-			array(
+			],
+			[
 				esc_html__( 'Delete Forms', 'wpforms-lite' ),
 				esc_html__( 'Delete Others Forms', 'wpforms-lite' ),
 				esc_html__( 'View Forms Entries', 'wpforms-lite' ),
 				esc_html__( 'View Others Forms Entries', 'wpforms-lite' ),
-			),
-			array(
+			],
+			[
 				esc_html__( 'Edit Forms Entries', 'wpforms-lite' ),
 				esc_html__( 'Edit Others Forms Entries', 'wpforms-lite' ),
 				esc_html__( 'Delete Forms Entries', 'wpforms-lite' ),
 				esc_html__( 'Delete Others Forms Entries', 'wpforms-lite' ),
-			),
-		);
+			],
+		];
 
 		$content = '<p>' . esc_html__( 'Custom access to the following capabilities…', 'wpforms-lite' ) . '</p>';
 
@@ -233,15 +288,16 @@ class Access {
 	 * Generate and output section "Upgrade to Pro" row HTML.
 	 *
 	 * @since 1.5.8
+	 * @deprecated 1.8.6
 	 */
 	public function output_section_row_upgrade_to_pro() {
 
-		$content = sprintf(
-			'<a href="%1$s" target="_blank" rel="noopener noreferrer" class="wpforms-upgrade-modal wpforms-btn wpforms-btn-lg wpforms-btn-orange">%2$s</a>',
-			esc_url( 'https://wpforms.com/lite-upgrade/?discount=LITEUPGRADE&utm_source=WordPress&utm_medium=settings-license&utm_campaign=liteplugin' ),
-			esc_html__( 'Upgrade to WPForms Now', 'wpforms-lite' )
-		);
+		_deprecated_function( __METHOD__, '1.8.6 of the WPForms plugin' );
 
-		return $content;
+		return sprintf(
+			'<a href="%1$s" target="_blank" rel="noopener noreferrer" class="wpforms-upgrade-modal wpforms-btn wpforms-btn-lg wpforms-btn-orange">%2$s</a>',
+			esc_url( wpforms_admin_upgrade_link( 'Settings - Access', 'Access Controls' ) ),
+			esc_html__( 'Upgrade to WPForms Pro', 'wpforms-lite' )
+		);
 	}
 }

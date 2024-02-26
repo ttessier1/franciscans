@@ -64,7 +64,8 @@ define('NONCE_SALT',       'fV/O.RvM*gR-y%Jl,Hh]@m2HdYRu+k3u|++g>I=?kAb:Ip-|@cYE
  * a unique prefix. Only numbers, letters, and underscores please!
  */
 $table_prefix = 'wp_';
-
+define( 'WP_HOME', 'https://localhost' );
+define( 'WP_SITEURL', 'https://localhost' );
 /**
  * For developers: WordPress debugging mode.
  *

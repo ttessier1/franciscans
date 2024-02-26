@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -82,7 +82,7 @@ if (!@file_exists($logFile))
 else
 {
 	// Allright, let's load and render it
-	$fp = fopen($logFile, "rt");
+	$fp = fopen($logFile, "r");
 
 	if ($fp === FALSE)
 	{

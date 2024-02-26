@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -425,7 +425,9 @@ class Dbfilters extends Model
 
 			// Tabular view
 			case 'tab':
-				$ret_array = $this->get_filters($action->root);
+				$ret_array = [
+					'list' => $this->get_filters($action->root)
+				];
 				break;
 
 			// Reset filters

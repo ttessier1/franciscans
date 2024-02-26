@@ -2,11 +2,11 @@
 Contributors: nikosdion
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=10903325
 Tags: backup, restore, migrate, move
-Requires at least: 3.8.0
-Tested up to: 4.5
-Requires PHP: 5.4
-Stable tag: 7.3.2
-License: GPLv3 or later
+Requires at least: 6.3.0
+Tested up to: 6.3
+Requires PHP: 7.4
+Stable tag: 8.2.0
+License: GPL-3.0-or-later
 License URI: http://www.gnu.org/licenses/gpl.html
 
 Easily backup, restore and move your WordPress site with the fastest, most robust, native PHP backup plugin.
@@ -180,173 +180,63 @@ link on our site to request more information for your specific needs.
 
 == Changelog ==
 
-* eeba Backup 7.3.2
-* [HIGH] CLI and remote backups could end up running forever if the MySQL connection was closed by the host at an inopportune moment
-* [MEDIUM] Fixed a PHP warning displayed during check updates in some rare circumstances
-* [MEDIUM] Remote backup failure on hosts which prevent creation of .php files
+* eeba Backup 8.2.0
+* Expert options for the Upload to Amazon S3 configuration
+* Separate remote and local quota settings
+* [MEDIUM] Clicking on Backup Now would start the backup automatically
+* [MEDIUM] CLI backups would not send emails, reporting the mysqli connection is already closed
 
-* eeba Backup 7.3.1
-* Massive speedup in data replacement of heavily nested serialised tables with thousands of elements
-* You can select a faster algorithm for data replacement of really big serialised data during restoration
-* [HIGH] WebDAV fails to upload because of the wrong absolute URL being calculated
-* [LOW] pCloud was erroneously listed in the free of charge Core version (it requires a paid subscription and was thus unusable)
-* [LOW] Frontend backup URL does not work if the secret key contains the plus sign (+) character due to a PHP bug.
+* eeba Backup 8.1.2
+* Automatically downgrade utf8mb4_900_* collations to utf8mb4_unicode_520_ci on MariaDB
+* Remove the message about the release being 120 days old
 
-* eeba Backup 7.3.0.1
-* CLI backup is broken under WordPress
+* eeba Backup 8.1.1
+* Removed support for Akeeba Backup JSON API v1 (APIv1)
+* Re-enabled integrated updates with WordPress
+* [HIGH] Raw views include WordPress HTML
+* [MEDIUM] SQL error after finishing migrating archives
+* [LOW] Double URL in the JSON API section of the scheduling info page
 
-* eeba Backup 7.3.0
-* S3: Add support for Cape Town and Milan regions
-* Added feature to "freeze" some backup records to keep them indefinitely
-* Improved error page with a button to resolve common issues regarding a stuck temporary storage
-* Now using WordPress' wp_options table to save the system configuration information instead of a file
-* Improved automatic configuration for scheduled and remote backups to work around some weird wp-config.php implementations.
-* Using WordPress' nonce system instead of our legacy anti-CSRF token system to avoid “invalid token” errors on some hosts.
-* Removed support for Internet Explorer
-* Improve default header and body fonts for similar cross-platform "feel" without the need to use custom fonts.
-* Rendering improvements
-* Adjust size of control panel icons
-* [HIGH] Backup-on-update must-use plugin was not removed from wp-content/mu-plugins on uninstallation
-* [HIGH] Replacing (not just removing) AddHandler/SetHandler lines would fail during restoration
-* [MEDIUM] Access Denied if you rename your user account and change its user ID with some third party tools after having already used Akeeba Backup for WordPress
-* [MEDIUM] Fetching back to server the archives from these provides would result in invalid archives: Amazon S3, Backblaze, Cloudfiles, OVH, Swift
-* [MEDIUM] Greedy RegEx match in database dump could mess up views containing the literal ' view ' (word "view" surrounded by spaces) in their definition.
-* [LOW] Fixed fatal error when trying to use a non-existent profile
-* [LOW] Fixed filtering by Profile in Manage Backups view
-* [LOW] Fixed timestamp in default backup description
+* eeba Backup 8.1.0
+* [HIGH] PHP error in Manage Backups when you have pending or failed backups
+* [HIGH] CLI scripts did not work through the 8.1.0 betas
 
-= 7.2.2.1 =
-* [MEDIUM] The warning about the default directory being in use was not visible on the Control Panel page
+* eeba Backup 8.1.0.b3
+* [HIGH] Wrong update URL
 
-= 7.2.2 =
-* Automatic UTF8MB4 character encoding downgrades from MySQL 8 to 5.7/5.6/5.5 on restoration.
+* eeba Backup 8.1.0.b2
+* [HIGH] The migration is never over if you have backup records claiming their archive files exist but, in fact, they do not
 
-= 7.2.0.1 =
-* The version file was missing from the package, causing the update to always show up as being available
+* eeba Backup 8.1.0.b1
+* Moved the default backup output folder to wp-content/backups
+* Moved the settings encryption key to wp-content/akeebabackupwp_secretkey.php
+* Automatic migration of backup archives and backup profiles outside the plugin's root folder
+* Path shown for backups is now relative to WordPress' root folder (as reported by its `ABSPATH` constant)
+* Removed admin dashboard widgets
+* [LOW] Downgrading from Pro to Core would make it so that you always saw an update available
+* [LOW] Management column show the wrong file extension for the last file you need to download
 
-= 7.2.0 =
-* Minimum required PHP version is now 7.1.0
-* Remove multiple, unnecessary copies of the cacert.pem file
-* [LOW] Very rare backup failures with a JS error
+* eeba Backup 8.0.0.2
+* [HIGH] Change in WordPress itself causes a PHP fatal error at the end of the update
+* [HIGH] Fatal error sending emails at the end of the backup
+* [LOW] Cosmetic issue: application name appeared as Akeeba Solo instead of Akeeba Backup for WordPress in some screens
+* [LOW] Translations not loaded during frontend and remote JSON API backups
 
-= 7.1.4 =
-* Automatically exclude Cache folder (if it exists)
-* [LOW] Multipart upload to BackBlaze B2 might fail due to a silent B2 behavior change
-* [LOW] OneDrive upload failure if a part upload starts >3600s after token issuance
+* eeba Backup 8.0.0.1
+* [HIGH] Profile encryption key migration does not work when using WordPress' plugins update
+* [LOW] PHP deprecated warnings
 
-= 7.1.3 =
-* Reserved version number to maintain continuity with Akeeba Backup for Joomla versioning
-
-= 7.1.2 =
-* Improved error handling allows reporting PHP fatal errors (only available on sites using PHP 7)
-* Added Site Overrides feature
-* [LOW] Fixed typos that could create issues with servers using very restrictive security rules
-* [LOW] Error page would trigger an error, effectively making all errors invisible without using WordPress' debug mode
-* [LOW] (S)FTP connection test would report "false" instead of the reason of failure
-* [LOW] Fixed archive download using the browser under some circustances
-
-= 7.1.1 =
-* Possible exception when the user has erroneously put their backup output directory to the site's root with open_basedir restrictions restricting access to its parent folder.
-* [MEDIUM] OneDrive for Business is not working at all in Akeeba Backup for WordPress
-
-= 7.1.0 =
-* Automatic security check of the backup output directory
-* Option to change post GUIDs on restoration
-* Yes/No toggles are now colorful instead of plain teal
-* Renamed helper functions for the benefit of some WordPress themes which try to redefine them
-* Improved storage of temporary data during backup [akeeba/engine#114]
-* Log files now have a .php extension to prevent unauthorized access in very rare cases
-* Enforce the recommended, sensible security measures when using the default backup output directory
-* Ongoing JavaScript refactoring
-* Google Drive: fetch up to 100 shared drives (previously: up to 10)
-* [MEDIUM] CloudFiles post-processing engine: Fixed file uploads
-* [MEDIUM] Swift post-processing engine: Fixed file uploads
-* [LOW] Send by Email reported a successful email sent as a warning
-* [LOW] Extra greater-than sign in the Configuration icon's URL in the Control Panel page
-* [LOW] Database dump: foreign keys' (constraints) and local indices' names did not get their prefix replaced like tables, views etc do
-
-= 7.0.2 =
-* Log the full path to the computed site's root, without <root> replacement
-* [HIGH] Core (free of charge) version only: the PayPal donation link included a tracking pixel. Changed to donation link, without tracking.
-* [MEDIUM] Integrated restoration: sanity checks were not applied, resulting in extraction errors
-* [MEDIUM] WebDav post-processing engine: first backup archive was always uploaded on the remote root, ignoring any directory settings
-* [HIGH] Restoration will fail if a table's name is a superset of another table's name e.g. foo_example_2020 being a superset of foo_example_2.
-
-= 7.0.1 =
-* pCloud: removing download to browser (cannot work properly due to undocumented API restrictions)
-* [HIGH] An error about not being able to open a file with an empty name occurs when taking a SQL-only backup but there's a row over 1MB big
-* [LOW] Notice in Control Panel when maximum error reporting is enabled
-* [LOW] Backup log file did not appear correctly (but you could still download it)
-* [LOW] Redirections for the legacy frontend backup method should be to remote.php, not index.php
-* [LOW] Bad HTML in the document head when using raw display (e.g. Manage Remote Files popup)
-* [LOW] Fixed displaying release notes when a new version comes out
-* [LOW] Dark Mode: modal close icon was invisible both in the backup software and during restoration
-* [LOW] Fixed automatically filling DropBox tokens after OAuth authentication
-
-= 7.0.0 =
-* Remove TABLESPACE and DATA|INDEX DIRECTORY table options during backup
-* [LOW] FTP and SFTP connection tests were always failing
-* [LOW] Fixed applying quotas for obsolete backups
-
-= 7.0.0.rc1 =
-* Upload to OVH now supports Keystone v3 authentication, mandatory starting mid-January 2020
-* Remove obsolete "Use IFRAMEs instead of AJAX" option
-* [HIGH] An error in an early backup domain could result in a forever-running backup
-* [HIGH] DB connection errors wouldn't result in the backup failing, as it should be doing
-* [HIGH] Manage remotely stored files: Fetch to server would fail after the first batch of downloads
-
-= 7.0.0.b3-patch1 =
-* Missing files led to immediate backup failure
-
-= 7.0.0.b3 =
-* Common PHP version warning scripts
-* Reinstated support for pCloud after they fixed their OAuth2 server
-* Improved Dark Mode
-* Improved PHP 7.4 compatibility
-* Improved integration with the WordPress plugins update system
-* Clearer message when setting decryption fails in CLI backup script
-* Replace JavaScript eval() with JSON.parse()
-* [HIGH] The database dump was broken with some versions of PCRE (e.g. the one distributed with Ubuntu 18.04)
-* [HIGH] The integrated restoration was broken
-
-= 7.0.0.b2 =
-* Removed pCloud support
-* ANGIE: Options to remove AddHandler lines on restoration
-* [MEDIUM] Fixed OAuth authentication flow
-* [LOW] Configuration wizard will always prompt to the user
-
-= 7.0.0.b1 =
-* Amazon S3 now supports Bahrain and Stockholm regions
-* Amazon S3 now supports Intelligent Tiering, Glacier and Deep Archive storage classes
-* Google Storage now supports the nearline and coldline storage classes
-* Manage Backups: Improved performance of the Transfer (re-upload to remote storage) feature.
-* Windows Azure BLOB Storage: download back to server and download to browser are now supported
-* New OneDrive integration supports both regular OneDrive and OneDrive for Business
-* pCloud support
-* Support for Dropbox for Business
-* Minimum required PHP version is now 5.6.0
-* Common version numbering among all of our backup products means this version is 7, not 4
-* All views have been converted to Blade for easier development and better future-proofing
-* The integrated restoration feature is now only available in the Professional version
-* The front-end legacy backup API and the Remote JSON API are now available only in the Professional version
-* The Site Transfer Wizard is now only available in the Professional version
-* WP-CLI integration is now only available in the Professional version
-* SugarSync integration: you now need to provide your own access keys following the documentation instructions
-* Backup error handling and reporting (to the log and to the interface) during backup has been improved.
-* The Test FTP/SFTP Connection buttons now return much more informative error messages.
-* Manage Backups: much more informative error messages if the Transfer to remote storage process fails.
-* The backup and log IDs will follow the numbering you see in the left hand column of the Manage Backups page.
-* Manage Backups: The Remote File Management page is now giving better, more accurate information.
-* Manage Backups: Fetch Back To Server was rewritten to gracefully deal with more problematic cases.
-* Removed AES encapsulations from the JSON API for security reasons. We recommend you always use HTTPS with the JSON API.
-* [HIGH] Changing the database prefix would not change it in the referenced tables inside PROCEDUREs, FUNCTIONs and TRIGGERs
-* [HIGH] Backing up PROCEDUREs, FUNCTIONs and TRIGGERs was broken
-* [HIGH] Manage Backups: would not show Transfer Archive for qualifying backups not fully uploaded to remote storage.
-* [MEDIUM] Database only backup of PROCEDUREs, FUNCTIONs and TRIGGERs does not output the necessary DELIMITER commands to allow direct import
-* [MEDIUM] BackBlaze B2: upload error when chunk size is higher than the backup archive's file size
-* [LOW] Manage Backups: the Remote Files Management dialog's size was off by several pixels
-* [LOW] Manage Backups: downloading a part file from S3 beginning with text data would result in inline display of the file instead of download.
-* [LOW] Disabled menu items (e.g. Backup Now) page confused people; removed them to prevent confusion
+* eeba Backup 8.0.0
+* Minimum PHP version is now 7.4.0
+* Using Composer to load all internal dependencies (AWF, backup engine, S3 library)
+* Workaround for Wasabi S3v4 signatures
+* Support for uploading to Shared With Me folders in Google Drive
+* Improved error reporting, removing the unhelpful "(HTML containing script tags)" message
+* Improved mixed– and upper–case database prefix support at backup time
+* [MEDIUM] Resetting corrupt backups can cause a crash of the Control Panel page
+* [MEDIUM] Upload to S3 would always use v2 signatures with a custom endpoint.
+* [MEDIUM] Some transients need data replacements to take place in WP 6.3
+* [HIGH] Not choosing a forced backup timezone in System Configuration results in the WP-CRON Scheduling page throwing an error
 
 
 == Upgrade Notice ==

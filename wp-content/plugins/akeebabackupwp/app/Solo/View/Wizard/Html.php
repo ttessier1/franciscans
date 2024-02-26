@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -24,6 +24,7 @@ class Html extends View
 		$document = $this->container->application->getDocument();
 
 		// Load the necessary Javascript
+		Template::addJs('media://js/solo/showon.js', $this->container->application);
 		Template::addJs('media://js/solo/configuration.js', $this->container->application);
 		Template::addJs('media://js/solo/wizard.js', $this->container->application);
 
@@ -48,8 +49,9 @@ class Html extends View
 		$this->siteInfo = $this->getModel()->guessSiteParams();
 
 		// Add Javascript
-		Text::script('COM_AKEEBA_CONFIG_UI_BROWSE');
-		Text::script('SOLO_COMMON_LBL_ROOT');
+		$doc = $this->container->application->getDocument();
+		$doc->lang('COM_AKEEBA_CONFIG_UI_BROWSE');
+		$doc->lang('SOLO_COMMON_LBL_ROOT');
 
 		$document   = $this->container->application->getDocument();
 		$router     = $this->getContainer()->router;
@@ -72,19 +74,20 @@ class Html extends View
 		Template::addJs('media://js/solo/backup.js', $this->container->application);
 		Template::addJs('media://js/solo/wizard.js', $this->container->application);
 
-		Text::script('COM_AKEEBA_CONFWIZ_UI_MINEXECTRY');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_CANTDETERMINEMINEXEC');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_SAVEMINEXEC');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_CANTSAVEMINEXEC');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_CANTFIXDIRECTORIES');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_CANTDBOPT');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_EXECTOOLOW');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_MINEXECTRY');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_SAVINGMAXEXEC');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_CANTSAVEMAXEXEC');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_CANTDETERMINEPARTSIZE');
-		Text::script('COM_AKEEBA_CONFWIZ_UI_PARTSIZE');
-		Text::script('COM_AKEEBA_BACKUP_TEXT_LASTRESPONSE');
+		$doc = $this->container->application->getDocument();
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_MINEXECTRY');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_CANTDETERMINEMINEXEC');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_SAVEMINEXEC');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_CANTSAVEMINEXEC');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_CANTFIXDIRECTORIES');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_CANTDBOPT');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_EXECTOOLOW');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_MINEXECTRY');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_SAVINGMAXEXEC');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_CANTSAVEMAXEXEC');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_CANTDETERMINEPARTSIZE');
+		$doc->lang('COM_AKEEBA_CONFWIZ_UI_PARTSIZE');
+		$doc->lang('COM_AKEEBA_BACKUP_TEXT_LASTRESPONSE');
 
 		$document = $this->container->application->getDocument();
 		$router   = $this->getContainer()->router;

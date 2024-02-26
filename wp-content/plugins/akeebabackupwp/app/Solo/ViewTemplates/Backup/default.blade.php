@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -22,9 +22,6 @@ $formstyle 	  = $this->hasErrors ? 'style="display: none"' : '';
 @if($this->promptForConfigurationWizard)
 	@include('Configuration/confwiz_modal')
 @endif
-
-{{-- Obsolete PHP version warning --}}
-@include('Main/warning_phpversion')
 
 <div id="backup-setup" class="akeeba-panel--primary">
     <header class="akeeba-block-header">
@@ -88,32 +85,12 @@ $formstyle 	  = $this->hasErrors ? 'style="display: none"' : '';
 			<label for="description">
 				@lang('COM_AKEEBA_BACKUP_LABEL_DESCRIPTION')
 			</label>
-            <input type="text" name="description" value="{{{ $this->description }}}"
+            <input type="text" name="description" value="{{{ empty($this->description) ? $this->defaultDescription : $this->description }}}"
                    maxlength="255" size="80" id="backup-description"
                    autocomplete="off" />
             <span class="akeeba-help-text">@lang('COM_AKEEBA_BACKUP_LABEL_DESCRIPTION_HELP')</span>
 		</div>
 
-		@if($this->showJPSPassword)
-			<div class="akeeba-form-group">
-				<label for="jpskey">
-					@lang('COM_AKEEBA_CONFIG_JPS_KEY_TITLE')
-				</label>
-                <input type="password" name="jpskey" value="{{{ $this->jpsPassword }}}"
-                       size="50" id="jpskey" autocomplete="off" />
-                <span class="akeeba-help-text">@lang('COM_AKEEBA_CONFIG_JPS_KEY_DESCRIPTION')</span>
-			</div>
-		@endif
-		@if($this->showANGIEPassword)
-			<div class="akeeba-form-group">
-				<label for="angiekey">
-					@lang('COM_AKEEBA_CONFIG_ANGIE_KEY_TITLE')
-				</label>
-                <input type="password" name="angiekey" value="{{{ $this->ANGIEPassword }}}"
-                       size="50" id="angiekey" autocomplete="off" />
-                <span class="akeeba-help-text">@lang('COM_AKEEBA_CONFIG_ANGIE_KEY_DESCRIPTION')</span>
-			</div>
-		@endif
 		<div class="akeeba-form-group">
 			<label for="comment">
 				@lang('COM_AKEEBA_BACKUP_LABEL_COMMENT')
@@ -146,7 +123,6 @@ $formstyle 	  = $this->hasErrors ? 'style="display: none"' : '';
 
 	<p>@lang('COM_AKEEBA_BACKUP_ANGIE_PASSWORD_WARNING_1')</p>
 	<p>@lang('COM_AKEEBA_BACKUP_ANGIE_PASSWORD_WARNING_2')</p>
-	<p>@lang('COM_AKEEBA_BACKUP_ANGIE_PASSWORD_WARNING_3')</p>
 </div>
 
 {{-- Backup in progress --}}

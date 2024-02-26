@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -30,7 +30,7 @@ class Log extends ControllerDefault
 
 		if (!empty($profile_id) && is_numeric($profile_id) && ($profile_id > 0))
 		{
-			\Awf\Application\Application::getInstance()->getContainer()->segment->profile = $profile_id;
+			$this->getContainer()->segment->profile = $profile_id;
 		}
 
 		// Execute the controller

@@ -125,7 +125,7 @@ html {
 }
 
 body {
-	background: #f5efe0;
+	background: #654822;
 	box-sizing: border-box;
 	color: #000;
 	font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, sans-serif;
@@ -455,7 +455,7 @@ hr.styled-separator::after {
 }
 
 a {
-	color: #cd2653;
+	color: #412e15;
 	text-decoration: underline;
 }
 
@@ -1352,7 +1352,7 @@ ul.social-icons li {
 
 
 #site-header {
-	background: #fff;
+	background: #412e15;
 	position: relative;
 }
 
@@ -4368,7 +4368,7 @@ div.comment:first-of-type {
 
 .footer-nav-widgets-wrapper,
 #site-footer {
-	background-color: #fff;
+	background-color: #412e15;
 	border-color: #dedfdf;
 	border-style: solid;
 	border-width: 0;

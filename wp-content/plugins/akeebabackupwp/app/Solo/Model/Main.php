@@ -1,7 +1,7 @@
 <?php
 /**
  * @package   solo
- * @copyright Copyright (c)2014-2020 Nicholas K. Dionysopoulos / Akeeba Ltd
+ * @copyright Copyright (c)2014-2024 Nicholas K. Dionysopoulos / Akeeba Ltd
  * @license   GNU General Public License version 3, or later
  */
 
@@ -13,12 +13,9 @@ use Akeeba\Engine\Util\Complexify;
 use Akeeba\Engine\Util\RandomValue;
 use Awf\Database\Installer;
 use Awf\Download\Download;
-use Awf\Html\Select;
 use Awf\Mvc\Model;
-use Awf\Session\Randval;
 use Awf\Timer\Timer;
 use Awf\Uri\Uri;
-use Awf\Utils\Phpfunc;
 use DirectoryIterator;
 use Exception;
 use RuntimeException;
@@ -32,34 +29,43 @@ class Main extends Model
 	/**
 	 * Checks the database for missing / outdated tables and runs the appropriate SQL scripts if necessary.
 	 *
+	 * @param   bool  $allowMarkingAsStuck  Should I allow the database update to be marked as stuck? The only time I
+	 *                                      am not doing that is the plugin activation (what WP calls "install").
+	 *
 	 * @return  $this
 	 *
-	 * @throws  RuntimeException    If the previous database update is stuck
-	 * @throws  Exception
+	 * @throws Exception
 	 */
-	public function checkAndFixDatabase()
+	public function checkAndFixDatabase($allowMarkingAsStuck = true)
 	{
 		$params = $this->container->appConfig;
 
-		// First of all let's check if we are already updating
-		$stuck = $params->get('updatedb', 0);
-
-		if ($stuck)
+		if ($allowMarkingAsStuck)
 		{
-			throw new RuntimeException('Previous database update is flagged as stuck');
-		}
+			// First of all let's check if we are already updating
+			$stuck = $params->get('updatedb', 0);
 
-		// Then set the flag
-		$params->set('updatedb', 1);
-		$params->saveConfiguration();
+			if ($stuck)
+			{
+				// If we throw there is no way for the user to address the problem. DO NOT UNCOMMENT NEXT LINE.
+				// throw new RuntimeException('Previous database update is flagged as stuck');
+			}
+
+			// Then set the flag
+			$params->set('updatedb', 1);
+			$params->saveConfiguration();
+		}
 
 		// Update the database, if necessary
 		$dbInstaller = new Installer($this->container);
 		$dbInstaller->updateSchema();
 
-		// And finally remove the flag if everything went fine
-		$params->set('updatedb', null);
-		$params->saveConfiguration();
+		if ($allowMarkingAsStuck)
+		{
+			// And finally remove the flag if everything went fine
+			$params->set('updatedb', null);
+			$params->saveConfiguration();
+		}
 
 		return $this;
 	}
@@ -97,7 +103,7 @@ class Main extends Model
 					$description = '#' . $profile['value'] . '. ' . $description;
 				}
 
-				$ret[] = Select::option($profile['value'], $description);
+				$ret[] = $this->getContainer()->html->select->option( $profile['value'], $description);
 			}
 		}
 
@@ -174,7 +180,17 @@ class Main extends Model
 	 */
 	public function checkEngineSettingsEncryption()
 	{
-		$secretKeyFile = $this->container->basePath . Application::secretKeyRelativePath;
+		$secretKeyFile = APATH_BASE . '/Solo/secretkey.php';
+
+		// Different secretkey.php path when using WordPress
+		if (defined('ABSPATH'))
+		{
+			$secretKeyFile = rtrim(
+				                 (defined('WP_CONTENT_DIR') ? WP_CONTENT_DIR : (rtrim(ABSPATH, '/') . '/wp-content')),
+				                 '/'
+			                 ) . '/akeebabackup_secretkey.php';
+		}
+
 		// We have to look inside the application config, not  the platform options
 		$encryptionEnabled = $this->container->appConfig->get('useencryption', -1);
 		$fileExists        = @file_exists($secretKeyFile);
@@ -260,6 +276,18 @@ class Main extends Model
 		{
 			$this->container->appConfig->set('options.siteurl', $baseURL);
 			$dirtyFlag = true;
+		}
+
+		if (defined('WPINC'))
+		{
+			$ajaxURL       = admin_url('admin-ajax.php');
+			$storedAjaxURL = $this->container->appConfig->get('options.ajaxurl');
+
+			if ($storedAjaxURL != $ajaxURL)
+			{
+				$this->container->appConfig->set('options.ajaxurl', $ajaxURL);
+				$dirtyFlag = true;
+			}
 		}
 
 		if (!$this->container->appConfig->get('options.confwiz_upgrade', 0))
@@ -434,9 +462,11 @@ ENDBODY;
 	/**
 	 * Performs any post-upgrade actions
 	 *
-	 * @return bool True if we took any actions, false otherwise
+	 * @param   bool  $schemaUpgrade  Should I allow upgrading the database tables?
+	 *
+	 * @return  bool True if we took any actions, false otherwise
 	 */
-	public function postUpgradeActions()
+	public function postUpgradeActions(bool $schemaUpgrade = false)
 	{
 		// Check the last update_version stored in the database
 		$db = $this->container->db;
@@ -461,8 +491,20 @@ ENDBODY;
 			return false;
 		}
 
+		// Do we have to try and update the database schema?
+		if ($schemaUpgrade)
+		{
+			try
+			{
+				$this->checkAndFixDatabase(false);
+			}
+			catch (\Throwable $e)
+			{
+			}
+		}
+
 		// Load and execute the PostUpgradeScript class
-		if (class_exists('\\Solo\\PostUpgradeScript'))
+		if (class_exists(PostUpgradeScript::class))
 		{
 			$upgradeScript = new PostUpgradeScript($this->container);
 			$upgradeScript->execute();
@@ -520,7 +562,7 @@ ENDBODY;
 		$profiles = $db->loadColumn();
 
 		// Save the current profile number
-		$session    = \Awf\Application\Application::getInstance()->getContainer()->segment;
+		$session    = $this->getContainer()->segment;
 		$oldProfile = $session->profile;
 
 		// Update all profiles
@@ -866,6 +908,18 @@ ENDBODY;
 			];
 		}
 
+		$proxyParams = Platform::getInstance()->getProxySettings();
+
+		if ($proxyParams['enabled'])
+		{
+			$options['proxy'] = [
+				'host' => $proxyParams['host'],
+				'port' => $proxyParams['port'],
+				'user' => $proxyParams['user'],
+				'pass' => $proxyParams['pass'],
+			];
+		}
+
 		$downloader->setAdapterOptions($options);
 
 		$result = $downloader->getFromURL($checkURL);
@@ -1117,7 +1171,7 @@ ENDBODY;
 			$fileContents .= sprintf("define('%s', '%s');\n", $define, str_replace("'", "\\'", $value));
 		}
 
-		$target     = AKEEBA_SOLOWP_PATH . '/helpers/private/wp-config.php';
+		$target     = AKEEBABACKUPWP_PATH . '/helpers/private/wp-config.php';
 		$needsWrite = true;
 
 		if (@file_exists($target))
@@ -1154,7 +1208,7 @@ ENDBODY;
 		}
 
 		// Try to open the converted log file (.log.php)
-		$fp = @fopen($newFile, 'wb');
+		$fp = @fopen($newFile, 'w');
 
 		if ($fp === false)
 		{
@@ -1162,7 +1216,7 @@ ENDBODY;
 		}
 
 		// Try to open the source log file (.log)
-		$sourceFP = @fopen($filePath, 'rb');
+		$sourceFP = @fopen($filePath, 'r');
 
 		if ($sourceFP === false)
 		{
@@ -1260,7 +1314,7 @@ ENDBODY;
 		}
 
 		// Decrypt the Secret Word settings in the database
-		SecretWord::enforceDecrypted('frontend_secret_word');
+		SecretWord::enforceDecrypted('frontend_secret_word', null, $this->container);
 
 		// Finally, remove the key file
 		$fs = $this->container->fileSystem;
@@ -1323,8 +1377,7 @@ ENDBODY;
 	 */
 	protected function createEngineSettingsKeyFile($secretKeyFile)
 	{
-		$randValue = new Randval(new Phpfunc());
-		$key       = $randValue->generate(64);
+		$key       = random_bytes(64);
 
 		$encodedKey = base64_encode($key);
 

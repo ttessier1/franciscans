@@ -21,7 +21,9 @@ if ( ! \defined( 'ABSPATH' ) ) {
 
 	<br>
 
-	<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpforms-builder' ) ); ?>" class="wpforms-btn add-new-h2 wpforms-btn-orange"><?php esc_html_e( 'Create Your Form', 'wpforms-lite' ); ?></a>
+	<?php if ( wpforms_current_user_can( 'create_forms' ) ) : ?>
+		<a href="<?php echo esc_url( admin_url( 'admin.php?page=wpforms-builder' ) ); ?>" class="wpforms-btn add-new-h2 wpforms-btn-orange"><?php esc_html_e( 'Create Your Form', 'wpforms-lite' ); ?></a>
+	<?php endif; ?>
 
 	<p class="wpforms-admin-no-forms-footer">
 		<?php
@@ -36,7 +38,7 @@ if ( ! \defined( 'ABSPATH' ) ) {
 					],
 				]
 			),
-			'https://wpforms.com/docs/creating-first-form/'
+			esc_url( wpforms_utm_link( 'https://wpforms.com/docs/creating-first-form/', 'forms-overview', 'Create Your First Form Documentation' ) )
 		);
 		?>
 	</p>
