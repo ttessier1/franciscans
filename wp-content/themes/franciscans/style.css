@@ -1,58 +1,3 @@
-/*
-Theme Name: Twenty Twenty
-Text Domain: twentytwenty
-Version: 1.5
-Requires at least: 4.7
-Requires PHP: 5.2.4
-Description: Our default theme for 2020 is designed to take full advantage of the flexibility of the block editor. Organizations and businesses have the ability to create dynamic landing pages with endless layouts using the group and column blocks. The centered content column and fine-tuned typography also makes it perfect for traditional blogs. Complete editor styles give you a good idea of what your content will look like, even before you publish. You can give your site a personal touch by changing the background colors and the accent color in the Customizer. The colors of all elements on your site are automatically calculated based on the colors you pick, ensuring a high, accessible color contrast for your visitors.
-Tags: blog, one-column, custom-background, custom-colors, custom-logo, custom-menu, editor-style, featured-images, footer-widgets, full-width-template, rtl-language-support, sticky-post, theme-options, threaded-comments, translation-ready, block-styles, wide-blocks, accessibility-ready
-Author: the WordPress team
-Author URI: https://wordpress.org/
-Theme URI: https://wordpress.org/themes/twentytwenty/
-License: GNU General Public License v2 or later
-License URI: http://www.gnu.org/licenses/gpl-2.0.html
-
-All files, unless otherwise stated, are released under the GNU General Public
-License version 2.0 (http://www.gnu.org/licenses/gpl-2.0.html)
-
-This theme, like WordPress, is licensed under the GPL.
-Use it to make something cool, have fun, and share what you've learned
-with others.
-*/
-
-/*--------------------------------------------------------------
->>> TABLE OF CONTENTS:
-----------------------------------------------------------------
-
-	0. 	CSS Reset
-	1. 	Document Setup
-	2. 	Element Base
-	3. 	Helper Classes
-	4. 	Site Header
-	5. 	Menu Modal
-	6. 	Search Modal
-	7. 	Page Templates
-		a. 	Template: Cover Template
-		c. 	Template: Full Width
-	8.  Post: Archive
-	9.  Post: Single
-	10. Blocks
-	11. Entry Content
-	12. Comments
-	13. Site Pagination
-	14. Error 404
-	15. Widgets
-	16. Site Footer
-	17. Media Queries
-
------------------------------------------------------------------------------ */
-
-
-/* -------------------------------------------------------------------------- */
-
-/*	0. CSS Reset
-/* -------------------------------------------------------------------------- */
-
 
 html,
 body {
@@ -125,7 +70,7 @@ html {
 }
 
 body {
-	background: #654822;
+	background: #f5efe0;
 	box-sizing: border-box;
 	color: #000;
 	font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, sans-serif;
@@ -262,7 +207,7 @@ Inter variable font. Usage:
 	font-weight: 100 900; /* stylelint-disable-line font-weight-notation */
 	font-style: normal;
 	font-display: swap;
-	src: url(./assets/fonts/inter/Inter-upright-var.woff2) format("woff2");
+	src: url(/web/20230627101616im_/https://www.trilliumregionalofs.ca/wp-content/themes/franciscans/assets/fonts/inter/Inter-upright-var.woff2) format("woff2");
 }
 
 @font-face {
@@ -270,7 +215,7 @@ Inter variable font. Usage:
 	font-weight: 100 900; /* stylelint-disable-line font-weight-notation */
 	font-style: italic;
 	font-display: swap;
-	src: url(./assets/fonts/inter/Inter-italic-var.woff2) format("woff2");
+	src: url(/web/20230627101616im_/https://www.trilliumregionalofs.ca/wp-content/themes/franciscans/assets/fonts/inter/Inter-italic-var.woff2) format("woff2");
 }
 
 
@@ -455,7 +400,7 @@ hr.styled-separator::after {
 }
 
 a {
-	color: #412e15;
+	color: #cd2653;
 	text-decoration: underline;
 }
 
@@ -1352,7 +1297,7 @@ ul.social-icons li {
 
 
 #site-header {
-	background: #412e15;
+	background: #fff;
 	position: relative;
 }
 
@@ -2593,7 +2538,7 @@ h2.entry-title {
 }
 
 .post-inner {
-	padding-top: 5rem;
+	padding-top: 0rem;
 }
 
 .reduced-spacing.missing-post-thumbnail .post-inner {
@@ -3538,7 +3483,6 @@ figure.wp-block-table.is-style-stripes {
 /* Font Families ----------------------------- */
 
 .entry-content {
-	font-family: NonBreakingSpaceOverride, "Hoefler Text", Garamond, "Times New Roman", serif;
 	letter-spacing: normal;
 }
 
@@ -3554,7 +3498,7 @@ figure.wp-block-table.is-style-stripes {
 .entry-content address,
 .entry-content .wp-caption-text,
 .entry-content .wp-block-file {
-	font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, sans-serif;
+p
 }
 
 @supports ( font-variation-settings: normal ) {
@@ -3571,7 +3515,6 @@ figure.wp-block-table.is-style-stripes {
 	.entry-content address,
 	.entry-content .wp-caption-text,
 	.entry-content .wp-block-file {
-		font-family: "Inter var", -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, sans-serif;
 	}
 }
 
@@ -3579,8 +3522,8 @@ figure.wp-block-table.is-style-stripes {
 /* Alignment Classes ------------------------- */
 
 .entry-content > *:not(.alignwide):not(.alignfull):not(.alignleft):not(.alignright):not(.is-style-wide) {
-	max-width: 58rem;
-	width: calc(100% - 4rem);
+/*	max-width: 58rem;
+	width: calc(100% - 4rem);*/
 }
 
 [class*="__inner-container"] > *:not(.alignwide):not(.alignfull):not(.alignleft):not(.alignright):not(.is-style-wide) {
@@ -4368,7 +4311,7 @@ div.comment:first-of-type {
 
 .footer-nav-widgets-wrapper,
 #site-footer {
-	background-color: #412e15;
+	background-color: #fff;
 	border-color: #dedfdf;
 	border-style: solid;
 	border-width: 0;
@@ -5119,7 +5062,7 @@ a.to-the-top > * {
 	}
 
 	.post-inner {
-		padding-top: 8rem;
+		padding-top: 0rem;
 	}
 
 	/* POST FOOTER */
@@ -6469,3 +6412,24 @@ a.to-the-top > * {
 		top: 0;
 	}
 }
+
+/*
+     FILE ARCHIVED ON 10:16:16 Jun 27, 2023 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 16:38:04 Mar 11, 2024.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+*/
+/*
+playback timings (ms):
+  exclusion.robots: 0.095
+  exclusion.robots.policy: 0.085
+  cdx.remote: 0.095
+  esindex: 0.009
+  LoadShardBlock: 723.816 (6)
+  PetaboxLoader3.resolve: 926.637 (2)
+  PetaboxLoader3.datanode: 303.727 (8)
+  load_resource: 597.378
+  loaddict: 161.821
+*/
